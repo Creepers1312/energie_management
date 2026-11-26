@@ -5273,7 +5273,9 @@ window.EN = (function () {
   };
   var DASH_STORE = "sfm-dashboards-v1", DASH_CURRENT_STORE = "sfm-dash-current-v1";
   var dashList = null, currentDashId = "standard", dashSaveTimer = null;
-  function dashMe() { return currentUser && !currentUser.demo ? currentUser.name : ""; }
+  // Demo-Zugang: im lokalen Testmodus dürfen auch Demo-Nutzer Dashboards anpassen (liegt nur im Browser);
+  // am Server speichert der Demo-Zugang keine Dashboards
+  function dashMe() { return currentUser && (!currentUser.demo || !SFM.isServer()) ? currentUser.name : ""; }
   function dashIsBuiltin(d) { return !!(d && DASH_BUILTIN[d.id]); }
   function dashFallbackList() {
     return Object.keys(DASH_BUILTIN).map(function (id) {
@@ -5298,7 +5300,7 @@ window.EN = (function () {
     try { LS.setItem(DASH_STORE, JSON.stringify(all)); } catch (e) { /* Speichern optional */ }
   }
   function localCanEdit(d) {
-    if (!currentUser || currentUser.demo) return false;
+    if (!currentUser || (currentUser.demo && SFM.isServer())) return false;
     if (d.visibility === "standard") return can("stamm");
     return can("manageUsers") || String(d.owner).toLowerCase() === dashMe().toLowerCase();
   }
