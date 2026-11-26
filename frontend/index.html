@@ -9311,7 +9311,7 @@ window.EN = (function () {
         { h: "Der monatliche Ablauf",
           p: "Zu Monatsbeginn werden alle Zähler abgelesen und die Stände erfasst — von Hand oder per CSV-Datei. Der zuletzt gespeicherte Stand gilt automatisch als vorheriger Stand; daraus entsteht der Verbrauch des Abrechnungsmonats. Die ILV-Regeln verteilen ihn auf die Kostenstellen und bewerten ihn mit den hinterlegten Preisen. Das Dashboard zeigt die Entwicklung und weist auf fehlende Ablesungen hin.",
           note: "Verbräuche und Kosten werden nie von Hand eingetragen, sondern immer aus Zählerständen, Faktoren, Regeln und Preisen berechnet. Ändert sich eine Grundlage rückwirkend, wird mit Vorschau und Bestätigung neu berechnet." },
-        { h: "Die Bereiche", list: [
+        { h: "Die Bereiche", img: "kopfzeile", cap: "Kopfzeile mit allen Bereichen", list: [
           "<b>Dashboard</b> — Gesamtverbrauch je Energieart, Vergleich mit dem Vormonat, Kosten, fehlende Ablesungen und frei zusammenstellbare Diagramme.",
           "<b>Zähler</b> — alle Zähler mit Eigenschaften, Zählerbaum, Ablesungen, Monatsverbrauch, Zählerwechsel und Ausbau.",
           "<b>Ablesung</b> — Zählerstände eines Abrechnungsmonats erfassen oder als CSV importieren.",
@@ -9331,7 +9331,7 @@ window.EN = (function () {
     { id: "anmelden", group: "Grundlagen", title: "Anmelden & eigenes Konto",
       intro: "Jede Person meldet sich mit einem eigenen Konto an. Die Rolle des Kontos bestimmt, was sie sehen und ändern darf.",
       sections: [
-        { h: "Anmelden", steps: [
+        { h: "Anmelden", img: "anmeldung", cap: "Anmeldeseite", small: true, steps: [
           ["Anmeldename oder E-Mail", "Den Anmeldenamen oder die hinterlegte E-Mail-Adresse eingeben — Groß- und Kleinschreibung spielt keine Rolle."],
           ["Passwort", "Mindestens 10 Zeichen (am Server einstellbar), nicht gleich dem Namen. Nach mehreren Fehlversuchen ist die Anmeldung für 15 Minuten gesperrt."],
           ["Erstes Konto", "Auf einem neuen System wird das zuerst angelegte Konto automatisch Administrator."]
@@ -9350,7 +9350,7 @@ window.EN = (function () {
     { id: "zaehler", group: "Zähler & Ablesung", title: "Zähler anlegen und pflegen",
       intro: "Jeder Zähler wird einzeln verwaltet. Unter „Zähler“ stehen alle Zähler als Liste oder als Zählerbaum (Unterzähler eingerückt unter ihrem Hauptzähler); rechts die Details des gewählten Zählers.",
       sections: [
-        { h: "Neuer Zähler", steps: [
+        { h: "Neuer Zähler", img: "zaehler", cap: "Zählerliste als Zählerbaum, rechts die Details", steps: [
           ["Zählernummer und Bezeichnung", "Die Nummer muss eindeutig sein, z. B. E-4711."],
           ["Energieart", "Strom (kWh), Wasser (m³), Gas (m³, abgerechnet in kWh) oder Druckluft (Nm³). Die Energieart lässt sich später nicht ändern."],
           ["Kostenstelle", "Die zugeordnete Kostenstelle. Mit „ILV-Regel automatisch anlegen“ erhält sie den Verbrauch dieses Zählers."],
@@ -9373,7 +9373,7 @@ window.EN = (function () {
       intro: "Beim Zählerwechsel wird der alte Zähler mit seinem Ausbaustand abgeschlossen und ein neuer Zähler mit eigener Nummer angelegt. Der Verbrauch beider Zähler wird getrennt berechnet; die Daten des alten Zählers bleiben erhalten.",
       flow: ["Ausbaustand erfassen", "Neuen Zähler anlegen", "Anfangsstand erfassen", "Verbrauch getrennt berechnen"],
       sections: [
-        { h: "So geht es", steps: [
+        { h: "So geht es", img: "zaehlerwechsel", cap: "Zählerwechsel: alten Zähler abschließen, neuen anlegen", steps: [
           ["Zähler wählen", "Unter „Zähler“ den alten Zähler wählen und „Zählerwechsel“ klicken."],
           ["Alter Zähler", "Ausbaudatum und Ausbauzählerstand eingeben. Der Abrechnungsmonat des Restverbrauchs wird vorgeschlagen; der Verbrauch seit der letzten Ablesung wird sofort angezeigt."],
           ["Neuer Zähler", "Neue Zählernummer, Einbaudatum, Anfangszählerstand sowie Messfaktor und Überlaufwert (vom alten Zähler übernommen, änderbar)."],
@@ -9387,13 +9387,13 @@ window.EN = (function () {
       intro: "Die Ablesung erfolgt grundsätzlich monatlich. Unter „Ablesung“ stehen alle Zähler, die im gewählten Abrechnungsmonat eingebaut sind — mit dem vorherigen Stand, einem Feld für den neuen Stand und dem sofort berechneten Verbrauch.",
       sections: [
         { h: "Ablesedatum, Verbrauchszeitraum und Abrechnungsmonat", p: "Die drei Angaben werden getrennt gespeichert. Beispiel: Ablesedatum 01.12.2026, Verbrauchszeitraum 01.11.–01.12.2026, Abrechnungsmonat November 2026. Ablesungen bis zum Stichtag (Stammdaten, Standard der 5.) gehören zum Vormonat, spätere zum laufenden Monat. Der Abrechnungsmonat lässt sich je Ablesung ändern." },
-        { h: "Stände erfassen", steps: [
+        { h: "Stände erfassen", img: "ablesung", cap: "Ablesung eines Abrechnungsmonats", steps: [
           ["Monat wählen", "Mit den Pfeilen den Abrechnungsmonat wählen; „Fälliger Monat“ springt zum Vormonat von heute."],
           ["Ablesedatum", "Gilt für alle Zeilen und lässt sich je Zähler ändern."],
           ["Stände eingeben", "Mit Enter springt der Cursor zum nächsten Zähler. Verbrauch und Vergleich mit dem Vormonat erscheinen sofort."],
           ["Prüfen und speichern", "Alle Eingaben werden geprüft; bei Auffälligkeiten öffnet sich die Prüfliste (siehe unten)."]
         ] },
-        { h: "Fehlerfälle", list: [
+        { h: "Fehlerfälle", img: "pruefliste", cap: "Prüfliste: Stand kleiner als vorher — Entscheidung nötig", list: [
           "<b>Vorheriger Stand fehlt:</b> Es erscheint eine Warnung. Erst nach ausdrücklicher Bestätigung wird mit dem alten Stand 0 gerechnet; die Ablesung ist danach als „mit 0 gerechnet“ markiert.",
           "<b>Neuer Stand kleiner als der alte:</b> Es wird gewarnt; der negative Verbrauch wird nicht automatisch korrigiert. Zur Wahl stehen: Zählerüberlauf (nur mit hinterlegtem Überlaufwert — dann wird über den Maximalwert gerechnet), den negativen Verbrauch so speichern oder die Zeile auslassen und stattdessen einen Zählerwechsel erfassen.",
           "<b>Überlauf erkennen:</b> Ist ein Überlaufwert hinterlegt und wäre der Verbrauch über den Überlauf plausibel (weniger als ein halbes Zählwerk), wird „Zählerüberlauf“ vorgeschlagen. Verbrauch = Überlaufwert − alter Stand + neuer Stand.",
@@ -9425,27 +9425,27 @@ window.EN = (function () {
     { id: "ilv", group: "Verrechnung (ILV)", title: "Verrechnung auf Kostenstellen",
       intro: "Die interne Leistungsverrechnung berechnet automatisch anhand der hinterlegten ILV-Struktur, welche Kostenstelle wie viel verbraucht hat — unter Berücksichtigung von Zählerverknüpfungen, Faktoren und Summen.",
       sections: [
-        { h: "Die Verrechnungstabelle", p: "Unter „ILV → Verrechnung“ steht je Kostenstelle der Verbrauch jeder Energieart im gewählten Monat — als Menge, Kosten oder beides. Ein Klick auf eine Kostenstelle zeigt die Berechnung Zähler für Zähler. Ein „!“ heißt: Mindestens ein Zähler der Regel ist in diesem Monat nicht abgelesen.", list: [
+        { h: "Die Verrechnungstabelle", img: "ilv", cap: "Verrechnung eines Monats, Kostenstelle aufgeklappt", p: "Unter „ILV → Verrechnung“ steht je Kostenstelle der Verbrauch jeder Energieart im gewählten Monat — als Menge, Kosten oder beides. Ein Klick auf eine Kostenstelle zeigt die Berechnung Zähler für Zähler. Ein „!“ heißt: Mindestens ein Zähler der Regel ist in diesem Monat nicht abgelesen.", list: [
           "<b>Summe verrechnet</b> — alles, was über Regeln auf Kostenstellen geht.",
           "<b>Gesamtverbrauch (Hauptzähler)</b> — Summe aller Zähler ohne übergeordneten Zähler.",
           "<b>Nicht verteilt</b> — Differenz; idealerweise 0. Ein Wert ungleich 0 zeigt fehlende oder doppelte Zuordnungen.",
           "<b>Preis</b> — der im Monat gültige Preis je Energieart."
         ] },
-        { h: "Regeln", p: "Eine Regel gehört zu einer Kostenstelle und einer Energieart und ist eine Summe aus Zähler × Faktor: Faktor 1 = voller Verbrauch, −1 = abziehen (Differenzzähler), 0,4 = 40 % Anteil an einem Gemeinschaftszähler. Jede Regel hat Versionen „gültig ab Monat“; frühere Versionen bleiben erhalten.", steps: [
+        { h: "Regeln", img: "regeln", cap: "ILV-Regeln im gewählten Monat", p: "Eine Regel gehört zu einer Kostenstelle und einer Energieart und ist eine Summe aus Zähler × Faktor: Faktor 1 = voller Verbrauch, −1 = abziehen (Differenzzähler), 0,4 = 40 % Anteil an einem Gemeinschaftszähler. Jede Regel hat Versionen „gültig ab Monat“; frühere Versionen bleiben erhalten.", steps: [
           ["Automatisch", "Ein neuer Zähler mit Kostenstelle erhält die Regel „+1 × Zähler“. Hat er einen Hauptzähler, wird er bei allen Regeln des Hauptzählers anteilig abgezogen."],
           ["Bearbeiten", "Unter „ILV → Regeln“ mit ✎: Zähler und Faktoren ändern, „gültig ab“ wählen. Rückwirkend → Vorschau und Bestätigung."],
           ["Neue Regel", "Z. B. für eine Aufteilung: Kostenstelle A 0,6 × (Hauptzähler − Unterzähler), Kostenstelle B 0,4 × (dasselbe)."],
           ["Beenden", "„Ab Monat beenden“ — ab dann wird über die Regel nichts mehr verrechnet."]
         ] },
         { h: "Kostenstellen", p: "Unter „ILV → Kostenstellen“ werden Kostenstellen angelegt und gepflegt. Kostenstellen mit Zählern oder Regeln lassen sich nicht löschen, aber auf inaktiv setzen." },
-        { h: "Preise und Gas-Umrechnung", p: "Je Energieart ein Preis in € je Abrechnungseinheit mit „gültig ab“. Gas wird in m³ abgelesen und mit Brennwert × Zustandszahl in kWh umgerechnet; ohne Umrechnung für einen Monat bleibt der Gasverbrauch als unvollständig markiert." }
+        { h: "Preise und Gas-Umrechnung", img: "preise", cap: "Preise und Gas-Umrechnung mit „gültig ab“", p: "Je Energieart ein Preis in € je Abrechnungseinheit mit „gültig ab“. Gas wird in m³ abgelesen und mit Brennwert × Zustandszahl in kWh umgerechnet; ohne Umrechnung für einen Monat bleibt der Gasverbrauch als unvollständig markiert." }
       ] },
 
     { id: "rueckwirkend", group: "Verrechnung (ILV)", title: "Rückwirkende Änderungen, Vorschau und Berechnungsstände",
       intro: "Messfaktoren, technische Eigenschaften, Regeln, Preise, Umrechnung und Ablesungen lassen sich auch rückwirkend ändern. Damit nichts unbemerkt passiert, gilt immer derselbe Ablauf.",
       flow: ["Änderung eingeben", "Vorschau alt / neu", "Grund angeben", "Ausdrücklich bestätigen", "Stand davor wird gesichert", "Neu berechnet"],
       sections: [
-        { h: "Vorschau", p: "Betrifft eine Änderung Monate, für die schon Ablesungen vorliegen, zeigt eine Vorschau vor dem Speichern jede betroffene Zahl: je Monat und Kostenstelle bisher, neu und Differenz, dazu die geänderten Monatswerte einzelner Zähler und die Kostendifferenz insgesamt." },
+        { h: "Vorschau", img: "vorschau", cap: "Vorschau einer rückwirkenden Faktoränderung", p: "Betrifft eine Änderung Monate, für die schon Ablesungen vorliegen, zeigt eine Vorschau vor dem Speichern jede betroffene Zahl: je Monat und Kostenstelle bisher, neu und Differenz, dazu die geänderten Monatswerte einzelner Zähler und die Kostendifferenz insgesamt." },
         { h: "Bestätigung", p: "Übernommen wird erst, wenn ein Grund eingetragen und „Ich habe die Vorschau geprüft …“ angekreuzt ist. Abbrechen ändert nichts." },
         { h: "Nachvollziehbarkeit", list: [
           "Vor jeder rückwirkenden Neuberechnung wird der bisherige Stand der betroffenen Monate als <b>Berechnungsstand</b> gespeichert (ILV → Berechnungsstände). Ein Klick vergleicht ihn mit dem heutigen Ergebnis.",
@@ -9458,25 +9458,25 @@ window.EN = (function () {
     { id: "dashboard", group: "Auswertung & Maßnahmen", title: "Dashboard",
       intro: "Das Dashboard ist die zentrale Übersicht über die Verbrauchsentwicklung.",
       sections: [
-        { h: "Inhalte", list: [
+        { h: "Inhalte", img: "dashboard", cap: "Dashboard „Standard“", list: [
           "<b>Übersicht je Energieart</b> — Gesamtverbrauch des gewählten Abrechnungsmonats, Veränderung zum Vormonat (rot ab der Warnschwelle aus den Stammdaten), Kosten, fehlende Ablesungen und nicht verteilte Mengen.",
           "<b>Diagramme</b> — Verbrauchs- und Kostenentwicklung über 6 bis 36 Monate; ein gestrichelter Ring markiert Monate mit angelegten Maßnahmen.",
           "<b>Fehlende Zählerstände</b> — je Monat, ein Klick öffnet die Ablesung.",
           "<b>Kacheln</b> — Verbrauch je Energieart, Kosten gesamt, fehlende Ablesungen, offene Maßnahmen."
         ] },
         { h: "Monat und Zeitraum", p: "Mit den Pfeilen den Abrechnungsmonat wählen; „Diagramme“ legt fest, wie viele Monate bis dahin gezeigt werden. „CSV-Export“ liefert die Monatswerte je Energieart." },
-        { h: "Dashboards anpassen", p: "Über das Dashboard-Menü lassen sich Dashboards wechseln, kopieren, neu anlegen (privat oder öffentlich) und anpassen: Widgets hinzufügen, verschieben, Größe ändern. Die Standard-Dashboards „Standard“ und „Detaillierte Auswertung“ ändern Teamleitung und Administration für alle." }
+        { h: "Dashboards anpassen", img: "dashboard-anpassen", cap: "Dashboard anpassen", p: "Über das Dashboard-Menü lassen sich Dashboards wechseln, kopieren, neu anlegen (privat oder öffentlich) und anpassen: Widgets hinzufügen, verschieben, Größe ändern. Die Standard-Dashboards „Standard“ und „Detaillierte Auswertung“ ändern Teamleitung und Administration für alle." }
       ] },
 
     { id: "massnahmen", group: "Auswertung & Maßnahmen", title: "Maßnahmen (PDCA) und Tracking",
       intro: "Maßnahmen halten Auffälligkeiten (Mehrverbrauch, Leckage, Zählerstörung) und Einsparprojekte fest und führen sie durch den PDCA-Zyklus.",
       sections: [
-        { h: "Maßnahmen", steps: [
+        { h: "Maßnahmen", img: "massnahmen", cap: "Maßnahmen im PDCA-Ablauf", steps: [
           ["Anlegen", "„+ Neue Maßnahme“ oder beim Zähler „Maßnahme anlegen“: Titel, Energieart, Art, optional Zähler, Verantwortlich, Fälligkeit und Beschreibung."],
           ["PDCA", "Karten zwischen Plan, Do, Check und Act verschieben (ziehen oder Pfeile); „Abschließen ✓“ beendet die Maßnahme."],
           ["5 Why", "In der Detailansicht führt die 5-Why-Analyse zur Ursache."]
         ] },
-        { h: "Tracking", p: "„Maßnahmen-Tracking“ zeigt alle Maßnahmen eines Monats, Jahres oder insgesamt — mit Schlagwortsuche, Filtern nach Energieart, Art und Status, Summen je Art, Verteilung nach Energieart und CSV-Export." }
+        { h: "Tracking", img: "tracking", cap: "Maßnahmen-Tracking", p: "„Maßnahmen-Tracking“ zeigt alle Maßnahmen eines Monats, Jahres oder insgesamt — mit Schlagwortsuche, Filtern nach Energieart, Art und Status, Summen je Art, Verteilung nach Energieart und CSV-Export." }
       ] },
 
     /* ===== Verwaltung ===== */
@@ -9493,7 +9493,7 @@ window.EN = (function () {
     { id: "stammdaten", group: "Verwaltung", title: "Stammdaten",
       intro: "Unter Einstellungen → Stammdaten stehen die Angaben, die überall gelten.",
       sections: [
-        { h: "Einstellungen", list: [
+        { h: "Einstellungen", img: "stammdaten", cap: "Stammdaten", list: [
           "<b>Standort / Bereich</b> — erscheint in Kopfzeile, Dashboard und Exporten.",
           "<b>Stichtag der Ablesung</b> — Ablesungen bis zu diesem Tag gehören zum Vormonat.",
           "<b>Warnung bei Mehrverbrauch</b> — ab dieser Steigerung zum Vormonat wird ein Verbrauch hervorgehoben.",
@@ -9503,7 +9503,7 @@ window.EN = (function () {
     { id: "benutzer", group: "Verwaltung", title: "Benutzerverwaltung",
       intro: "Unter Einstellungen → Benutzerverwaltung legen Teamleitung und Administration Konten an und pflegen sie.",
       sections: [
-        { h: "Konten pflegen", steps: [
+        { h: "Konten pflegen", img: "benutzer", cap: "Benutzerverwaltung", steps: [
           ["Anlegen", "„+ Benutzer anlegen“: Name, Anmeldename, optional E-Mail, Rolle, Berechtigung und Startpasswort."],
           ["Bearbeiten", "Name, E-Mail, Rolle und Berechtigung ändern."],
           ["Passwort", "Neues Passwort setzen — das Konto wird dabei auf allen Geräten abgemeldet."],
@@ -9515,7 +9515,7 @@ window.EN = (function () {
     { id: "email", group: "Verwaltung", title: "E-Mail-Versand",
       intro: "Der Server nutzt den Mailserver für „Passwort vergessen“ und Test-E-Mails.",
       sections: [
-        { h: "Mailserver einrichten", steps: [
+        { h: "Mailserver einrichten", img: "email", cap: "Einstellungen → E-Mail-Versand", steps: [
           ["Absender", "Absendername, Absenderadresse und Antwortadresse."],
           ["SMTP-Server", "Server, Port und Verschlüsselung (üblich: STARTTLS auf Port 587), Benutzer und Passwort. Das Passwort wird verschlüsselt gespeichert und nie wieder angezeigt."],
           ["Testen", "„Verbindung testen“ prüft Server und Anmeldung, „Test-E-Mail senden“ schickt eine Nachricht an die eigene Adresse aus „Mein Konto“."]
@@ -9524,7 +9524,7 @@ window.EN = (function () {
     { id: "sicherung", group: "Verwaltung", title: "Datenbank & Sicherung",
       intro: "Am Server liegen alle Daten in einer PostgreSQL-Datenbank — alle Geräte sehen denselben Stand. Der Server sichert sie selbstständig.",
       sections: [
-        { h: "Sichern und wiederherstellen", steps: [
+        { h: "Sichern und wiederherstellen", img: "datenbank", cap: "Datenbank & Sicherung", steps: [
           ["Automatisch sichern", "„Täglich sichern“ einschalten, Uhrzeit und Aufbewahrung festlegen, speichern."],
           ["Jetzt sichern / Herunterladen", "Legt sofort eine Sicherung an bzw. speichert eine Sicherungsdatei (.dump) auf diesem Computer."],
           ["Wiederherstellen", "In der Liste auf „Wiederherstellen“: Sie wählen, was zurückgespielt wird — Energiedaten (Zähler, Ablesungen, Kostenstellen, Regeln, Preise, Protokoll und Berechnungsstände, nur als Ganzes), Maßnahmen, Stammdaten, Benutzerkonten, Dashboards. Maßnahmen, Konten und Dashboards auch einzeln."],

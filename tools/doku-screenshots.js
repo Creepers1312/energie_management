@@ -32,34 +32,39 @@ const W = 1440, H = 900;
   await shot('dashboard-anpassen');
   await p.click('#dashAddBtn'); await wait(400); await shot('widget-hinzufuegen', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
   await p.click('#dashEditDone'); await p.evaluate(() => scrollTo(0, 0));
-  // SQIDP-Board
-  await p.click('.tab[data-view="board"]'); await wait(600); await shot('sqidp-board');
-  await p.locator('#view-board button.cell.nok').nth(3).click(); await wait(400); await shot('board-tag', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
-  // Huddle
-  await p.click('.tab[data-view="huddle"]'); await wait(500); await shot('huddle-kalender');
-  await p.click('.huddle-cal-day:has-text("23")'); await wait(800); await shot('huddle-kennzahlen');
-  await p.click('#dtab-prod'); await wait(300); await shot('huddle-produktion');
-  await p.click('#dailyDlgClose'); await wait(500);
-  await shot('huddle-runde');
-  await p.locator('#agendaList .agenda-item').nth(1).click(); await wait(600); await shot('huddle-agenda');
-  await p.click('#agOk'); await wait(300);
-  await p.locator('#agendaList .agenda-item').nth(4).click(); await wait(600); await shot('huddle-produktivitaet');
-  await p.click('#agOk'); await wait(300);
-  if (await p.isVisible('#huddleRevBtn')) { await p.click('#huddleRevBtn'); await wait(600); await shot('revision', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(300); }
-  else console.log('Revision-Knopf nicht sichtbar');
+  // Zähler
+  await p.click('.tab[data-view="meters"]'); await wait(700); await shot('zaehler');
+  await p.click('.me-actions >> text=Zählerwechsel'); await wait(400); await shot('zaehlerwechsel', { clip: await box('dialog[open]', 28) });
+  await p.keyboard.press('Escape'); await wait(200);
+  // Ablesung mit Prüfliste (W-220: Stand kleiner als vorher)
+  await p.click('.tab[data-view="readings"]'); await wait(700); await shot('ablesung');
+  for (const r of await p.$$('#rdTable tbody tr')) if ((await r.innerText()).includes('W-220')) await (await r.$('.rd-input')).fill('5000');
+  await p.click('#rdSave'); await wait(500); await shot('pruefliste', { clip: await box('dialog[open]', 28) });
+  await p.keyboard.press('Escape'); await wait(200);
+  // ILV
+  await p.click('.tab[data-view="ilv"]'); await wait(500);
+  await p.locator('#ilvTable tbody tr.trk-row').first().click(); await wait(400); await shot('ilv');
+  await p.click('#ilvTabs [data-itab="rules"]'); await wait(400); await shot('regeln');
+  await p.click('#ilvTabs [data-itab="prices"]'); await wait(400); await shot('preise');
+  // Vorschau einer rückwirkenden Faktoränderung (wird nicht übernommen)
+  await p.click('.tab[data-view="meters"]'); await wait(400);
+  for (const r of await p.$$('#mtTable tbody tr')) if ((await r.innerText()).includes('E-110')) { await r.click(); break; }
+  await wait(300); await p.click('.me-actions >> text=Messfaktor / Überlauf'); await wait(300);
+  await p.fill('#ppFactor', '1,05');
+  const m3 = await p.evaluate(() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return d.toISOString().slice(0, 7); });
+  await p.fill('#ppFrom', m3); await p.click('#ppSave'); await wait(600);
+  await shot('vorschau', { clip: await box('dialog[open]', 28) });
+  await p.keyboard.press('Escape'); await wait(200);
   // Maßnahmen
   await p.click('.tab[data-view="actions"]'); await wait(600); await shot('massnahmen');
-  await p.locator('#kanban .kcard').first().click(); await wait(500); await shot('abweichung', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
-  // Tracking, Bericht
+  await p.locator('#kanban .kcard').first().click(); await wait(500); await shot('massnahme', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
+  // Tracking
   await p.click('.tab[data-view="tracking"]'); await wait(800); await shot('tracking');
-  await p.click('.tab[data-view="report"]'); await wait(500); await p.click('#reportPrev'); await wait(600); await shot('tagesbericht');
   // Einstellungen
   await p.click('.tab[data-view="settings"]'); await wait(500);
   for (const [pane, name] of [['stamm', 'stammdaten'], ['users', 'benutzer'], ['mail', 'email'], ['db', 'datenbank']]) {
     await p.click(`.side-item[data-spane="${pane}"]`); await wait(500); await shot(name);
   }
-  // TV-Modus
-  await p.click('#tvBtn'); await wait(1200); await p.mouse.move(W / 2, H / 2); await wait(4500); await shot('tv-modus'); await p.keyboard.press('Escape');
   console.log(errs.join('\n') || 'keine Seitenfehler');
   await b.close();
   // PNG → WebP (Qualität 80) nach frontend/docs/

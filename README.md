@@ -1,7 +1,9 @@
-# Shopfloor Board — Digitales Shopfloor Management
+# Energie Management — Verbrauch, Zähler und interne Leistungsverrechnung
 
-Deutsche Web-App für das digitale Shopfloor Management mit SQIDP-Board, Kennzahlen und Huddle.
-Läuft als Docker-Compose-Stack mit PostgreSQL. Alle Geräte einer Linie sehen denselben Stand.
+Deutsche Web-App für das Energiemanagement eines Standorts: Zählerverwaltung und monatliche Ablesung für **Strom,
+Wasser, Gas und Druckluft**, automatische Verbrauchsberechnung und Verrechnung auf Kostenstellen (ILV), Dashboard
+und Maßnahmen im PDCA-Zyklus. Läuft als Docker-Compose-Stack mit PostgreSQL; alle Geräte sehen denselben Stand.
+Entstanden aus dem Shopfloor Board (Stand 1.6.0) — Aufbau, Design, Anmeldung, Sicherungen und Betrieb sind gleich.
 
 Änderungen je Version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -9,14 +11,14 @@ Läuft als Docker-Compose-Stack mit PostgreSQL. Alle Geräte einer Linie sehen d
 
 | Bereich | Inhalt |
 |---------|--------|
-| Dashboard | OEE, First Pass Yield, Termintreue und Tageswerte je Zeitraum (Tag, Arbeitswoche, Monat, Jahr, frei wählbar), eigene Widget-Anordnung je Benutzer, Detaillierte Auswertung mit eigenen, anpassbaren Diagrammen |
-| SQIDP-Board | Monatsboard Sicherheit, Qualität, Inventory, Lieferung, Produktivität |
-| Maßnahmen | Abweichungen mit Art, PDCA-Phase, Verantwortlichem und 5-Why-Analyse; Schlagwortsuche auch in abgeschlossenen Maßnahmen |
-| Abweichungs-Tracking | Alle Abweichungen eines Zeitraums mit Schlagwortsuche, Filtern nach Kategorie, Art und Quelle, Summen je Art und CSV-Export |
-| Daily Huddle | Kalender, Timer mit Start, Pause und Zurücksetzen, geführte Agenda, Erfassung der Tageskennzahlen, „Huddle ENDE“ |
-| Tagesbericht | Bericht je Tag, Versand per E-Mail |
+| Dashboard | Gesamtverbrauch je Energieart, Vergleich mit dem Vormonat, Kosten, Hinweise auf fehlende Zählerstände, Verbrauchs- und Kostenentwicklung über 6–36 Monate; mehrere, frei anpassbare Dashboards |
+| Zähler | Jeder Zähler einzeln: Nummer, Bezeichnung, Energieart, Kostenstelle, Haupt-/Unterzähler, Ein- und Ausbau, Anfangsstand, Messfaktor und Überlaufwert (mit „gültig ab“), technische Eigenschaften; Zählerwechsel und Ausbau mit getrennter Verbrauchsberechnung |
+| Ablesung | Monatliche Erfassung von Hand oder per CSV; letzter Stand wird automatisch vorheriger Stand; Ablesedatum, Verbrauchszeitraum und Abrechnungsmonat getrennt; Prüfliste bei fehlendem Vorstand (nach Bestätigung 0), kleinerem Stand (Überlauf, negativ speichern oder auslassen) und rückwirkenden Ablesungen; fehlende Ablesungen werden angezeigt |
+| ILV | Verrechnung auf Kostenstellen nach Regeln aus Zählern × Faktoren (Summen, Differenzen, Anteile), automatisch aus der Zählerstruktur angelegt und von Hand änderbar; Preise je Energieart und Gas-Umrechnung (Brennwert × Zustandszahl) mit „gültig ab“ |
+| Rückwirkende Änderungen | Vorschau (alt / neu je Kostenstelle und Zähler), Pflicht-Grund und ausdrückliche Bestätigung; der vorherige Stand wird als Berechnungsstand gespeichert; Änderungsprotokoll |
+| Maßnahmen | Mehrverbrauch, Leckagen, Zählerstörungen und Einsparungen mit PDCA-Phase, Verantwortlichem, Zählerbezug und 5-Why-Analyse; Tracking mit Filtern und CSV-Export |
 
-Die Produktionsmenge wird in drei Teile erfasst: Gutmenge im ersten Durchlauf (First Pass Yield), mit Nacharbeit verwendbar und Ausschuss (Absandung / Kreislaufmaterial).
+Einheiten: Strom kWh, Wasser m³, Gas m³ (abgerechnet in kWh), Druckluft Nm³.
 
 ## Aufbau
 
@@ -49,8 +51,8 @@ Voraussetzung: Linux-Server mit Git und `sudo` (oder als root). Docker muss nich
 fehlt es, richtet das Skript es auf Wunsch mit dem offiziellen Installationsskript (`get.docker.com`) ein.
 
 ```bash
-git clone https://github.com/Creepers1312/shopfloor.git
-cd shopfloor
+git clone https://github.com/Creepers1312/energie_management.git
+cd energie_management
 ./deploy.sh
 ```
 
@@ -64,7 +66,7 @@ Das Skript
 3. erzeugt ein zufälliges Datenbank-Passwort,
 4. legt den Sicherungsordner an,
 5. prüft die Compose-Konfiguration, baut die Images und startet die Container,
-6. wartet, bis Board und Datenbank antworten,
+6. wartet, bis Anwendung und Datenbank antworten,
 7. legt beim ersten Mal das Administrator-Konto an,
 8. räumt alte Images und Build-Cache (älter als 7 Tage) auf — nie Container, Volumes oder andere Projekte.
 
@@ -74,7 +76,7 @@ Ein Protokoll jedes Laufs landet in `logs/deploy.log`. Alle Optionen: `./deploy.
 
 | Betriebsart | Wann | Ziel im Reverse Proxy |
 |-------------|------|------------------------|
-| `proxy` | Nginx Proxy Manager, Traefik o. Ä. laufen **als Docker-Container auf demselben Server** (empfohlen) | `http://<projekt>-web:8080`, z. B. `http://shopfloor-web:8080` |
+| `proxy` | Nginx Proxy Manager, Traefik o. Ä. laufen **als Docker-Container auf demselben Server** (empfohlen) | `http://<projekt>-web:8080`, z. B. `http://energie-web:8080` |
 | `port` | Kein Proxy oder ein Proxy auf einem anderen Rechner | `http://<server-ip>:<WEB_PORT>` |
 
 Läuft beim ersten Start bereits ein Reverse-Proxy-Container, schlägt das Skript `proxy` und dessen Docker-Netz
@@ -101,7 +103,7 @@ Jede Einstellung lässt sich vorab als Umgebungsvariable setzen. Es gilt: Umgebu
 Danach ist allein die `.env` maßgeblich (Umgebungsvariablen überschreiben sie beim Start nicht mehr).
 
 ```bash
-DEPLOY_MODE=proxy PROXY_NETWORK=npm_default PUBLIC_URL=https://shopfloor.firma.de \
+DEPLOY_MODE=proxy PROXY_NETWORK=npm_default PUBLIC_URL=https://energie.firma.de \
 ADMIN_NAME="Max Mustermann" ADMIN_USERNAME=max.mustermann ADMIN_PASSWORD='…' ./deploy.sh -y
 ```
 
@@ -109,26 +111,26 @@ ADMIN_NAME="Max Mustermann" ADMIN_USERNAME=max.mustermann ADMIN_PASSWORD='…' .
 
 | Variable | Standard | Bedeutung |
 |----------|----------|-----------|
-| `COMPOSE_PROJECT_NAME` | `shopfloor` | Präfix für Container, Netze, Volumes |
+| `COMPOSE_PROJECT_NAME` | `energie` | Präfix für Container, Netze, Volumes |
 | `DEPLOY_MODE` | `proxy`, wenn ein Proxy-Container läuft, sonst `port` | Betriebsart (siehe oben) |
 | `PROXY_NETWORK` | Netz des erkannten Proxys | Docker-Netz des Reverse Proxys (nur Betriebsart `proxy`) |
 | `WEB_BIND` | `0.0.0.0` bzw. `127.0.0.1` bei `proxy` | IP für den Web-Port (`127.0.0.1` = nur lokal) |
-| `WEB_PORT` | `8080` | Port des Boards |
+| `WEB_PORT` | `8080` | Port der Anwendung |
 | `PUBLIC_URL` | `http://<server-ip>:<port>` | Adresse für Benutzer, bestimmt den Standard für `COOKIE_SECURE` |
 | `TZ` | `Europe/Berlin` | Zeitzone |
-| `DB_NAME` / `DB_USER` | `shopfloor` | Datenbank und Benutzer |
+| `DB_NAME` / `DB_USER` | `energie` | Datenbank und Benutzer |
 | `DB_PASSWORD` | zufällig | Datenbank-Passwort |
 | `APP_SECRET` | zufällig | Schlüssel für gespeicherte Zugangsdaten (SMB-Passwort); wird erzeugt und nicht abgefragt |
 | `ALLOW_REGISTER` | `false` | Selbstregistrierung (das allererste Konto ist immer möglich und wird Administrator) |
 | `ALLOW_DEMO` | `false` | Demo-Zugang mit Leserechten auf der Anmeldeseite |
 | `SESSION_DAYS` | `14` | Höchstdauer einer Anmeldung |
-| `SESSION_IDLE_HOURS` | `12` | Abmeldung nach so vielen Stunden ohne Bedienung (`0` = aus; der TV-Modus zählt als aktiv) |
+| `SESSION_IDLE_HOURS` | `12` | Abmeldung nach so vielen Stunden ohne Bedienung (`0` = aus) |
 | `PASSWORD_MIN_LENGTH` | `10` | Mindestlänge für Passwörter (8–128) |
-| `CHECKMK` | `true`, wenn ein Checkmk-Agent installiert ist | Local Check für Board und Sicherungen einrichten (siehe „Überwachung mit Checkmk“) |
+| `CHECKMK` | `true`, wenn ein Checkmk-Agent installiert ist | Local Check für Anwendung und Sicherungen einrichten (siehe „Überwachung mit Checkmk“) |
 | `SMTP_HOST` | leer | Startwert für den Mailserver („Passwort vergessen“, Test-E-Mails). Gilt nur, bis die Einstellungen in der Oberfläche gespeichert werden (*Einstellungen → E-Mail-Versand*) |
 | `SMTP_PORT` / `SMTP_SECURITY` | `587` / `starttls` | Port und Verschlüsselung (`starttls`, `tls` für Port 465, `none`) |
 | `SMTP_USER` / `SMTP_PASSWORD` | leer | Anmeldung am Mailserver (leer = ohne Anmeldung) |
-| `SMTP_FROM` | leer | Absender, z. B. `Shopfloor Board <shopfloor@firma.de>` |
+| `SMTP_FROM` | leer | Absender, z. B. `Energie Management <energie@firma.de>` |
 | `RESET_LINK_MINUTES` | `60` | Gültigkeit eines Links zum Zurücksetzen (10–1440 Minuten) |
 | `COOKIE_SECURE` | `true` bei `https://` | Sitzungs-Cookie nur über HTTPS (Name dann `__Host-sfm_session`) |
 | `TRUSTED_PROXIES` | leer | IP(s) des Reverse Proxys, dessen `X-Forwarded-For` als Client-IP gilt |
@@ -145,22 +147,22 @@ ADMIN_NAME="Max Mustermann" ADMIN_USERNAME=max.mustermann ADMIN_PASSWORD='…' .
 **NPM als Docker-Container auf demselben Server (Betriebsart `proxy`, empfohlen):**
 
 1. `./deploy.sh` ausführen; Betriebsart `proxy` und das NPM-Netz werden vorgeschlagen.
-   `PUBLIC_URL=https://shopfloor.firma.de`, damit wird `COOKIE_SECURE=true`.
-2. In NPM einen Proxy Host `shopfloor.firma.de` anlegen: Schema `http`, Host `shopfloor-web`, Port `8080`
+   `PUBLIC_URL=https://energie.firma.de`, damit wird `COOKIE_SECURE=true`.
+2. In NPM einen Proxy Host `energie.firma.de` anlegen: Schema `http`, Host `energie-web`, Port `8080`
    (bei anderem Projektnamen `<projekt>-web`). SSL-Zertifikat zuweisen, „Force SSL“, „HTTP/2“ und „HSTS“ an.
 3. Fertig — `TRUSTED_PROXIES` ist bereits auf das Proxy-Netz gesetzt.
 
 **NPM auf einem anderen Rechner (Betriebsart `port`):**
 
-1. `PUBLIC_URL=https://shopfloor.firma.de`, damit wird `COOKIE_SECURE=true`.
-2. In NPM einen Proxy Host `shopfloor.firma.de` → `http://<server-ip>:<WEB_PORT>` anlegen, SSL-Zertifikat zuweisen, „Force SSL“ und „HSTS“ an.
+1. `PUBLIC_URL=https://energie.firma.de`, damit wird `COOKIE_SECURE=true`.
+2. In NPM einen Proxy Host `energie.firma.de` → `http://<server-ip>:<WEB_PORT>` anlegen, SSL-Zertifikat zuweisen, „Force SSL“ und „HSTS“ an.
 3. `TRUSTED_PROXIES` auf die IP des NPM-Rechners setzen (`./deploy.sh config`, danach `./deploy.sh`) — sonst sehen
    Login-Bremse und Sicherheitsprotokoll alle Zugriffe als „von NPM“. Die IP steht nach dem ersten Aufruf im
    Protokoll (*Einstellungen → Sicherheitsprotokoll*, Spalte IP-Adresse).
 
 In beiden Fällen: wenn möglich in NPM eine Access List anlegen, die nur das Firmennetz bzw. VPN zulässt.
 
-Ohne HTTPS funktioniert das Board im LAN ebenfalls. Passwörter gehen dann aber ungeschützt über das Netz.
+Ohne HTTPS funktioniert die Anwendung im LAN ebenfalls. Passwörter gehen dann aber ungeschützt über das Netz.
 
 ## Betrieb
 
@@ -189,23 +191,20 @@ Ohne HTTPS funktioniert das Board im LAN ebenfalls. Passwörter gehen dann aber 
   (gültig `RESET_LINK_MINUTES`, nur einmal nutzbar, beendet alle Sitzungen). Sonst landet eine Anfrage in der
   Benutzerverwaltung, Administratoren werden nach der Anmeldung darauf hingewiesen.
 - Die Antwort ist immer gleich — ob ein Konto existiert, verrät die Seite nicht. Höchstens 3 Anfragen je Konto und Stunde.
-- Für korrekte Links `PUBLIC_URL` auf die Adresse setzen, unter der Benutzer das Board öffnen.
+- Für korrekte Links `PUBLIC_URL` auf die Adresse setzen, unter der Benutzer die Anwendung öffnen.
 - Einrichten in der Oberfläche unter *Einstellungen → E-Mail-Versand*: Absender, Mailserver, Port, Verschlüsselung,
   Benutzer und Passwort eintragen, „Verbindung testen“, speichern. „Test-E-Mail senden“ schickt über den Server eine
-  Nachricht an den Verteiler (oder an die eigene Adresse). Das Passwort liegt AES-256-GCM-verschlüsselt in der
+  Nachricht an die eigene Adresse aus „Mein Konto“. Das Passwort liegt AES-256-GCM-verschlüsselt in der
   Datenbank (Schlüssel `APP_SECRET`) und wird nie wieder angezeigt.
 - Die `SMTP_*`-Werte aus der `.env` sind nur Startwerte: Sie gelten, solange in der Oberfläche nichts gespeichert ist,
   und werden beim ersten Speichern übernommen. Prüfen von der Kommandozeile: `./deploy.sh mail-test adresse@firma.de`.
-- **Monatsbericht:** ebenfalls unter *Einstellungen → E-Mail-Versand*. Der API-Container verschickt am eingestellten
-  Tag (1–28) zur eingestellten Uhrzeit (Zeitzone `TZ`, Standard Europe/Berlin) eine Übersicht des Vormonats an den
-  eigenen Verteiler; fehlgeschlagene Versuche werden stündlich wiederholt. Für den Link „Board öffnen“ `PUBLIC_URL` setzen.
 
 ### Testdaten
 
-Am Server startet das Board leer — Testdaten gibt es nur, wenn `frontend/index.html` ohne Server geöffnet wird.
+Am Server startet die Anwendung leer — Demo-Daten gibt es nur, wenn `frontend/index.html` ohne Server geöffnet wird.
 Sind trotzdem Daten zu entfernen (z. B. nach einem Probebetrieb): *Einstellungen → Datenbank & Sicherung →
-Alle Board-Daten löschen*. Das löscht Board, Kennzahlen, Maßnahmen und Huddle-Protokoll nach einer automatischen
-Sicherung; Konten und Einstellungen bleiben.
+Alle Daten löschen*. Das löscht Zähler, Ablesungen, Kostenstellen, Regeln, Preise, Protokoll und Maßnahmen nach einer
+automatischen Sicherung; Konten und Einstellungen bleiben.
 
 ### Ressourcen und Logs
 
@@ -221,15 +220,15 @@ Linux-Sonderrechte (`cap_drop: ALL`) und mit `no-new-privileges`; das gilt auch 
 - Täglich automatisch zur eingestellten Uhrzeit, alte automatische Sicherungen werden nach `BACKUP_KEEP` entfernt.
 - Von Hand in der Oberfläche unter *Einstellungen → Datenbank & Sicherung* oder per `./deploy.sh backup`.
 - Vor jedem `./deploy.sh` und vor jeder Wiederherstellung wird der aktuelle Stand automatisch gesichert.
-- Dateien: `backups/shopfloor_<datum>_<auto|manual>.dump` (PostgreSQL-Custom-Format, Tabellen `documents`, `users`, `dashboards` und `user_avatars`).
+- Dateien: `backups/energie_<datum>_<auto|manual>.dump` (PostgreSQL-Custom-Format, Tabellen `documents`, `users`, `dashboards` und `user_avatars`).
   Für den Ernstfall zusätzlich auf ein NAS kopieren (siehe unten) und die Wiederherstellung einmal ausprobieren.
 - Die Sicherungen enthalten die Passwort-Hashes. Ordner und Dateien sind deshalb nur für den Besitzer lesbar (`700`/`600`).
 - **Herunterladen:** In der Liste *Vorhandene Sicherungen* lädt „Herunterladen“ die `.dump`-Datei direkt im Browser
   (nur Administratoren, wird protokolliert).
 - **Wiederherstellen mit Auswahl:** „Wiederherstellen“ in der Liste zeigt den Inhalt der Sicherung; zurückgespielt
-  werden nur die angekreuzten Teile — Tageswerte & Huddle (optional nur ein Zeitraum), Abweichungen & Maßnahmen,
-  Stammdaten & Einstellungen, Benutzerkonten (mit Passwörtern und Profilbildern), Dashboards — oder über
-  „Einzeln auswählen …“ einzelne Tage, Abweichungen, Konten und Dashboards. Eine Vorschau zeigt vorher die
+  werden nur die angekreuzten Teile — Energiedaten (nur als Ganzes), Maßnahmen, Stammdaten & Einstellungen,
+  Benutzerkonten (mit Passwörtern und Profilbildern), Dashboards — oder über „Einzeln auswählen …“ einzelne
+  Maßnahmen, Konten und Dashboards. Eine Vorschau zeigt vorher die
   Änderungen; der Server prüft das Ergebnis und ändert bei Konflikten nichts. Alles angekreuzt ohne Einzelauswahl
   entspricht der vollständigen Wiederherstellung. Die Regeln stehen in `CLAUDE.md` („Wiederherstellung & Datenkonsistenz“).
 - **Zurückspielen aus einer Datei:** Eine `.dump`-Datei in den Sicherungsordner kopieren — sie erscheint in der Liste
@@ -240,7 +239,7 @@ Linux-Sonderrechte (`cap_drop: ALL`) und mit `no-new-privileges`; das gilt auch 
 Zusätzlich zum lokalen Ordner kann jede Sicherung auf eine Windows-/NAS-Freigabe kopiert werden. Eingestellt wird alles
 in der Oberfläche unter *Einstellungen → Datenbank & Sicherung → Kopie auf SMB-Freigabe*:
 
-1. Freigabe eintragen, z. B. `//nas.firma.local/backup/shopfloor` (`\\nas\backup\shopfloor` geht auch; fehlende
+1. Freigabe eintragen, z. B. `//nas.firma.local/backup/energie` (`\\nas\backup\energie` geht auch; fehlende
    Ordner unterhalb der Freigabe werden beim Test angelegt), dazu Benutzer, Passwort und ggf. Domäne.
 2. „Verbindung testen“ — meldet verständlich, ob Server, Anmeldung, Ordner oder Rechte nicht passen.
 3. „Kopie aktiv“ einschalten und speichern — der Server gleicht sofort ab.
@@ -262,17 +261,17 @@ Verhalten:
 
 Läuft auf dem Server ein Checkmk-Agent (`/usr/lib/check_mk_agent/local` vorhanden), richtet `./deploy.sh` einen
 Local Check ein (`CHECKMK=true`, Standard bei vorhandenem Agent). Danach in Checkmk beim Host die Service-Erkennung
-ausführen. Neue Dienste (bei anderem Projektnamen mit dem Namen dahinter, z. B. „Shopfloor linie2 Backup“):
+ausführen. Neue Dienste (bei anderem Projektnamen mit dem Namen dahinter, z. B. „Energie werk2 Backup“):
 
 | Dienst | OK | WARN | CRIT |
 |--------|----|------|------|
-| **Shopfloor Board** | API und Datenbank erreichbar | – | API-Container läuft nicht, Datenbank nicht erreichbar, `pg_dump` fehlt |
-| **Shopfloor Backup** | letzte erfolgreiche Sicherung jünger als 26 h | älter als 26 h, automatische Sicherung ausgeschaltet, unter 10 % frei im Sicherungsordner | älter als 50 h, letzter Versuch fehlgeschlagen, Datei fehlt, noch nie gesichert, unter 5 % frei |
-| **Shopfloor Backup SMB** (nur wenn die Kopie eingeschaltet ist) | Abgleich jünger als 3 h | älter als 3 h, noch nie abgeglichen | Abgleich fehlgeschlagen oder älter als 26 h |
+| **Energie App** | API und Datenbank erreichbar | – | API-Container läuft nicht, Datenbank nicht erreichbar, `pg_dump` fehlt |
+| **Energie Backup** | letzte erfolgreiche Sicherung jünger als 26 h | älter als 26 h, automatische Sicherung ausgeschaltet, unter 10 % frei im Sicherungsordner | älter als 50 h, letzter Versuch fehlgeschlagen, Datei fehlt, noch nie gesichert, unter 5 % frei |
+| **Energie Backup SMB** (nur wenn die Kopie eingeschaltet ist) | Abgleich jünger als 3 h | älter als 3 h, noch nie abgeglichen | Abgleich fehlgeschlagen oder älter als 26 h |
 
 Metriken für Graphen: Alter der letzten Sicherung, Größe, Anzahl, freier Platz in %, Alter des letzten Abgleichs.
 
-- Das Skript liegt unter `/usr/lib/check_mk_agent/local/300/shopfloor_<projekt>` und läuft alle 5 Minuten. Es fragt
+- Das Skript liegt unter `/usr/lib/check_mk_agent/local/300/energie_<projekt>` und läuft alle 5 Minuten. Es fragt
   den Status per `docker exec` im API-Container ab — kein offener Port, kein Token.
 - Ausgabe prüfen: `./deploy.sh checkmk`.
 - Anderes Agent-Verzeichnis: `CHECKMK_LOCAL_DIR=/pfad ./deploy.sh`. Abschalten: `CHECKMK=false` (`./deploy.sh config`),
@@ -301,16 +300,15 @@ Metriken für Graphen: Alter der letzten Sicherung, Größe, Anzahl, freier Plat
 
   | | Nur Lesen | Bearbeiten | Teamleitung | Administrator |
   |---|:-:|:-:|:-:|:-:|
-  | Board, Huddle, Maßnahmen ansehen | ✓ | ✓ | ✓ | ✓ |
-  | Erfassen und bearbeiten | | ✓ | ✓ | ✓ |
-  | Abweichungen löschen | | | ✓ | ✓ |
+  | Alle Bereiche ansehen | ✓ | ✓ | ✓ | ✓ |
+  | Ablesen, Zähler, Regeln, Preise und Maßnahmen bearbeiten | | ✓ | ✓ | ✓ |
+  | Löschen (Zähler ohne Ablesungen, Ablesungen, Kostenstellen, Maßnahmen) | | | ✓ | ✓ |
   | Stammdaten | | | ✓ | ✓ |
   | Benutzer verwalten | | | ✓ (ohne Administrator-Konten) | ✓ |
   | E-Mail-Versand, Datenbank & Sicherung, Sicherheitsprotokoll | | | | ✓ |
 
   Die Teamleitung kann Administrator-Konten weder ändern, sperren, löschen noch ihr Passwort setzen und die
-  Berechtigung „Administrator“ nicht vergeben. In den Einstellungen dürfen Bearbeiter nur die Unfallchronik (Huddle)
-  und das Versandprotokoll ändern.
+  Berechtigung „Administrator“ nicht vergeben. In den Einstellungen dürfen Bearbeiter nur das Versandprotokoll ändern.
 - Gespeicherte Zugangsdaten (SMTP- und SMB-Passwort) liegen AES-256-GCM-verschlüsselt in der Datenbank, Schlüssel
   `APP_SECRET` nur in der `.env` (Rechte `600`). Sie werden nie ausgeliefert, nicht protokolliert und stecken nicht in
   den Sicherungsdateien.
@@ -329,11 +327,11 @@ Metriken für Graphen: Alter der letzten Sicherung, Größe, Anzahl, freier Plat
   `./deploy.sh` baut bei jedem Update mit aktuellen Basis-Images neu.
 
 **Bewusst noch offen**
-- Bearbeiter speichern das Board als Ganzes. Feinere Rechte (z. B. nur eigene Maßnahmen ändern) bräuchten einzelne
+- Bearbeiter speichern die Energiedaten als Ganzes (Dokument `energy`). Feinere Rechte (z. B. nur eigene Maßnahmen ändern) bräuchten einzelne
   API-Endpunkte statt eines Gesamtdokuments; bis dahin fangen Sicherungen und das Protokoll Fehlbedienungen ab.
 - Keine Zwei-Faktor-Anmeldung. Für Zugriff aus dem Internet besser VPN oder eine NPM-Access-List vorschalten.
 
 ## Ohne Server
 
-`frontend/index.html` lässt sich auch einfach im Browser öffnen. Ohne erreichbare API läuft das Board im lokalen Modus und speichert alles im Browser.
+`frontend/index.html` lässt sich auch einfach im Browser öffnen. Ohne erreichbare API läuft die Anwendung im lokalen Modus mit Demo-Daten und speichert alles im Browser.
 Das ist nur zum Ausprobieren gedacht: Konten und Rechte liegen dann im Browser und schützen nichts.
