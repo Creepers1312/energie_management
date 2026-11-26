@@ -14,7 +14,7 @@ ENV NODE_ENV=production \
     PORT=3000 \
     BACKUP_DIR=/backups
 
-RUN mkdir -p /backups && chown node:node /backups
+RUN mkdir -p /backups /import && chown node:node /backups /import
 USER node
 
 EXPOSE 3000

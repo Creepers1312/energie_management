@@ -196,6 +196,7 @@ SETTINGS=(
   "COOKIE_SECURE|__auto__|bool|Sitzungs-Cookie nur über HTTPS senden?"
   "TRUSTED_PROXIES|__auto__|iplist|IP-Adresse(n)/Netz des Reverse Proxys, dessen X-Forwarded-For als Client-IP gilt (leer = keiner)"
   "BACKUP_PATH|./backups|path|Ordner für Datenbanksicherungen auf dem Host"
+  "IMPORT_PATH|./import|path|Ordner für CSV-Dateien von Datenloggern (Online-Anbindung der Zähler)"
   "BACKUP_ENABLED|true|bool|Standard für tägliche automatische Sicherung"
   "BACKUP_TIME|02:00|time|Uhrzeit der täglichen Sicherung (HH:MM)"
   "BACKUP_KEEP|14|int|Wie viele automatische Sicherungen aufbewahren?"
@@ -507,6 +508,16 @@ prepare_backup_dir() {
   chmod 700 "$p" 2>/dev/null || sudo chmod 700 "$p" || warn "Konnte Rechte von $p nicht auf 700 setzen."
 }
 
+prepare_import_dir() {
+  local p="${VAL[IMPORT_PATH]:-./import}"
+  [[ "$p" == /* || "$p" == ./* || "$p" == ../* ]] || return 0
+  mkdir -p "$p" 2>/dev/null || sudo mkdir -p "$p"
+  # Der API-Container (UID 1000) liest die Dateien und verschiebt sie nach „verarbeitet“
+  if [[ "$(stat -c %u "$p")" != "1000" ]]; then
+    chown 1000:1000 "$p" 2>/dev/null || sudo chown 1000:1000 "$p" || warn "Konnte Besitzer von $p nicht ändern — der CSV-Ordner der Online-Anbindung ist dann nicht beschreibbar."
+  fi
+}
+
 # ---------- Checkmk ---------------------------------------------------------
 # Local Check: Der Checkmk-Agent führt das Skript alle 5 Minuten aus (Unterordner 300).
 # Es fragt den Status per docker exec direkt im API-Container ab — kein Port, kein Token.
@@ -695,6 +706,7 @@ do_deploy() {
     if [[ "$ASSUME_YES" == true ]]; then configure false; else configure true; fi
   fi
   prepare_backup_dir
+  prepare_import_dir
 
   title "Bauen und starten"
   dc config -q 2>>"$LOG_FILE" || die "Compose-Konfiguration ungültig — Details in $LOG_FILE (./deploy.sh config)"

@@ -123,6 +123,24 @@ CREATE TABLE IF NOT EXISTS dashboards (
   updated_by text
 );
 CREATE INDEX IF NOT EXISTS dashboards_owner_lower ON dashboards (lower(owner));
+
+-- Online-Anbindung: abgeholte Zählerstände (Zählereinheit, vor Messfaktor) je Zähler-Kennung des Dokuments energy
+CREATE TABLE IF NOT EXISTS meter_values (
+  meter  text NOT NULL,
+  ts     timestamptz NOT NULL,
+  value  double precision NOT NULL,
+  source text NOT NULL DEFAULT '',
+  PRIMARY KEY (meter, ts)
+);
+-- Letzter Abfragestatus je Zähler (Anzeige, Checkmk)
+CREATE TABLE IF NOT EXISTS meter_status (
+  meter      text PRIMARY KEY,
+  ok_at      timestamptz,
+  value      double precision,
+  error      text,
+  error_at   timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

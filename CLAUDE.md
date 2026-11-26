@@ -54,6 +54,9 @@ backend/src/            Node/Express + PostgreSQL (pg)
   secrets.js            AES-256-GCM für gespeicherte Passwörter, Schlüssel APP_SECRET (.env)
   monitor.js            Checkmk-Ausgabe (Local Check)
   avatars.js            Profilbilder prüfen und speichern (Tabelle user_avatars)
+  metering.js           Online-Anbindung: Adapter (Modbus TCP, M-Bus/TCP, MQTT, REST, Push, CSV-Ordner, Simulator),
+                        Abfrage-Dienst (alle 30 s fällige Zähler), Tabellen meter_values/meter_status, Verbindungen
+                        in meta „meter_connections“ (Passwort/Push-Schlüssel verschlüsselt); Routen routes/metering.js
   cli.js                create-admin, reset-password, list-users, mail-test, audit, backup, smb-sync, checkmk
 deploy.sh               Installer/Updater (Docker-Installation, .env, Bauen, Sicherung vor Update, Checkmk)
 docker-compose.yml      db (postgres:17), api, web; gehärtet (read_only, cap_drop, no-new-privileges)
@@ -100,6 +103,12 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
 - **Anwenderdoku** im Array `DOCS` (Gruppen `DOC_GROUPS`) — bei neuen Funktionen mitpflegen; Bilder mit
   `node tools/doku-screenshots.js` neu erzeugen.
 - **Profilbilder, Darstellung hell/dunkel, Passwort vergessen, Benutzerverwaltung:** unverändert aus dem Shopfloor Board.
+- **Online-Anbindung:** je Zähler `meter.source` im Dokument `energy` (`enabled`, `conn`, `interval`, `scale` und je Art
+  `register/fn/dtype/order/unit`, `mbusAddr/mbusRecord`, `topic`, `path`, `jsonPath`, `key`, `simRate/simStart`; keine
+  Geheimnisse). Messwerte = Zählerstand vor Messfaktor. Oberfläche: Bereich „Zähler-Anbindung“ (`renderOnlinePane`,
+  `#connDialog`), Reiter `onl` im Zählerfenster (`mdSrcFill`/`mdSrcRead`), `renderMeterOnline` im Detail, Vorschläge in der
+  Ablesung (`rdLoadOnline`, `rdSuggestion`, `#rdOnlineBtn`, Bemerkung „Online-Wert“). Lokal nur Simulator: Verbindungen in
+  `sfm-connections-v1`, Werte aus den Ablesungen nachgebildet (`onlLocalValue`). Beim Zählerwechsel geht `source` mit.
 - **Kopfzeile:** Speicherstatus nur bei Problemen; Datum → Ablesung des fälligen Monats; Zähler am Reiter „Ablesung“
   = fehlende Ablesungen.
 
@@ -113,7 +122,9 @@ Verbindlich für jede Funktion, die Daten aus Sicherungen, Dateien oder anderen 
 Teil-Wiederherstellung in `backups.js`). Neue Datenfelder oder Tabellen müssen hier einem Teil zugeordnet werden.
 1. **Einheiten statt Einzelfelder.** Zusammengehöriges wird nur gemeinsam übernommen:
    - **Energiedaten** = ganzes Dokument `energy` (Zähler, Ablesungen, Kostenstellen, Regeln, Preise, Umrechnung,
-     Protokoll, Berechnungsstände) — nur als Ganzes, weil Verbräuche, Wechselketten und Regeln voneinander abhängen.
+     Protokoll, Berechnungsstände) + Tabellen `meter_values`/`meter_status` (Online-Messwerte, Zuordnung über die
+     Zähler-Kennung; ältere Sicherungen ohne diese Tabellen lassen die Messwerte unverändert) — nur als Ganzes.
+     Die Verbindungen (meta „meter_connections“) stecken wie SMB-/Mail-Einstellungen nicht in den Sicherungen.
    - **Maßnahme** = ganzes Objekt aus `state.deviations` (inkl. 5-Why, Phase, `meter`).
    - **Konto** = Zeile `users` + Profilbild `user_avatars` (Passwort-Hash nur auf ausdrücklichen Wunsch).
    - **Dashboard** = ganze Zeile `dashboards`; **Stammdaten** = ganzes Dokument `settings`.
@@ -163,6 +174,8 @@ Es gibt keine Testsuite im Repo; geprüft wird mit Playwright (Chromium ist vori
   für Mail-Tests. nginx drosselt Anmelde-Endpunkte (10/min) — in API-Tests Pausen einplanen.
 - Rechenkern: `node tools/test-rechenkern.js` (lädt `window.EN` aus `index.html`; `global.window = {}`, den
   zweiten `<script>`-Block ausführen) — Überlauf, Zählerwechsel, Start bei 0, ILV und Vorschau-Vergleich.
+- Online-Anbindung: `node tools/test-anbindung.js` (Modbus-, M-Bus- und REST-Gerät nachgebaut, ohne Datenbank). MQTT
+  im Server-Test mit einem lokalen Broker (z. B. `aedes`), Push per `curl`/fetch, CSV über `IMPORT_DIR`.
 - Vor jedem Commit: JS-Syntax der Inline-Skripte prüfen
   (`node -e` mit `new Function(...)` über alle `<script>`-Blöcke), `node --check` für Backend-Dateien,
   `bash -n deploy.sh` (ggf. shellcheck), bei UI-Änderungen auf Seitenfehler und CSP-Verstöße achten.

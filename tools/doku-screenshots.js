@@ -62,9 +62,15 @@ const W = 1440, H = 900;
   await p.click('.tab[data-view="tracking"]'); await wait(800); await shot('tracking');
   // Einstellungen
   await p.click('.tab[data-view="settings"]'); await wait(500);
-  for (const [pane, name] of [['stamm', 'stammdaten'], ['users', 'benutzer'], ['mail', 'email'], ['db', 'datenbank']]) {
+  for (const [pane, name] of [['stamm', 'stammdaten'], ['users', 'benutzer'], ['mail', 'email'], ['online', 'online'], ['db', 'datenbank']]) {
     await p.click(`.side-item[data-spane="${pane}"]`); await wait(500); await shot(name);
   }
+  // Zählerfenster: Reiter „Online-Anbindung“
+  await p.click('.tab[data-view="meters"]'); await wait(600);
+  await p.click('.me-actions >> text=Bearbeiten'); await wait(400);
+  await p.click('#meterDialog .dtab[data-tab="onl"]'); await wait(300);
+  await shot('online-zaehler', { clip: await box('dialog[open]', 28) });
+  await p.keyboard.press('Escape'); await wait(200);
   console.log(errs.join('\n') || 'keine Seitenfehler');
   await b.close();
   // PNG → WebP (Qualität 80) nach frontend/docs/

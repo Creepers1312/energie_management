@@ -98,6 +98,7 @@ services:
       BACKUP_KEEP: ${BACKUP_KEEP:-14}
     volumes:
       - ${BACKUP_PATH:-./backups}:/backups
+      - ${IMPORT_PATH:-./import}:/import
     networks:
       - backend
       - frontend

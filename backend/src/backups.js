@@ -1,5 +1,6 @@
 "use strict";
-// Sicherungen per pg_dump (Custom-Format) der Tabellen documents, users, dashboards und user_avatars.
+// Sicherungen per pg_dump (Custom-Format) der Tabellen documents, users, dashboards, user_avatars und der
+// Online-Messwerte (meter_values, meter_status).
 // Sitzungen, Sicherungsliste und Zähler gehören nicht dazu — eine Wiederherstellung
 // meldet also niemanden ab und löscht keine anderen Sicherungen.
 const fs = require("fs");
@@ -11,7 +12,7 @@ const { HttpError } = require("./http");
 const smb = require("./smb");
 
 const FILE_RE = config.backupFileRe;
-const TABLES = ["documents", "users", "dashboards", "user_avatars"];
+const TABLES = ["documents", "users", "dashboards", "user_avatars", "meter_values", "meter_status"];
 
 let busy = false;
 let toolInfo = { ok: false, info: "noch nicht geprüft" };
@@ -344,7 +345,8 @@ async function inspect(filename) {
     energy: {
       present: !!d.energy, meters: (Array.isArray(en.meters) ? en.meters : []).length,
       costCenters: (Array.isArray(en.costCenters) ? en.costCenters : []).length,
-      readings: rd.length, from: rd[0] || null, to: rd[rd.length - 1] || null
+      readings: rd.length, from: rd[0] || null, to: rd[rd.length - 1] || null,
+      onlineValues: ((d.tables.meter_values && d.tables.meter_values.rows) || []).length
     },
     deviations: {
       total: devs.length, open: devs.filter((x) => x.phase !== "done").length,
@@ -603,6 +605,9 @@ async function restoreParts(filename, opts = {}, by) {
       }
       if (parts.includes("energy")) {
         await c.query("UPDATE documents SET value = $1::jsonb, updated_at = now(), updated_by = $2 WHERE name = 'energy'", [JSON.stringify(d.energy), by || null]);
+        // Online-Messwerte gehören zu den Energiedaten (Zuordnung über die Zähler-Kennung); ältere Sicherungen ohne
+        // diese Tabellen lassen die heutigen Messwerte unverändert
+        if (d.tables.meter_values) { await replaceTable(c, "meter_values", d.tables.meter_values); await replaceTable(c, "meter_status", d.tables.meter_status); }
         changed.push("energy");
       }
       if (parts.includes("settings")) {

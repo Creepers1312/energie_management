@@ -3,6 +3,7 @@
 .env.bak
 .env.tmp
 backups/
+import/
 logs/
 
 # Node

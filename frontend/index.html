@@ -2068,7 +2068,15 @@ tr.me-removed td:first-child b { text-decoration: line-through; }
 .pv-up { color: var(--crit-text); }
 .pv-down { color: var(--good-text); }
 tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
-.md-new, #cgNewBox { display: flex; flex-direction: column; gap: 12px; }
+.md-new, #cgNewBox, #mdSrcBox { display: flex; flex-direction: column; gap: 12px; }
+.onl-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.onl-seg button { padding: 4px 10px; font-size: 12px; }
+.onl-chart { min-height: 170px; position: relative; }
+.onl-sec > .btn { align-self: flex-start; }
+.onl-copy { word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+.onl-pre { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); font-size: 12px; overflow-x: auto; white-space: pre; }
+.onl-help td { vertical-align: top; font-size: 12.5px; }
+.rd-sug { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
 .rd-input, .rd-date, .rl-factor { padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
 .rd-input:focus, .rd-date:focus, .rl-factor:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); border-color: var(--accent); }
 @media (max-width: 560px) { .pv-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -2203,6 +2211,7 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       <input type="search" class="perm-select search-input" id="rdSearch" placeholder="Zähler suchen …" aria-label="Zähler suchen" autocomplete="off">
       <button class="btn sm" id="rdOnlyMissing" aria-pressed="false">Nur fehlende</button>
       <button class="btn sm" id="rdToday">Fälliger Monat</button>
+      <button class="btn sm primary" id="rdOnlineBtn" hidden>Online-Werte übernehmen</button>
     </div>
     <p class="mini-hint" id="rdHint"></p>
   </div>
@@ -2429,6 +2438,7 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
           <button class="side-item" data-spane="stamm" type="button"><svg class="ico" aria-hidden="true"><use href="#i-db"/></svg><span>Stammdaten</span></button>
           <button class="side-item" data-spane="mail" type="button"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg><span>E-Mail-Versand</span></button>
           <button class="side-item" data-spane="users" type="button"><svg class="ico" aria-hidden="true"><use href="#i-users"/></svg><span>Benutzerverwaltung</span></button>
+          <button class="side-item" data-spane="online" type="button"><svg class="ico" aria-hidden="true"><use href="#i-meter"/></svg><span>Zähler-Anbindung</span></button>
           <button class="side-item" data-spane="db" type="button"><svg class="ico" aria-hidden="true"><use href="#i-db"/></svg><span>Datenbank &amp; Sicherung</span></button>
           <button class="side-item" data-spane="audit" id="sideAudit" type="button" hidden><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg><span>Sicherheitsprotokoll</span></button>
         </nav>
@@ -2661,6 +2671,35 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       </div>
 
       <!-- ===== Sicherheitsprotokoll ===== -->
+      <div class="spane" id="onlineCard">
+        <div class="pane-title-row">
+          <div>
+            <h2 class="pane-title">Zähler-Anbindung</h2>
+            <p class="pane-sub">Verbindungen zu Gateways, Zählern, MQTT-Brokern, Portalen und Datenloggern. Der Server holt die Zählerstände im eingestellten Intervall ab; welcher Wert zu welchem Zähler gehört, steht beim Zähler im Reiter „Online-Anbindung“.</p>
+          </div>
+          <button class="btn primary" id="connNewBtn" type="button">+ Verbindung</button>
+        </div>
+        <p class="mr-local" id="onlLocalHint" hidden>Im lokalen Testmodus gibt es nur den Simulator. Die echten Verbindungen (Modbus, M-Bus, MQTT, REST, Push, CSV-Ordner) fragt der Server ab — Installation mit ./deploy.sh.</p>
+        <div class="card set-card">
+          <div class="trk-table-wrap"><table class="trk-table" id="connTable"></table></div>
+        </div>
+        <div class="card set-card">
+          <div class="set-card-title">So kommen die Werte herein</div>
+          <div class="trk-table-wrap"><table class="trk-table onl-help">
+            <thead><tr><th>Art</th><th>Typische Geräte</th><th>Was je Zähler eingetragen wird</th></tr></thead>
+            <tbody>
+              <tr><td><b>Modbus TCP</b></td><td>Stromzähler mit Netzwerk, Modbus-Gateways, Druckluft-Messgeräte</td><td>Registeradresse, Datentyp, Wortreihenfolge, ggf. Geräteadresse (Unit-ID) und Skalierung</td></tr>
+              <tr><td><b>M-Bus (TCP-Gateway)</b></td><td>Wasser-, Wärme- und Gaszähler am M-Bus über ein transparentes Gateway (Netz ↔ M-Bus)</td><td>Primäradresse, optional Nummer des Datensatzes</td></tr>
+              <tr><td><b>MQTT</b></td><td>IoT-Gateways, Datenlogger, Gebäudeleittechnik</td><td>Thema (Topic) und ggf. JSON-Pfad</td></tr>
+              <tr><td><b>REST / JSON</b></td><td>Gateways mit Web-Schnittstelle, Versorgerportale</td><td>Pfad bzw. Adresse und JSON-Pfad</td></tr>
+              <tr><td><b>HTTP-Push</b></td><td>Logger, die Werte selbst senden</td><td>Kennung (Standard: Zählernummer)</td></tr>
+              <tr><td><b>CSV-Ordner</b></td><td>Logger oder Leittechnik legen Dateien im Import-Ordner ab</td><td>Kennung (Standard: Zählernummer)</td></tr>
+            </tbody>
+          </table></div>
+          <p class="set-desc">Übernommen werden Zählerstände (nicht Verbräuche) in der Ableseeinheit des Zählers, vor dem Messfaktor — wie bei der Ablesung von Hand. Liefert ein Gerät z. B. Wh statt kWh, rechnet die Skalierung um (0,001).</p>
+        </div>
+      </div>
+
       <div class="spane" id="auditCard">
         <h2 class="pane-title">Sicherheitsprotokoll</h2>
         <p class="pane-sub">Wer hat sich wann angemeldet, welche Konten und Sicherungen wurden geändert, wer hat gespeichert. Mehrere Speichervorgänge derselben Person innerhalb von 10 Minuten sind zusammengefasst. Einträge werden nach der eingestellten Frist (Standard 365 Tage) gelöscht.</p>
@@ -2983,6 +3022,7 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <button type="button" class="dtab" role="tab" data-tab="base" aria-selected="true">Grunddaten</button>
         <button type="button" class="dtab" role="tab" data-tab="mess" id="mdTabMess" aria-selected="false">Einbau &amp; Messung</button>
         <button type="button" class="dtab" role="tab" data-tab="tech" aria-selected="false">Technische Eigenschaften</button>
+        <button type="button" class="dtab" role="tab" data-tab="onl" aria-selected="false">Online-Anbindung</button>
       </div>
       <div class="dpanel" role="tabpanel" data-tab="base">
       <div class="field-row">
@@ -3026,6 +3066,44 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
           <div class="field"><label for="mdCalib">Eichung gültig bis</label><input id="mdCalib" type="date"></div>
         </div>
         <div class="field"><label for="mdNote">Bemerkung</label><textarea id="mdNote" maxlength="500"></textarea></div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="onl" hidden>
+        <label class="check-line"><input type="checkbox" id="mdSrcOn"> Zählerstand online abholen</label>
+        <div id="mdSrcBox">
+          <div class="field-row">
+            <div class="field"><label for="mdSrcConn">Verbindung</label><select id="mdSrcConn"></select></div>
+            <div class="field"><label for="mdSrcInterval">Abfrageintervall (Minuten, leer = wie Verbindung)</label><input id="mdSrcInterval" type="number" min="1" max="1440" inputmode="numeric"></div>
+          </div>
+          <div class="src-sec" data-for="modbus">
+            <div class="field-row">
+              <div class="field"><label for="mdSrcReg">Registeradresse</label><input id="mdSrcReg" inputmode="numeric" autocomplete="off" placeholder="z. B. 100 oder 40101"><p class="mini-hint">0-basiert wie im Datenblatt; 40001 ff. = Holding-, 30001 ff. = Input-Register.</p></div>
+              <div class="field"><label for="mdSrcFn">Registerart</label><select id="mdSrcFn"><option value="holding">Holding-Register (Funktion 3)</option><option value="input">Input-Register (Funktion 4)</option></select></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label for="mdSrcType">Datentyp</label><select id="mdSrcType"><option value="uint32">uint32 (2 Register)</option><option value="int32">int32</option><option value="float32">float32</option><option value="uint64">uint64 (4 Register)</option><option value="int64">int64</option><option value="float64">float64</option><option value="uint16">uint16 (1 Register)</option><option value="int16">int16</option></select></div>
+              <div class="field"><label for="mdSrcOrder">Wortreihenfolge</label><select id="mdSrcOrder"><option value="be">Höherwertiges Wort zuerst (Standard)</option><option value="le">Niederwertiges Wort zuerst (getauscht)</option></select></div>
+            </div>
+            <div class="field"><label for="mdSrcUnit">Geräteadresse (Unit-ID, leer = wie Verbindung)</label><input id="mdSrcUnit" type="number" min="0" max="255" inputmode="numeric"></div>
+          </div>
+          <div class="src-sec field-row" data-for="mbus">
+            <div class="field"><label for="mdSrcMbus">Primäradresse</label><input id="mdSrcMbus" type="number" min="0" max="254" inputmode="numeric"></div>
+            <div class="field"><label for="mdSrcRec">Datensatz (leer = erster Zählerstand)</label><input id="mdSrcRec" type="number" min="0" max="999" inputmode="numeric"></div>
+          </div>
+          <div class="src-sec field-row" data-for="mqtt http">
+            <div class="field"><label for="mdSrcTopic" id="mdSrcTopicLabel">Thema (Topic)</label><input id="mdSrcTopic" maxlength="500" autocomplete="off" spellcheck="false"></div>
+            <div class="field"><label for="mdSrcPath">JSON-Pfad (leer = Nachricht ist die Zahl)</label><input id="mdSrcPath" maxlength="200" autocomplete="off" spellcheck="false" placeholder="z. B. data.energy.total"></div>
+          </div>
+          <div class="src-sec field" data-for="push file"><label for="mdSrcKey">Kennung</label><input id="mdSrcKey" maxlength="80" autocomplete="off" spellcheck="false" placeholder="leer = Zählernummer"></div>
+          <div class="src-sec field-row" data-for="sim">
+            <div class="field"><label for="mdSrcRate">Steigung je Stunde</label><input id="mdSrcRate" inputmode="decimal" autocomplete="off" placeholder="z. B. 12,5"></div>
+            <div class="field"><label for="mdSrcStart">Startwert (leer = letzter Stand)</label><input id="mdSrcStart" inputmode="decimal" autocomplete="off"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="mdSrcScale">Skalierung (Faktor auf den gelesenen Wert)</label><input id="mdSrcScale" inputmode="decimal" autocomplete="off" placeholder="1"><p class="mini-hint">Z. B. 0,001 für Wh → kWh oder 0,1 für eine Nachkommastelle. Der Messfaktor des Zählers gilt zusätzlich.</p></div>
+            <div class="field"><label>Test</label><button class="btn" id="mdSrcTest" type="button">Wert jetzt lesen</button><div class="calc-out" id="mdSrcTestOut">—</div></div>
+          </div>
+        </div>
+        <p class="mini-hint" id="mdSrcNoConn" hidden>Noch keine Verbindung angelegt — die Administration legt sie unter Einstellungen → Zähler-Anbindung an.</p>
       </div>
       <p class="login-error" id="mdError" hidden></p>
     </div>
@@ -3236,6 +3314,83 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       <button type="button" class="btn ghost danger" id="ccDelete" hidden>Löschen</button>
       <button type="button" class="btn" id="ccCancel">Abbrechen</button>
       <button type="submit" class="btn primary" id="ccSave">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog: Verbindung der Online-Anbindung -->
+<dialog id="connDialog" class="wide-dialog">
+  <form method="dialog" id="connForm">
+    <div class="dlg-head">
+      <h2 id="cnTitle">Verbindung</h2>
+      <button type="button" class="btn ghost sm" id="cnClose" aria-label="Schließen">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="dtabs" role="tablist" aria-label="Bereiche der Verbindung">
+        <button type="button" class="dtab" role="tab" data-tab="gen" aria-selected="true">Allgemein</button>
+        <button type="button" class="dtab" role="tab" data-tab="con" aria-selected="false">Verbindung</button>
+        <button type="button" class="dtab" role="tab" data-tab="test" aria-selected="false" id="cnTabTest">Test</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="gen">
+        <div class="field-row">
+          <div class="field"><label for="cnName">Name</label><input id="cnName" required maxlength="80" autocomplete="off" placeholder="z. B. Modbus-Gateway Halle 1"></div>
+          <div class="field"><label for="cnType">Art</label><select id="cnType"></select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="cnInterval">Abfrageintervall (Minuten)</label><input id="cnInterval" type="number" min="1" max="1440" step="1" inputmode="numeric"><p class="mini-hint" id="cnIntervalHint">Wie oft der Server die Zähler dieser Verbindung abfragt; je Zähler änderbar.</p></div>
+          <div class="field"><label for="cnTimeout">Zeitlimit je Abfrage (Sekunden)</label><input id="cnTimeout" type="number" min="1" max="60" step="1" inputmode="numeric"></div>
+        </div>
+        <label class="check-line"><input type="checkbox" id="cnEnabled" checked> Verbindung aktiv</label>
+        <div class="field"><label for="cnNote">Bemerkung</label><input id="cnNote" maxlength="300" autocomplete="off" placeholder="z. B. Standort, Ansprechpartner, IP-Bereich"></div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="con" hidden>
+        <div class="cn-sec" data-for="modbus mbus">
+          <div class="field-row">
+            <div class="field"><label for="cnHost">Adresse des Geräts / Gateways</label><input id="cnHost" maxlength="200" autocomplete="off" spellcheck="false" placeholder="z. B. 192.0.2.10 oder gateway.firma.local"></div>
+            <div class="field"><label for="cnPort">Port</label><input id="cnPort" type="number" min="1" max="65535" inputmode="numeric"></div>
+          </div>
+          <div class="field cn-sec" data-for="modbus"><label for="cnUnit">Geräteadresse (Unit-ID) Standard</label><input id="cnUnit" type="number" min="0" max="255" inputmode="numeric"><p class="mini-hint">Hängen mehrere Zähler an einem Gateway, lässt sich die Unit-ID je Zähler überschreiben.</p></div>
+          <p class="mini-hint cn-sec" data-for="mbus">Das Gateway muss im transparenten Modus arbeiten (TCP ↔ M-Bus). Gateways, die M-Bus als Modbus oder REST bereitstellen, bitte mit dieser Art anbinden.</p>
+        </div>
+        <div class="cn-sec" data-for="http mqtt">
+          <div class="field"><label for="cnUrl" id="cnUrlLabel">Adresse</label><input id="cnUrl" maxlength="500" autocomplete="off" spellcheck="false"></div>
+          <div class="field cn-sec" data-for="mqtt"><label for="cnTopic">Themen-Präfix (optional)</label><input id="cnTopic" maxlength="200" autocomplete="off" spellcheck="false" placeholder="z. B. werk/energie"></div>
+          <div class="field cn-sec" data-for="http"><label for="cnAuth">Anmeldung</label>
+            <select id="cnAuth"><option value="none">Keine</option><option value="basic">Benutzer und Passwort (Basic)</option><option value="bearer">Token (Bearer)</option><option value="header">Schlüssel in eigenem Header</option></select>
+          </div>
+          <div class="field cn-sec" data-for="header"><label for="cnHeader">Name des Headers</label><input id="cnHeader" maxlength="60" autocomplete="off" placeholder="z. B. X-Api-Key"></div>
+          <div class="field-row cn-cred">
+            <div class="field" id="cnUserField"><label for="cnUser">Benutzer</label><input id="cnUser" maxlength="120" autocomplete="off"></div>
+            <div class="field"><label for="cnPass" id="cnPassLabel">Passwort</label><input id="cnPass" type="password" autocomplete="new-password"><p class="mini-hint" id="cnPassHint">Wird verschlüsselt gespeichert und nie wieder angezeigt. Leer lassen, um es zu behalten.</p></div>
+          </div>
+        </div>
+        <div class="cn-sec" data-for="push">
+          <p class="set-desc">Der Logger sendet die Werte selbst per HTTP an diese Adresse. Zuordnung über die Kennung, die beim Zähler steht (Standard: Zählernummer).</p>
+          <div class="field"><label>Adresse (POST)</label><div class="calc-out onl-copy" id="cnPushUrl">wird nach dem Speichern angezeigt</div></div>
+          <div class="field"><label>Schlüssel (Header „Authorization: Bearer …“)</label><div class="calc-out onl-copy" id="cnPushToken">wird nach dem Speichern angezeigt</div></div>
+          <label class="check-line"><input type="checkbox" id="cnNewToken"> Neuen Schlüssel erzeugen (der alte gilt danach nicht mehr)</label>
+          <pre class="onl-pre">{ "values": [ { "key": "E-100", "value": 195772.05, "ts": "2026-11-26T10:00:00+01:00" } ] }</pre>
+        </div>
+        <div class="cn-sec" data-for="file">
+          <div class="field"><label for="cnFolder">Unterordner im Import-Ordner (optional)</label><input id="cnFolder" maxlength="80" autocomplete="off" spellcheck="false" placeholder="z. B. logger-halle1"></div>
+          <p class="set-desc">Die Dateien kommen in den Import-Ordner des Servers (Einstellung IMPORT_PATH, Standard ./import im Projektordner, auch als Netzlaufwerk möglich). Aufbau je Zeile: <code>Kennung;Zeitpunkt;Zählerstand</code>, z. B. <code>E-100;26.11.2026 10:00;195772,05</code>. Verarbeitete Dateien wandern in den Unterordner „verarbeitet“.</p>
+        </div>
+        <div class="cn-sec" data-for="sim">
+          <p class="set-desc">Der Simulator erzeugt steigende Zählerstände ab dem letzten Stand — zum Ausprobieren ohne Hardware. Die Steigung je Stunde steht beim Zähler.</p>
+        </div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="test" hidden>
+        <p class="set-desc" id="cnTestHint">Prüft die Verbindung mit den Werten im Formular (ohne zu speichern). Mit einem Zähler wird zusätzlich dessen Wert gelesen.</p>
+        <div class="field"><label for="cnTestMeter">Zähler</label><select id="cnTestMeter"></select></div>
+        <button class="btn" id="cnTestBtn" type="button">Verbindung testen</button>
+        <div class="calc-out" id="cnTestOut">—</div>
+      </div>
+      <p class="login-error" id="cnError" hidden></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost danger" id="cnDelete" hidden>Löschen</button>
+      <button type="button" class="btn" id="cnCancel">Abbrechen</button>
+      <button type="submit" class="btn primary" id="cnSave">Speichern</button>
     </div>
   </form>
 </dialog>
@@ -4005,6 +4160,7 @@ window.EN = (function () {
       id: nextId(doc, "m"), no: o.no, name: o.name != null ? o.name : old.name, type: old.type, costCenter: old.costCenter,
       parent: old.parent || null, location: old.location || "", manufacturer: o.manufacturer || "", model: o.model || "",
       serial: o.serial || "", note: o.note || "", installed: o.installDate, removed: null, predecessor: old.id, successor: null,
+      source: old.source ? clone(old.source) : undefined,
       props: [{ from: "1900-01", factor: o.factor != null ? o.factor : propsAt(old, o.removeMonth).factor,
         overflow: o.overflow !== undefined ? o.overflow : propsAt(old, o.removeMonth).overflow, at: who.at, by: who.by }]
     };
@@ -4214,7 +4370,12 @@ window.EN = (function () {
     var d = null;
     try { d = raw && raw !== "null" ? JSON.parse(raw) : null; } catch (e) { d = null; }
     if (!d) return SFM.isServer() ? EN.emptyDoc() : demoEnergy();
-    return EN.normalize(d);
+    d = EN.normalize(d);
+    // Ältere Demo-Daten (lokaler Testmodus) bekommen die Simulator-Anbindung nachträglich
+    if (!SFM.isServer() && d.changes.some(function (c) { return c.kind === "demo"; }) && !d.meters.some(function (m) { return m.source; })) {
+      d.meters.forEach(function (m) { if (["E-100", "E-140", "W-200", "W-220", "G-300", "D-400"].indexOf(m.no) >= 0 && !m.removed) m.source = { enabled: true, conn: "c-demo-sim" }; });
+    }
+    return d;
   }
   function saveEnergy() {
     try { LS.setItem(ENERGY_KEY, JSON.stringify(energy)); } catch (e) { /* Speichern optional */ }
@@ -4304,6 +4465,8 @@ window.EN = (function () {
     add("D-400", "Kompressorstation", "druckluft", "4900", null, 1, null, 1250000, { location: "Kompressorraum" });
     add("D-410", "Druckluft Bearbeitung", "druckluft", "4200", "D-400", 1, null, 640000, { location: "Halle 2" });
     add("D-420", "Druckluft Montage", "druckluft", "4300", "D-400", 1, null, 388000, { location: "Halle 3" });
+    // Online-Anbindung (lokal: Simulator) für einige Zähler
+    ["E-100", "E-140", "W-200", "W-220", "G-300", "D-400"].forEach(function (no) { meters[no].source = { enabled: true, conn: "c-demo-sim" }; });
     // Gemeinschaftswasser (Rest des Hauptzählers): 60 % Infrastruktur, 40 % Montage
     var wRule = d.rules.filter(function (r) { return r.versions[0].terms[0].meter === meters["W-200"].id; })[0];
     var wTerms = wRule.versions[wRule.versions.length - 1].terms.map(function (t) { return { meter: t.meter, factor: EN.round(t.factor * 0.6) }; });
@@ -4821,6 +4984,7 @@ window.EN = (function () {
     if (key === "actions") return { kind: "actions", label: "Offene Maßnahmen" };
     if (key === "missing") return { kind: "missing", label: "Fehlende Ablesungen" };
     if (key === "cost") return { kind: "cost", label: "Kosten gesamt" };
+    if (key === "online") return { kind: "online", label: "Online-Anbindung" };
     var t = /^t:(.+)$/.exec(String(key || ""));
     if (t && EN.typeOf(t[1])) return { kind: "type", type: t[1], label: "Verbrauch " + typeLabel(t[1]) };
     return null;
@@ -4852,6 +5016,20 @@ window.EN = (function () {
       tile.appendChild(el("div", "mini-label", n === 1 ? "Fehlende Ablesung" : "Fehlende Ablesungen"));
       tile.title = "Bis " + monthLabel(DUE_MONTH) + " — zum Erfassen klicken";
       tile.addEventListener("click", function () { switchView("readings"); });
+    } else if (m.kind === "online") {
+      if (!onlStatus || !onlConns) {
+        tile.appendChild(el("div", "mini-value", "…"));
+        onlLoadConns().then(function () { return onlLoadStatus(); }).then(function () { if (!dashDrag) renderDashGrid(); });
+      } else {
+        var oi = onlTileInfo();
+        if (oi.err) tile.classList.add("crit");
+        tile.appendChild(el("div", "mini-value", oi.err ? oi.err + " / " + oi.n : String(oi.n)));
+        tile.appendChild(el("div", "mini-label", oi.err ? "Zähler mit Abfragefehler" : oi.n === 1 ? "Zähler online angebunden" : "Zähler online angebunden"));
+      }
+      if (can("manageUsers")) {
+        tile.classList.add("clickable");
+        tile.addEventListener("click", function () { settingsPane = "online"; switchView("settings"); renderSettingsPanes(); renderOnlinePane(); });
+      }
     } else if (m.kind === "cost") {
       var cur = valueOfMonth("c:total", ctx.month), prev = valueOfMonth("c:total", ctx.prev);
       tile.appendChild(el("div", "mini-value", fmtEuro(cur)));
@@ -6021,7 +6199,7 @@ window.EN = (function () {
     return [
       { label: "Karten", opts: [{ v: "bilanz", t: "Übersicht je Energieart" }, { v: "missing", t: "Fehlende Zählerstände (Liste)" }] },
       { label: "Kacheln", opts: EN.TYPES.map(function (t) { return { v: "tile:t:" + t.key, t: "Verbrauch " + t.label + " mit Vormonat" }; }).concat([
-        { v: "tile:cost", t: "Kosten gesamt" }, { v: "tile:missing", t: "Anzahl fehlende Ablesungen" }, { v: "tile:actions", t: "Offene Maßnahmen" }]) }
+        { v: "tile:cost", t: "Kosten gesamt" }, { v: "tile:missing", t: "Anzahl fehlende Ablesungen" }, { v: "tile:actions", t: "Offene Maßnahmen" }, { v: "tile:online", t: "Online-Anbindung (Status)" }]) }
     ];
   }
   function wdKind() { return wdDlg.querySelector('input[name="wdKind"]:checked').value; }
@@ -6425,6 +6603,8 @@ window.EN = (function () {
       ["Stellen", m.digits], ["Eichung bis", m.calib ? fmtDate(m.calib) : ""], ["Bemerkung", m.note]
     ]));
 
+    renderMeterOnline(host, m);
+
     // Verbrauch der letzten 12 Monate (Zählereinheit × Faktor, bei Gas zusätzlich kWh)
     var sec = el("div", "me-sec");
     sec.appendChild(el("div", "set-card-title", "Monatsverbrauch"));
@@ -6544,6 +6724,8 @@ window.EN = (function () {
     $("#mdOverflow").value = "";
     $("#mdAutoRule").checked = true;
     $("#mdDelete").hidden = !(m && can("delete"));
+    mdSrcFill(m);
+    onlLoadConns().then(function () { if (mdDlg.open && mdEditing === (m || null)) mdSrcFill(m); });
     mdDlg.showModal();
   }
   $("#mdType").addEventListener("change", mdParentOptions);
@@ -6575,11 +6757,15 @@ window.EN = (function () {
       serial: $("#mdSerial").value.trim(), note: $("#mdNote").value.trim(),
       digits: $("#mdDigits").value.trim() ? clampNum($("#mdDigits").value, 1, 20, null) : null, calib: $("#mdCalib").value || null
     };
+    fields.source = mdSrcRead();
+    var srcProblem = mdSrcProblem(fields.source);
+    if (srcProblem) { dlgTab(mdDlg, "onl"); showErr("mdError", srcProblem); return; }
     if (mdEditing) {
       var m = mdEditing, id = m.id;
       if (fields.parent && parentLoop(id, fields.parent)) { showErr("mdError", "Ein Zähler kann nicht unter einem eigenen Unterzähler hängen."); return; }
       var parentChanged = (m.parent || null) !== fields.parent, ccChanged = (m.costCenter || null) !== fields.costCenter;
       var text = "Zähler " + no + " bearbeitet";
+      if (JSON.stringify(m.source || {}) !== JSON.stringify(fields.source)) text += fields.source.enabled ? " (Online-Anbindung: " + ((onlConn(fields.source.conn) || {}).name || "") + ")" : (m.source && m.source.enabled ? " (Online-Anbindung aus)" : "");
       var finish = function (from) {
         commitChange({
           from: from, kind: "meter", text: text + (parentChanged ? " (Hauptzähler geändert)" : ""), okMsg: "Zähler gespeichert",
@@ -6771,6 +6957,412 @@ window.EN = (function () {
   });
 
 
+
+  /* ---------- Online-Anbindung der Zähler ----------
+     Am Server: Verbindungen und Messwerte über die API (Abfrage-Dienst metering.js). Im lokalen Testmodus gibt es nur
+     den Simulator: Verbindungen im Browser (sfm-connections-v1), Messwerte werden aus den Ablesungen nachgebildet
+     (Tageswerte mit Wochenend-Absenkung, danach mit dem letzten Tagesverbrauch fortgeschrieben). */
+  var ONL_TYPES = { modbus: "Modbus TCP", mbus: "M-Bus (TCP-Gateway)", mqtt: "MQTT", http: "REST / JSON", push: "HTTP-Push", file: "CSV-Ordner", sim: "Simulator" };
+  var ONL_LOCAL_KEY = "sfm-connections-v1";
+  var onlConns = null, onlStatus = null, onlStatusAt = 0;
+  function onlLocalConns() {
+    var l = null;
+    try { l = JSON.parse(LS.getItem(ONL_LOCAL_KEY) || "null"); } catch (e) { l = null; }
+    if (!Array.isArray(l)) l = [
+      { id: "c-demo-sim", name: "Simulator (Demo)", type: "sim", enabled: true, interval: 15, timeoutSec: 5, note: "Erzeugt Werte aus den Ablesungen" },
+      { id: "c-demo-modbus", name: "Modbus-Gateway Halle 1 (Beispiel)", type: "modbus", enabled: false, interval: 15, timeoutSec: 5, host: "192.0.2.10", port: 502, unitId: 1, note: "Nur am Server abfragbar" }
+    ];
+    return l;
+  }
+  function onlLoadConns() {
+    if (!SFM.isServer()) { onlConns = onlLocalConns(); return Promise.resolve(onlConns); }
+    return SFM.api("/api/connections").then(function (r) { onlConns = r.ok ? r.data.connections : []; return onlConns; }).catch(function () { onlConns = onlConns || []; return onlConns; });
+  }
+  function onlConn(id) { return (onlConns || []).filter(function (c) { return c.id === id; })[0] || null; }
+  function onlActive(m) { var c = m && m.source && m.source.enabled && onlConn(m.source.conn); return c && c.enabled ? c : null; }
+
+  // Lokal nachgebildeter Zählerstand eines Zählers zu einem Zeitpunkt (null = keiner)
+  function onlHash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; }
+  function onlDayW(m, d) { var wd = d.getDay(); return (wd === 0 || wd === 6 ? 0.45 : 1) * (0.85 + 0.3 * onlHash(m.id + isoOf(d))); }
+  function onlLocalValue(m, t) {
+    var rs = EN.readingsOf(energy, m.id).map(function (r) { return { t: dateOnly(r.date).getTime(), v: EN.num(r.value) }; }).filter(function (x) { return x.v != null; });
+    if (!rs.length || t < rs[0].t) return null;
+    if (m.removed && t > dateOnly(m.removed).getTime()) return null;
+    var DAY = 86400000;
+    for (var i = 1; i < rs.length; i++) {
+      if (t > rs[i].t) continue;
+      var a = rs[i - 1], b = rs[i];
+      if (b.v < a.v || b.t <= a.t) return a.v;   // Überlauf/Wechsel: nicht nachbilden
+      var tot = 0, part = 0;
+      for (var d = a.t; d < b.t; d += DAY) {
+        var w = onlDayW(m, new Date(d)), frac = Math.max(0, Math.min(1, (t - d) / DAY));
+        tot += w; part += w * frac;
+      }
+      return Math.round((a.v + (b.v - a.v) * (tot ? part / tot : 0)) * 100) / 100;
+    }
+    // nach der letzten Ablesung mit dem Tagesverbrauch der letzten Periode fortschreiben
+    var L = rs[rs.length - 1], P = rs[rs.length - 2];
+    var perDay = P && L.v >= P.v && L.t > P.t ? (L.v - P.v) / ((L.t - P.t) / DAY) : 0;
+    var add = 0;
+    for (var d2 = L.t; d2 < t; d2 += DAY) add += perDay * onlDayW(m, new Date(d2)) / 0.84 * Math.max(0, Math.min(1, (t - d2) / DAY));
+    return Math.round((L.v + add) * 100) / 100;
+  }
+  function onlLocalMeters() { return energy.meters.filter(function (m) { var c = onlActive(m); return c && c.type === "sim"; }); }
+
+  /* -- Zugriff (Server oder lokal) -- */
+  function onlSeries(m, from, to, max) {
+    if (SFM.isServer()) {
+      return SFM.api("/api/meter-values?meter=" + encodeURIComponent(m.id) + "&from=" + encodeURIComponent(from.toISOString()) + "&to=" + encodeURIComponent(to.toISOString()) + "&max=" + (max || 500))
+        .then(function (r) { return r.ok ? r.data.values.map(function (x) { return { t: new Date(x.ts).getTime(), v: x.value }; }) : []; });
+    }
+    var out = [], c = onlActive(m);
+    if (!c || c.type !== "sim") return Promise.resolve(out);
+    var step = Math.max(3600000, Math.ceil((to - from) / (max || 500) / 3600000) * 3600000);
+    for (var t = from.getTime(); t <= to.getTime(); t += step) { var v = onlLocalValue(m, t); if (v != null) out.push({ t: t, v: v }); }
+    var vn = onlLocalValue(m, to.getTime());
+    if (vn != null) out.push({ t: to.getTime(), v: vn });
+    return Promise.resolve(out);
+  }
+  function onlValuesAt(dateIso) {
+    var t = dateOnly(dateIso);
+    if (SFM.isServer()) {
+      return SFM.api("/api/meter-values/at?ts=" + encodeURIComponent(t.toISOString())).then(function (r) { return r.ok ? r.data.values : {}; }).catch(function () { return {}; });
+    }
+    var out = {};
+    onlLocalMeters().forEach(function (m) {
+      if (t.getTime() > Date.now()) return;
+      var v = onlLocalValue(m, t.getTime());
+      if (v != null) out[m.id] = { value: v, ts: t.toISOString(), method: "Simulator" };
+    });
+    return Promise.resolve(out);
+  }
+  function onlLoadStatus(force) {
+    if (!force && onlStatus && Date.now() - onlStatusAt < 60000) return Promise.resolve(onlStatus);
+    var done = function (list) { onlStatus = {}; list.forEach(function (x) { onlStatus[x.meter] = x; }); onlStatusAt = Date.now(); return onlStatus; };
+    if (SFM.isServer()) return SFM.api("/api/meter-status").then(function (r) { return done(r.ok ? r.data.status : []); }).catch(function () { return done([]); });
+    var now = Date.now();
+    return Promise.resolve(done(onlLocalMeters().map(function (m) {
+      var iv = (EN.num(m.source.interval) || (onlConn(m.source.conn) || {}).interval || 15) * 60000;
+      return { meter: m.id, okAt: new Date(Math.floor(now / iv) * iv).toISOString(), value: onlLocalValue(m, now), error: null, count: 0 };
+    })));
+  }
+  function onlPoll(m) {
+    if (SFM.isServer()) {
+      return SFM.api("/api/meters/" + encodeURIComponent(m.id) + "/poll", { method: "POST" }).then(function (r) {
+        if (!r.ok) throw new Error((r.data && r.data.error) || "Abfrage fehlgeschlagen");
+        return r.data.result;
+      });
+    }
+    var c = onlActive(m);
+    if (!c || c.type !== "sim") return Promise.reject(new Error("Im lokalen Testmodus fragt nur der Simulator ab — echte Verbindungen fragt der Server ab."));
+    return Promise.resolve({ value: onlLocalValue(m, Date.now()), ts: new Date().toISOString() });
+  }
+  function onlTest(conn, source) {
+    if (SFM.isServer()) {
+      return SFM.api("/api/connections/test", { method: "POST", body: { connection: conn, source: source } }).then(function (r) {
+        if (!r.ok) throw new Error((r.data && r.data.error) || "Test nicht möglich");
+        if (!r.data.ok) throw new Error(r.data.error);
+        return r.data.result;
+      });
+    }
+    if (conn.type !== "sim") return Promise.reject(new Error("Im lokalen Testmodus kann der Browser keine Geräte abfragen — der Test läuft am Server."));
+    return Promise.resolve({ value: source ? EN.num(source.simStart) || 0 : null, connected: true });
+  }
+  function onlWhen(ts) { return ts ? fmtDateTime(new Date(ts).getTime()) : "—"; }
+
+  /* ---------- Einstellungen → Zähler-Anbindung ---------- */
+  function renderOnlinePane() {
+    $("#onlLocalHint").hidden = SFM.isServer();
+    $("#connNewBtn").hidden = !can("manageUsers");
+    onlLoadConns().then(function () { return onlLoadStatus(true); }).then(function () {
+      var tbl = $("#connTable"); tbl.innerHTML = "";
+      var list = onlConns || [];
+      if (!list.length) { tbl.appendChild(emptyRow(6, "Noch keine Verbindung angelegt.")); return; }
+      tbl.appendChild(headRow(["Name", "Art", "Ziel", "Intervall", "Zähler", "Status", ""], [0, 0, 0, 1, 1, 0, 0]));
+      var tb = document.createElement("tbody");
+      list.forEach(function (c) {
+        var ms = energy.meters.filter(function (m) { return m.source && m.source.enabled && m.source.conn === c.id && !m.removed; });
+        var errs = ms.filter(function (m) { return onlStatus[m.id] && onlStatus[m.id].error; }).length;
+        var tr = el("tr", c.enabled ? "" : "me-removed");
+        tr.appendChild(td(c.name)); tr.appendChild(td(ONL_TYPES[c.type] || c.type));
+        tr.appendChild(td(c.type === "modbus" || c.type === "mbus" ? (c.host || "—") + ":" + (c.port || "") : c.type === "http" || c.type === "mqtt" ? c.url || "—" : c.type === "file" ? "import/" + (c.folder || "") : c.type === "push" ? "/api/ingest/" + c.id : "—", "me-note"));
+        tr.appendChild(td(c.type === "push" || c.type === "file" ? "—" : c.interval + " min", "num"));
+        tr.appendChild(td(String(ms.length), "num"));
+        var cs = document.createElement("td");
+        var txt = !c.enabled ? "Aus" : errs ? errs + " mit Fehler" : c.status && c.status.error ? "Fehler" : ms.length ? "In Ordnung" : "Ohne Zähler";
+        cs.appendChild(el("span", "pill " + (!c.enabled ? "neutral" : errs || (c.status && c.status.error) ? "crit" : ms.length ? "good" : "neutral"), txt));
+        if (c.status && c.status.error) cs.title = c.status.error;
+        tr.appendChild(cs);
+        var c6 = document.createElement("td");
+        if (can("manageUsers")) {
+          var b = el("button", "btn sm", "✎"); b.type = "button"; b.title = "Verbindung bearbeiten"; b.setAttribute("aria-label", b.title);
+          b.addEventListener("click", function () { openConnDialog(c); });
+          c6.appendChild(b);
+        }
+        tr.appendChild(c6);
+        tb.appendChild(tr);
+      });
+      tbl.appendChild(tb);
+    });
+  }
+  var cnDlg = $("#connDialog"), cnEditing = null;
+  function cnSync() {
+    var t = $("#cnType").value, auth = $("#cnAuth").value;
+    cnDlg.querySelectorAll(".cn-sec").forEach(function (sec) {
+      var f = sec.dataset.for.split(" ");
+      sec.hidden = !(f.indexOf(t) >= 0 || (f.indexOf("header") >= 0 && t === "http" && auth === "header"));
+    });
+    var cred = cnDlg.querySelector(".cn-cred");
+    cred.hidden = !(t === "mqtt" || (t === "http" && auth !== "none"));
+    $("#cnUserField").hidden = t === "http" && auth !== "basic";
+    $("#cnPassLabel").textContent = t === "http" && auth !== "basic" ? "Token / Schlüssel" : "Passwort";
+    $("#cnUrlLabel").textContent = t === "mqtt" ? "Broker-Adresse (mqtt:// oder mqtts://)" : "Basis-Adresse (http:// oder https://)";
+    $("#cnUrl").placeholder = t === "mqtt" ? "mqtt://broker.firma.local:1883" : "https://gateway.firma.local/api";
+    $("#cnInterval").closest(".field").hidden = t === "push" || t === "file";
+    if (t === "file") $("#cnIntervalHint").textContent = "";
+    if (!$("#cnPort").value) $("#cnPort").value = t === "mbus" ? 10001 : 502;
+    var ms = energy.meters.filter(function (m) { return m.source && m.source.conn === (cnEditing && cnEditing.id); });
+    fillSelect($("#cnTestMeter"), [{ v: "", t: "Nur Verbindung prüfen" }].concat(ms.map(function (m) { return { v: m.id, t: m.no + " · " + m.name }; })), "");
+  }
+  function openConnDialog(c) {
+    cnEditing = c || null;
+    showErr("cnError", null);
+    $("#cnTitle").textContent = c ? "Verbindung bearbeiten" : "Neue Verbindung";
+    fillSelect($("#cnType"), Object.keys(ONL_TYPES).map(function (k) { return { v: k, t: ONL_TYPES[k] }; }), c ? c.type : "modbus");
+    $("#cnName").value = c ? c.name : ""; $("#cnInterval").value = c ? c.interval : 15; $("#cnTimeout").value = c ? c.timeoutSec || 5 : 5;
+    $("#cnEnabled").checked = !c || c.enabled !== false; $("#cnNote").value = c ? c.note || "" : "";
+    $("#cnHost").value = c ? c.host || "" : ""; $("#cnPort").value = c && c.port ? c.port : "";
+    $("#cnUnit").value = c && c.unitId != null ? c.unitId : 1;
+    $("#cnUrl").value = c ? c.url || "" : ""; $("#cnTopic").value = c ? c.topicPrefix || "" : "";
+    $("#cnAuth").value = c && c.authType ? c.authType : "none"; $("#cnHeader").value = c ? c.authHeader || "" : "";
+    $("#cnUser").value = c ? c.user || "" : ""; $("#cnPass").value = "";
+    $("#cnPass").placeholder = c && c.hasPassword ? "•••••••• gespeichert" : "";
+    $("#cnFolder").value = c ? c.folder || "" : "";
+    $("#cnNewToken").checked = false;
+    var base = (SFM.health() && location.origin) || "";
+    $("#cnPushUrl").textContent = c && c.type === "push" ? base + "/api/ingest/" + c.id : "wird nach dem Speichern angezeigt";
+    $("#cnPushToken").textContent = c && c.token ? c.token : "wird nach dem Speichern angezeigt";
+    $("#cnTestOut").textContent = "—";
+    $("#cnDelete").hidden = !c;
+    cnSync();
+    cnDlg.showModal();
+  }
+  ["cnType", "cnAuth"].forEach(function (id) { byId(id).addEventListener("change", cnSync); });
+  function cnForm() {
+    var o = cnEditing ? Object.assign({}, cnEditing) : {};
+    o.name = $("#cnName").value.trim(); o.type = $("#cnType").value; o.enabled = $("#cnEnabled").checked;
+    o.interval = clampNum($("#cnInterval").value, 1, 1440, 15); o.timeoutSec = clampNum($("#cnTimeout").value, 1, 60, 5);
+    o.note = $("#cnNote").value.trim(); o.host = $("#cnHost").value.trim(); o.port = clampNum($("#cnPort").value, 0, 65535, 0);
+    o.unitId = clampNum($("#cnUnit").value, 0, 255, 1); o.url = $("#cnUrl").value.trim(); o.topicPrefix = $("#cnTopic").value.trim();
+    o.authType = $("#cnAuth").value; o.authHeader = $("#cnHeader").value.trim(); o.user = $("#cnUser").value.trim();
+    o.folder = $("#cnFolder").value.trim();
+    if ($("#cnPass").value) o.password = $("#cnPass").value;
+    if ($("#cnNewToken").checked) o.newToken = true;
+    return o;
+  }
+  function onlSaveConns(list, msg) {
+    if (!SFM.isServer()) {
+      var clean = list.map(function (c) { var x = Object.assign({}, c); delete x.password; delete x.newToken; delete x.status; if (!x.id) x.id = "c" + newWidgetId(); return x; });
+      try { LS.setItem(ONL_LOCAL_KEY, JSON.stringify(clean)); } catch (e) {}
+      onlConns = clean;
+      cnDlg.close(); toast(msg); renderOnlinePane(); return;
+    }
+    SFM.api("/api/connections", { method: "PUT", body: { connections: list } }).then(function (r) {
+      if (!r.ok) { showErr("cnError", (r.data && r.data.error) || "Speichern fehlgeschlagen"); return; }
+      onlConns = r.data.connections;
+      var saved = cnEditing ? onlConn(cnEditing.id) : onlConns[onlConns.length - 1];
+      if (saved && saved.type === "push" && (!cnEditing || cnEditing.type !== "push" || $("#cnNewToken").checked)) {
+        cnEditing = saved; openConnDialog(saved); dlgTab(cnDlg, "con");
+        toast("Gespeichert — Adresse und Schlüssel für den Logger stehen jetzt im Reiter „Verbindung“");
+      } else { cnDlg.close(); toast(msg); }
+      renderOnlinePane();
+    }).catch(function () { showErr("cnError", "Server nicht erreichbar"); });
+  }
+  $("#connForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!can("manageUsers")) return;
+    var o = cnForm();
+    if (!o.name) { showErr("cnError", "Bitte einen Namen angeben."); return; }
+    if ((o.type === "modbus" || o.type === "mbus") && !o.host) { dlgTab(cnDlg, "con"); showErr("cnError", "Bitte die Adresse des Geräts bzw. Gateways angeben."); return; }
+    if (o.type === "http" && !/^https?:\/\//i.test(o.url)) { dlgTab(cnDlg, "con"); showErr("cnError", "Die Adresse muss mit http:// oder https:// beginnen."); return; }
+    if (o.type === "mqtt" && !/^mqtts?:\/\/|^wss?:\/\//i.test(o.url)) { dlgTab(cnDlg, "con"); showErr("cnError", "Die Broker-Adresse muss mit mqtt:// oder mqtts:// beginnen."); return; }
+    var list = (onlConns || []).map(function (c) { return c.id === (cnEditing && cnEditing.id) ? o : c; });
+    if (!cnEditing) list.push(o);
+    onlSaveConns(list, "Verbindung gespeichert");
+  });
+  $("#cnDelete").addEventListener("click", function () {
+    var c = cnEditing;
+    if (!c) return;
+    var used = energy.meters.filter(function (m) { return m.source && m.source.conn === c.id; }).length;
+    appConfirm("Verbindung löschen?", "„" + c.name + "“ wird gelöscht." + (used ? " " + used + " Zähler verlieren damit ihre Online-Anbindung (die gespeicherten Messwerte bleiben)." : ""), "Löschen", true, function () {
+      onlSaveConns((onlConns || []).filter(function (x) { return x.id !== c.id; }), "Verbindung gelöscht");
+    });
+  });
+  $("#cnTestBtn").addEventListener("click", function () {
+    var btn = this, m = EN.meterById(energy, $("#cnTestMeter").value);
+    btn.disabled = true; $("#cnTestOut").textContent = "Prüfe …";
+    onlTest(cnForm(), m ? m.source : null).then(function (r) {
+      $("#cnTestOut").textContent = r.value != null ? "✓ Gelesen: " + fmtValue(r.value) + (m ? " " + meterUnit(m.type) : "") + (r.raw != null && r.raw !== r.value ? " (Rohwert " + fmtValue(r.raw) + ")" : "") : "✓ Verbindung in Ordnung";
+    }).catch(function (e) { $("#cnTestOut").textContent = "✕ " + e.message; })
+      .then(function () { btn.disabled = false; });
+  });
+  $("#connNewBtn").addEventListener("click", function () { onlLoadConns().then(function () { openConnDialog(null); }); });
+  $("#cnCancel").addEventListener("click", function () { cnDlg.close(); });
+  $("#cnClose").addEventListener("click", function () { cnDlg.close(); });
+
+  /* ---------- Zählerfenster: Reiter „Online-Anbindung“ ---------- */
+  function mdSrcSync() {
+    var on = $("#mdSrcOn").checked, c = onlConn($("#mdSrcConn").value);
+    $("#mdSrcBox").hidden = !on || !(onlConns || []).length;
+    $("#mdSrcNoConn").hidden = !!(onlConns || []).length;
+    var t = c ? c.type : "";
+    $("#meterDialog").querySelectorAll(".src-sec").forEach(function (sec) { sec.hidden = sec.dataset.for.split(" ").indexOf(t) < 0; });
+    $("#mdSrcTopicLabel").textContent = t === "http" ? "Pfad oder Adresse (an die Basis-Adresse angehängt)" : "Thema (Topic" + (c && c.topicPrefix ? ", nach „" + c.topicPrefix + "/“" : "") + ")";
+    $("#mdSrcInterval").closest(".field").hidden = t === "push" || t === "file";
+  }
+  function mdSrcFill(m) {
+    var s = (m && m.source) || {};
+    fillSelect($("#mdSrcConn"), (onlConns || []).map(function (c) { return { v: c.id, t: c.name + " (" + (ONL_TYPES[c.type] || c.type) + ")" + (c.enabled ? "" : " — aus") }; }), s.conn || ((onlConns || [])[0] || {}).id || "");
+    $("#mdSrcOn").checked = !!s.enabled;
+    var val = function (id, v) { $(id).value = v == null ? "" : String(v).replace(/^(-?\d+)\.(\d+)$/, "$1,$2"); };
+    val("#mdSrcInterval", s.interval); val("#mdSrcReg", s.register); $("#mdSrcFn").value = s.fn || "holding";
+    $("#mdSrcType").value = s.dtype || "uint32"; $("#mdSrcOrder").value = s.order || "be"; val("#mdSrcUnit", s.unit);
+    val("#mdSrcMbus", s.mbusAddr); val("#mdSrcRec", s.mbusRecord); val("#mdSrcTopic", s.topic || s.path); val("#mdSrcPath", s.jsonPath);
+    val("#mdSrcKey", s.key); val("#mdSrcRate", s.simRate); val("#mdSrcStart", s.simStart); val("#mdSrcScale", s.scale);
+    $("#mdSrcTestOut").textContent = "—";
+    mdSrcSync();
+  }
+  function mdSrcRead() {
+    var c = onlConn($("#mdSrcConn").value), t = c ? c.type : "", n = function (id) { var v = $(id).value.trim(); return v === "" ? null : EN.num(v); };
+    var s = { enabled: $("#mdSrcOn").checked && !!c, conn: c ? c.id : null, interval: n("#mdSrcInterval"), scale: n("#mdSrcScale") };
+    if (t === "modbus") { s.register = n("#mdSrcReg"); s.fn = $("#mdSrcFn").value; s.dtype = $("#mdSrcType").value; s.order = $("#mdSrcOrder").value; s.unit = n("#mdSrcUnit"); }
+    if (t === "mbus") { s.mbusAddr = n("#mdSrcMbus"); s.mbusRecord = n("#mdSrcRec"); }
+    if (t === "mqtt") { s.topic = $("#mdSrcTopic").value.trim(); s.jsonPath = $("#mdSrcPath").value.trim(); }
+    if (t === "http") { s.path = $("#mdSrcTopic").value.trim(); s.jsonPath = $("#mdSrcPath").value.trim(); }
+    if (t === "push" || t === "file") s.key = $("#mdSrcKey").value.trim();
+    if (t === "sim") { s.simRate = n("#mdSrcRate"); s.simStart = n("#mdSrcStart"); }
+    Object.keys(s).forEach(function (k) { if (s[k] === null || s[k] === "") delete s[k]; });
+    return s;
+  }
+  function mdSrcProblem(s) {
+    if (!s.enabled) return null;
+    var c = onlConn(s.conn), t = c ? c.type : "";
+    if (t === "modbus" && s.register == null) return "Online-Anbindung: bitte die Registeradresse angeben.";
+    if (t === "mbus" && s.mbusAddr == null) return "Online-Anbindung: bitte die Primäradresse angeben.";
+    if (t === "mqtt" && !s.topic) return "Online-Anbindung: bitte das Thema (Topic) angeben.";
+    if (t === "http" && !s.path && !(c && c.url)) return "Online-Anbindung: bitte Pfad oder Adresse angeben.";
+    return null;
+  }
+  ["mdSrcOn", "mdSrcConn"].forEach(function (id) { byId(id).addEventListener("change", mdSrcSync); });
+  $("#mdSrcTest").addEventListener("click", function () {
+    var btn = this, s = mdSrcRead(), c = onlConn(s.conn);
+    if (!c) return;
+    btn.disabled = true; $("#mdSrcTestOut").textContent = "Lese …";
+    var p = c.type === "sim" && !SFM.isServer() && mdEditing ? Promise.resolve({ value: onlLocalValue(mdEditing, Date.now()) }) : onlTest(c, s);
+    p.then(function (r) { $("#mdSrcTestOut").textContent = r.value != null ? "✓ " + fmtValue(r.value) + " " + meterUnit($("#mdType").value) : "✓ Verbindung in Ordnung"; })
+      .catch(function (e) { $("#mdSrcTestOut").textContent = "✕ " + e.message; })
+      .then(function () { btn.disabled = false; });
+  });
+
+  /* ---------- Zählerdetail: Online-Messwerte ---------- */
+  var mtOnlDays = 30;
+  function renderMeterOnline(host, m) {
+    var c = onlActive(m);
+    var sec = el("div", "me-sec onl-sec");
+    var head = el("div", "onl-head");
+    head.appendChild(el("div", "set-card-title", "Online-Messwerte"));
+    if (c) {
+      var seg = el("div", "period-seg onl-seg");
+      [7, 30, 90].forEach(function (d) {
+        var b = el("button", d === mtOnlDays ? "active" : "", d + " Tage"); b.type = "button";
+        b.addEventListener("click", function () { mtOnlDays = d; renderMeterDetail(); });
+        seg.appendChild(b);
+      });
+      head.appendChild(seg);
+    }
+    sec.appendChild(head);
+    if (!m.source || !m.source.enabled) { sec.appendChild(el("div", "mini-hint", "Keine Online-Anbindung — im Fenster „Bearbeiten“ unter „Online-Anbindung“ einrichten.")); host.appendChild(sec); return; }
+    if (!c) { sec.appendChild(el("div", "warn-text mini-hint", "Die Verbindung ist ausgeschaltet oder gelöscht.")); host.appendChild(sec); return; }
+    var st = el("div", "onl-status mini-hint", "Lade …");
+    sec.appendChild(st);
+    var chart = el("div", "onl-chart");
+    sec.appendChild(chart);
+    if (can("edit")) {
+      var pb = el("button", "btn sm", "Jetzt abfragen"); pb.type = "button";
+      pb.addEventListener("click", function () {
+        pb.disabled = true;
+        onlPoll(m).then(function (r) { toast("Gelesen: " + fmtValue(r.value) + " " + meterUnit(m.type)); onlStatus = null; renderMeterDetail(); })
+          .catch(function (e) { toast(e.message); onlStatus = null; renderMeterDetail(); });
+      });
+      sec.appendChild(pb);
+    }
+    host.appendChild(sec);
+    var unit = meterUnit(m.type), to = new Date(), from = new Date(to.getTime() - mtOnlDays * 86400000);
+    from.setHours(0, 0, 0, 0);
+    Promise.all([onlLoadStatus(), onlSeries(m, from, to, mtOnlDays * 24)]).then(function (res) {
+      if (mtSel !== m.id) return;
+      var s = res[0][m.id], vals = res[1];
+      st.textContent = "";
+      st.appendChild(document.createTextNode(c.name + " · " + (ONL_TYPES[c.type] || c.type) + " · alle " + (EN.num(m.source.interval) || c.interval) + " min · letzter Wert "));
+      st.appendChild(el("b", null, s && s.value != null ? fmtValue(s.value) + " " + unit : "—"));
+      st.appendChild(document.createTextNode(s && s.okAt ? " (" + onlWhen(s.okAt) + ")" : ""));
+      if (s && s.error) st.appendChild(el("div", "crit-text", "Letzte Abfrage fehlgeschlagen (" + onlWhen(s.errorAt) + "): " + s.error));
+      // Verbrauch je Tag = letzter Stand des Tages − letzter Stand des Vortags, × Messfaktor
+      var byDay = {};
+      vals.forEach(function (x) { byDay[isoOf(new Date(x.t))] = x.v; });
+      var isos = [], series = [], prev = null;
+      for (var d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+        var k = isoOf(d), v = byDay[k];
+        if (prev != null && v != null && v >= prev) { isos.push(k); series.push(EN.round((v - prev) * (EN.num(EN.propsAt(m, k.slice(0, 7)).factor) || 1), 3)); }
+        else if (prev != null) { isos.push(k); series.push(null); }
+        if (v != null) prev = v;
+      }
+      if (!series.some(function (x) { return x != null; })) {
+        chart.appendChild(el("div", "empty-hint", vals.length ? vals.length + (vals.length === 1 ? " Messwert" : " Messwerte") + " seit " + onlWhen(vals[0].t) + " — der Verbrauch je Tag erscheint, sobald Werte von zwei Tagen vorliegen." : "Noch keine Messwerte im Zeitraum."));
+        return;
+      }
+      var W = Math.max(280, chart.clientWidth || 520), H = 170;
+      var g = { fields: [{ key: "d", label: "Verbrauch je Tag", unit: unit, color: EN.typeOf(m.type).color }], units: [unit], unit: unit, width: W, height: H };
+      chart.innerHTML = multiFieldChartSvg(g, isos, [series]);
+      wireChartInteraction(chart, g, isos, [series], unit);
+    });
+  }
+
+  /* ---------- Ablesung: Online-Werte als Vorschlag ---------- */
+  var rdOnline = { date: null, values: {}, loading: false };
+  function rdLoadOnline() {
+    if (rdOnline.date === rdDate || rdOnline.loading) return;
+    var want = rdDate;
+    rdOnline.loading = true;
+    (onlConns ? Promise.resolve() : onlLoadConns()).then(function () { return onlValuesAt(want); }).then(function (v) {
+      rdOnline = { date: want, values: v || {}, loading: false };
+      if (viewActive("readings") && rdDate === want) renderReadings();
+    }).catch(function () { rdOnline.loading = false; });
+  }
+  function rdSuggestion(m) { return rdOnline.date === rdDate ? rdOnline.values[m.id] || null : null; }
+  function rdSugText(v) { return String(v.value).replace(".", ","); }
+  function rdUpdateOnlineBtn(list) {
+    var n = list.filter(function (m) { return !rdExisting(m).length && rdSuggestion(m) && !rdInput[m.id]; }).length;
+    $("#rdOnlineBtn").hidden = !n || !can("edit");
+    $("#rdOnlineBtn").textContent = "Online-Werte übernehmen (" + n + ")";
+  }
+  $("#rdOnlineBtn").addEventListener("click", function () {
+    rdMeters().forEach(function (m) {
+      var s = rdSuggestion(m);
+      if (!s || rdExisting(m).length || rdInput[m.id]) return;
+      rdInput[m.id] = { value: rdSugText(s), date: rdDate, online: s.method };
+    });
+    renderReadings();
+    toast("Online-Werte eingetragen — bitte prüfen und speichern");
+  });
+
+  /* ---------- Dashboard-Kachel ---------- */
+  function onlTileInfo() {
+    var ms = energy.meters.filter(function (m) { return onlActive(m) && !m.removed; });
+    var err = ms.filter(function (m) { return onlStatus && onlStatus[m.id] && onlStatus[m.id].error; }).length;
+    return { n: ms.length, err: err };
+  }
+
   /* ---------- Ablesung: Monatsliste ---------- */
   var rdMonth = null, rdType = "", rdSearch = "", rdOnlyMissing = false, rdDate = null, rdInput = {};
   // Standard-Ablesedatum eines Abrechnungsmonats: der Erste des Folgemonats (01.12. für November), höchstens heute
@@ -6834,6 +7426,8 @@ window.EN = (function () {
     }
     rdUpdateCount();
     renderMissingList();
+    rdLoadOnline();
+    rdUpdateOnlineBtn(all);
   }
   function rdRow(m) {
     var tr = el("tr", "rd-line"), unit = meterUnit(m.type), ex = rdExisting(m), inp = rdInput[m.id] || {};
@@ -6875,7 +7469,9 @@ window.EN = (function () {
       di.setAttribute("aria-label", "Ablesedatum " + m.no);
       var upd = function () {
         var v = EN.num(vi.value);
-        if (vi.value.trim()) rdInput[m.id] = { value: vi.value, date: di.value || rdDate }; else delete rdInput[m.id];
+        var sg = rdSuggestion(m);
+        if (vi.value.trim()) rdInput[m.id] = { value: vi.value, date: di.value || rdDate, online: sg && vi.value.trim() === rdSugText(sg) && (di.value || rdDate) === rdDate ? sg.method : null };
+        else delete rdInput[m.id];
         var pr = EN.previousReading(energy, m.id, di.value || rdDate);
         var pc = previewConsumption(m, di.value, rdMonth, v, pr);
         cCons.classList.remove("warn-text", "crit-text");
@@ -6903,6 +7499,16 @@ window.EN = (function () {
         if (nx) nx.focus(); else $("#rdSave").focus();
       });
       cVal.appendChild(vi); cDate.appendChild(di);
+      var sug = rdSuggestion(m);
+      if (sug && can("edit")) {
+        var sl = el("div", "rd-sug");
+        sl.appendChild(document.createTextNode("Online: " + fmtValue(sug.value) + " "));
+        sl.title = "Online-Wert zum " + fmtDate(rdDate) + " 00:00 (" + sug.method + ")";
+        var ub = el("button", "link-btn", "übernehmen"); ub.type = "button";
+        ub.addEventListener("click", function () { vi.value = rdSugText(sug); di.value = rdDate; upd(); rdUpdateOnlineBtn(rdMeters()); });
+        sl.appendChild(ub);
+        cVal.appendChild(sl);
+      }
       upd();
     }
     [cVal, cDate, cCons, cPrevM, cSt].forEach(function (c) { tr.appendChild(c); });
@@ -6951,7 +7557,7 @@ window.EN = (function () {
     if (!can("edit")) return;
     var entries = Object.keys(rdInput).map(function (id) {
       var x = rdInput[id];
-      return { meter: id, date: x.date || rdDate, month: rdMonth, value: EN.num(x.value), raw: x.value, note: "" };
+      return { meter: id, date: x.date || rdDate, month: rdMonth, value: EN.num(x.value), raw: x.value, note: x.online ? "Online-Wert (" + x.online + ")" : "" };
     });
     checkAndSave(entries, "Ablesungen " + monthLabel(rdMonth), false, function () { rdInput = {}; });
   });
@@ -8633,7 +9239,7 @@ window.EN = (function () {
      parts, select, from/to, dryRun). Ablauf: auswählen → Vorschau (dryRun, zeigt ersetzt/neu/entfernt und Hinweise)
      → Wiederherstellen. Jede Änderung der Auswahl verlangt eine neue Vorschau. Standard: CLAUDE.md. */
   var RS_PARTS = [
-    { key: "energy", title: "Energiedaten", desc: "Zähler, Ablesungen, Kostenstellen, ILV-Regeln, Preise, Änderungsprotokoll und Berechnungsstände — nur als Ganzes, weil Verbrauch und Verrechnung voneinander abhängen." },
+    { key: "energy", title: "Energiedaten", desc: "Zähler, Ablesungen, Online-Messwerte, Kostenstellen, ILV-Regeln, Preise, Änderungsprotokoll und Berechnungsstände — nur als Ganzes, weil Verbrauch und Verrechnung voneinander abhängen." },
     { key: "deviations", title: "Maßnahmen", pick: "Maßnahmen", desc: "Alle Maßnahmen mit PDCA-Phase, Verantwortlichen, Terminen und 5-Why — einzeln: vorhandene werden auf den alten Stand gesetzt, gelöschte wieder angelegt." },
     { key: "settings", title: "Stammdaten & Einstellungen", desc: "Standort, Stichtag der Ablesung, Warnschwelle, E-Mail-Absender." },
     { key: "users", title: "Benutzerkonten", pick: "Konten", desc: "Konten mit Rollen, Passwörtern und Profilbildern — einzeln: über den Anmeldenamen zugeordnet." },
@@ -8643,7 +9249,7 @@ window.EN = (function () {
   var rsFile = null, rsContents = null, rsPlanned = null, rsPickOn = {}, rsPicked = {};
   function rsError(msg) { var e = $("#rsError"); e.hidden = !msg; e.textContent = msg || ""; }
   function rsInfo(key, c) {
-    if (key === "energy") return c.energy.present ? c.energy.meters + " Zähler, " + c.energy.readings + " Ablesungen" + (c.energy.from ? " (" + fmtDate(c.energy.from) + " – " + fmtDate(c.energy.to) + ")" : "") : "nicht enthalten";
+    if (key === "energy") return c.energy.present ? c.energy.meters + " Zähler, " + c.energy.readings + " Ablesungen" + (c.energy.onlineValues ? ", " + c.energy.onlineValues + " Online-Messwerte" : "") + (c.energy.from ? " (" + fmtDate(c.energy.from) + " – " + fmtDate(c.energy.to) + ")" : "") : "nicht enthalten";
     if (key === "deviations") return c.deviations.total + " Maßnahmen, davon " + c.deviations.open + " offen";
     if (key === "settings") return c.settings.present ? "Linie „" + (c.settings.lineName || "–") + "“" : "nicht enthalten";
     if (key === "users") return c.users.total + " Konten (" + c.users.admins + " Administrator" + (c.users.admins === 1 ? "" : "en") + ")" +
@@ -9153,7 +9759,7 @@ window.EN = (function () {
 
   /* ---------- Einstellungen: Seitenleiste (ein Bereich zur Zeit) ---------- */
   var settingsPane = "stamm";
-  var SETTINGS_PANES = { stamm: "stammCard", mail: "mailCard", users: "usersCard", db: "dbCard", audit: "auditCard", doc: "docCard" };
+  var SETTINGS_PANES = { stamm: "stammCard", mail: "mailCard", users: "usersCard", online: "onlineCard", db: "dbCard", audit: "auditCard", doc: "docCard" };
   // Welche Einstellungsbereiche die angemeldete Person sieht
   function paneAllowed(key) {
     if (key === "doc") return true;
@@ -9190,6 +9796,7 @@ window.EN = (function () {
       if (settingsPane === "audit") loadAudit(false);
       if (settingsPane === "users") loadResetRequests();
       if (settingsPane === "mail") loadServerMail();
+      if (settingsPane === "online") renderOnlinePane();
     });
   });
   $("#settingsSearch").addEventListener("input", function () {
@@ -9494,6 +10101,27 @@ window.EN = (function () {
           "Fehlt der Abrechnungsmonat, wird er aus dem Ablesedatum und dem Stichtag bestimmt."
         ] }
       ] },
+
+    { id: "online", group: "Zähler & Ablesung", title: "Online-Anbindung der Zähler",
+      intro: "Zähler mit Schnittstelle liefern ihren Stand automatisch: Der Server fragt sie im eingestellten Intervall ab (oder empfängt die Werte) und speichert jeden Stand. Zur Monatsablesung erscheint der Stand zum Ablesedatum als Vorschlag.",
+      flow: ["Verbindung anlegen", "Zähler zuordnen", "Server fragt ab", "Vorschlag in der Ablesung", "Prüfen und speichern"],
+      sections: [
+        { h: "1. Verbindung anlegen (Administration)", img: "online", cap: "Einstellungen → Zähler-Anbindung", steps: [
+          ["Einstellungen → Zähler-Anbindung", "„+ Verbindung“: Name, Art und Abfrageintervall in Minuten."],
+          ["Modbus TCP", "Adresse und Port des Zählers oder Modbus-Gateways (Standard 502) und die Standard-Geräteadresse (Unit-ID)."],
+          ["M-Bus (TCP-Gateway)", "Adresse und Port eines transparenten M-Bus-Gateways. Gateways, die M-Bus als Modbus oder REST weitergeben, mit dieser Art anbinden."],
+          ["MQTT", "Broker-Adresse (mqtt://…), ggf. Benutzer, Passwort und ein Themen-Präfix."],
+          ["REST / JSON", "Basis-Adresse und Anmeldung (Benutzer/Passwort, Token oder eigener Header)."],
+          ["HTTP-Push", "Nach dem Speichern stehen Adresse und Schlüssel im Reiter „Verbindung“ — beides im Logger eintragen."],
+          ["CSV-Ordner", "Logger oder Leittechnik legen Dateien im Import-Ordner des Servers ab (Zeile: Kennung;Zeitpunkt;Zählerstand)."],
+          ["Test", "Im Reiter „Test“ wird die Verbindung mit den Formularwerten geprüft, auf Wunsch mit dem Wert eines Zählers."]
+        ] },
+        { h: "2. Zähler zuordnen", img: "online-zaehler", cap: "Zählerfenster, Reiter „Online-Anbindung“", p: "Im Zählerfenster (Bearbeiten) im Reiter „Online-Anbindung“: „Zählerstand online abholen“ einschalten, Verbindung wählen und angeben, wo der Stand steht — bei Modbus Registeradresse, Datentyp und Wortreihenfolge, bei M-Bus die Primäradresse, bei MQTT das Thema, bei REST Pfad und JSON-Pfad, bei Push und CSV die Kennung (Standard: Zählernummer). Die Skalierung rechnet den gelesenen Wert in die Ableseeinheit um (z. B. 0,001 für Wh → kWh); der Messfaktor des Zählers gilt wie bei der Ablesung zusätzlich. „Wert jetzt lesen“ prüft die Einstellung sofort.",
+          note: "Übernommen werden Zählerstände, nicht Verbräuche. Beim Zählerwechsel geht die Online-Anbindung auf den neuen Zähler über — Register oder Adresse bei Bedarf anpassen." },
+        { h: "3. Werte ansehen", p: "Im Zählerdetail zeigt „Online-Messwerte“ die Verbindung, den letzten Stand mit Zeitpunkt, einen Fehler der letzten Abfrage und den Verbrauch je Tag über 7, 30 oder 90 Tage. „Jetzt abfragen“ liest sofort. Die Dashboard-Kachel „Online-Anbindung“ zeigt, wie viele Zähler angebunden sind und ob Abfragen fehlschlagen." },
+        { h: "4. Monatsablesung", p: "In der Ablesung erscheint unter dem Eingabefeld „Online: …“ — der Stand zum Ablesedatum um 00:00 Uhr (zwischen zwei Messwerten linear ermittelt). „übernehmen“ trägt ihn ein, „Online-Werte übernehmen“ oben für alle fehlenden Zähler. Gespeichert wird wie immer erst nach „Prüfen und speichern“ mit der Prüfliste; die Ablesung erhält die Bemerkung „Online-Wert“." }
+      ],
+      tip: "Im lokalen Testmodus gibt es nur den Simulator. Echte Verbindungen fragt der Server ab; er braucht dazu Netzwerkzugang zu den Geräten bzw. zum Broker." },
 
     /* ===== Verrechnung ===== */
     { id: "ilv", group: "Verrechnung (ILV)", title: "Verrechnung auf Kostenstellen",

@@ -52,6 +52,8 @@ module.exports = {
   bodyLimit: env.BODY_LIMIT || "25mb",      // nur für Dokumente (Energiedaten, Wiederherstellung aus Datei)
   smallBodyLimit: "32kb",                   // alle übrigen Anfragen (Anmeldung, Konten, Sicherungen …)
   backupDir: env.BACKUP_DIR || "/backups",
+  // Online-Anbindung: Ordner für CSV-Dateien von Datenloggern (Verbindungsart „CSV-Ordner“)
+  importDir: env.IMPORT_DIR || "/import",
   // Name einer Sicherungsdatei (auch Schutz gegen Pfadangaben in Anfragen)
   backupFileRe: /^energie_[0-9_-]+_(auto|manual)\.dump$/,
   // Schlüssel für gespeicherte Zugangsdaten (SMB-Passwort); erzeugt deploy.sh in der .env

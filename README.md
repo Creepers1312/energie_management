@@ -16,6 +16,7 @@ Entstanden aus dem Shopfloor Board (Stand 1.6.0) — Aufbau, Design, Anmeldung, 
 | Ablesung | Monatliche Erfassung von Hand oder per CSV; letzter Stand wird automatisch vorheriger Stand; Ablesedatum, Verbrauchszeitraum und Abrechnungsmonat getrennt; Prüfliste bei fehlendem Vorstand (nach Bestätigung 0), kleinerem Stand (Überlauf, negativ speichern oder auslassen) und rückwirkenden Ablesungen; fehlende Ablesungen werden angezeigt |
 | ILV | Verrechnung auf Kostenstellen nach Regeln aus Zählern × Faktoren (Summen, Differenzen, Anteile), automatisch aus der Zählerstruktur angelegt und von Hand änderbar; Preise je Energieart und Gas-Umrechnung (Brennwert × Zustandszahl) mit „gültig ab“ |
 | Rückwirkende Änderungen | Vorschau (alt / neu je Kostenstelle und Zähler), Pflicht-Grund und ausdrückliche Bestätigung; der vorherige Stand wird als Berechnungsstand gespeichert; Änderungsprotokoll |
+| Online-Anbindung | Zählerstände automatisch abholen: Modbus TCP, M-Bus über TCP-Gateway, MQTT, REST/JSON, HTTP-Push von Datenloggern, CSV-Ordner; Abfrageintervall je Verbindung und Zähler; Online-Messwerte je Zähler mit Verbrauch je Tag; Stand zum Ablesedatum als Vorschlag in der Monatsablesung |
 | Maßnahmen | Mehrverbrauch, Leckagen, Zählerstörungen und Einsparungen mit PDCA-Phase, Verantwortlichem, Zählerbezug und 5-Why-Analyse; Tracking mit Filtern und CSV-Export |
 
 Einheiten: Strom kWh, Wasser m³, Gas m³ (abgerechnet in kWh), Druckluft Nm³.
@@ -119,6 +120,7 @@ ADMIN_NAME="Max Mustermann" ADMIN_USERNAME=max.mustermann ADMIN_PASSWORD='…' .
 | `PUBLIC_URL` | `http://<server-ip>:<port>` | Adresse für Benutzer, bestimmt den Standard für `COOKIE_SECURE` |
 | `TZ` | `Europe/Berlin` | Zeitzone |
 | `DB_NAME` / `DB_USER` | `energie` | Datenbank und Benutzer |
+| `IMPORT_PATH` | `./import` | Ordner für CSV-Dateien von Datenloggern (Online-Anbindung, Art „CSV-Ordner“) |
 | `DB_PASSWORD` | zufällig | Datenbank-Passwort |
 | `APP_SECRET` | zufällig | Schlüssel für gespeicherte Zugangsdaten (SMB-Passwort); wird erzeugt und nicht abgefragt |
 | `ALLOW_REGISTER` | `false` | Selbstregistrierung (das allererste Konto ist immer möglich und wird Administrator) |
@@ -215,12 +217,38 @@ Der `web`-Container läuft ohne Root-Rechte (`nginx-unprivileged`) und lauscht i
 Nach außen gilt weiterhin `WEB_PORT`. `web` und `api` laufen mit schreibgeschütztem Dateisystem, ohne
 Linux-Sonderrechte (`cap_drop: ALL`) und mit `no-new-privileges`; das gilt auch für `db`.
 
+## Online-Anbindung der Zähler
+
+Der API-Container fragt Zähler und Gateways im Firmennetz selbst ab — er braucht dazu Netzwerkzugang zu den Geräten
+(der Container hängt am Docker-Netz `frontend`, das nach außen offen ist; Firewall-Regeln für Port 502 bzw. den
+Gateway-/Broker-Port beachten). Eingerichtet wird alles in der Oberfläche:
+
+1. *Einstellungen → Zähler-Anbindung* (Administration): Verbindung anlegen — Art, Adresse, Anmeldung, Abfrageintervall
+   in Minuten. Passwörter und Push-Schlüssel liegen AES-256-GCM-verschlüsselt in der Datenbank (Schlüssel `APP_SECRET`),
+   wie beim SMB-Passwort. Der Reiter „Test“ prüft die Verbindung.
+2. Beim Zähler *Bearbeiten → Online-Anbindung*: Verbindung wählen und angeben, wo der Zählerstand steht.
+
+| Art | Adresse je Zähler | Hinweise |
+|-----|-------------------|----------|
+| Modbus TCP | Registeradresse (0-basiert oder 40001/30001-Schreibweise), Datentyp (u)int16/32/64, float32/64, Wortreihenfolge, Unit-ID | Zähler mit Netzwerk oder Modbus-Gateway (RS485 → TCP) |
+| M-Bus (TCP-Gateway) | Primäradresse, optional Datensatz-Nummer | Gateway im transparenten Modus; gelesen wird der erste Energie- bzw. Volumen-Datensatz (Wh/J → kWh, m³) |
+| MQTT | Thema, optional JSON-Pfad | Der Server abonniert die Themen und nimmt im Intervall die letzte Nachricht |
+| REST / JSON | Pfad bzw. Adresse, JSON-Pfad | Anmeldung Basic, Bearer oder eigener Header |
+| HTTP-Push | Kennung (Standard: Zählernummer) | Logger senden `POST /api/ingest/<Verbindung>` mit `Authorization: Bearer <Schlüssel>` und `{"values":[{"key":"E-100","value":123.4,"ts":"…"}]}` |
+| CSV-Ordner | Kennung | Dateien im Ordner `IMPORT_PATH` (Standard `./import`, im Container `/import`); Zeile `Kennung;Zeitpunkt;Zählerstand`; verarbeitete Dateien → `verarbeitet/` |
+| Simulator | Steigung je Stunde | Zum Ausprobieren ohne Hardware |
+
+Gespeichert werden Zählerstände in der Ableseeinheit (vor dem Messfaktor) in der Tabelle `meter_values`; sie stecken
+in den Sicherungen und gehören bei der Teil-Wiederherstellung zum Teil „Energiedaten“. In der Monatsablesung erscheint
+der Stand zum Ablesedatum (00:00 Uhr, zwischen zwei Messwerten linear ermittelt) als Vorschlag — gespeichert wird erst
+nach „Prüfen und speichern“. Die Adapter lassen sich ohne Hardware prüfen: `node tools/test-anbindung.js`.
+
 ## Sicherungen
 
 - Täglich automatisch zur eingestellten Uhrzeit, alte automatische Sicherungen werden nach `BACKUP_KEEP` entfernt.
 - Von Hand in der Oberfläche unter *Einstellungen → Datenbank & Sicherung* oder per `./deploy.sh backup`.
 - Vor jedem `./deploy.sh` und vor jeder Wiederherstellung wird der aktuelle Stand automatisch gesichert.
-- Dateien: `backups/energie_<datum>_<auto|manual>.dump` (PostgreSQL-Custom-Format, Tabellen `documents`, `users`, `dashboards` und `user_avatars`).
+- Dateien: `backups/energie_<datum>_<auto|manual>.dump` (PostgreSQL-Custom-Format, Tabellen `documents`, `users`, `dashboards`, `user_avatars`, `meter_values` und `meter_status`).
   Für den Ernstfall zusätzlich auf ein NAS kopieren (siehe unten) und die Wiederherstellung einmal ausprobieren.
 - Die Sicherungen enthalten die Passwort-Hashes. Ordner und Dateien sind deshalb nur für den Besitzer lesbar (`700`/`600`).
 - **Herunterladen:** In der Liste *Vorhandene Sicherungen* lädt „Herunterladen“ die `.dump`-Datei direkt im Browser

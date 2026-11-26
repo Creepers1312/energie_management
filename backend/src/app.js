@@ -45,6 +45,7 @@ function createApp() {
   app.use("/api/document", express.json({ limit: config.bodyLimit }));
   app.use("/api/user/dashboard", express.json({ limit: "256kb" }));
   app.use("/api/me/avatar", express.json({ limit: "400kb" }));
+  app.use("/api/ingest", express.json({ limit: "2mb" }));
   app.use("/api", express.json({ limit: config.smallBodyLimit }));
   app.use("/api", (req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });
   app.use("/api", sessions.middleware);
@@ -80,7 +81,7 @@ function createApp() {
     });
   }));
 
-  ["documents", "auth", "account", "admin", "dashboards"].forEach((m) => require("./routes/" + m).register(app));
+  ["documents", "auth", "account", "admin", "dashboards", "metering"].forEach((m) => require("./routes/" + m).register(app));
 
   /* ---------- Rest ---------- */
   app.use("/api", (req, res) => res.status(404).json({ error: "Unbekannter Endpunkt." }));

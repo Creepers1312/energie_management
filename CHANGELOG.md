@@ -41,5 +41,12 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
 - Im lokalen Testmodus (ohne Server) kann auch der Demo-Zugang Dashboards anpassen, kopieren und neu anlegen.
 - Fenster für Zähler, Zählerwechsel, Ablesung, ILV-Regel und Maßnahme mit Reitern (z. B. Grunddaten, Einbau & Messung, Technische Eigenschaften); fehlt ein Pflichtfeld, springt das Fenster zum passenden Reiter.
 
+- **Online-Anbindung der Zähler:** Der Server holt Zählerstände im einstellbaren Intervall ab — Modbus TCP,
+  M-Bus über TCP-Gateway, MQTT, REST/JSON, HTTP-Push von Datenloggern (mit Schlüssel) und CSV-Ordner, dazu ein
+  Simulator. Verbindungen unter Einstellungen → Zähler-Anbindung (mit Test), Zuordnung je Zähler im neuen Reiter
+  „Online-Anbindung“, Online-Messwerte mit Verbrauch je Tag im Zählerdetail, Dashboard-Kachel zum Status. In der
+  Ablesung erscheint der Stand zum Ablesedatum als Vorschlag („Online-Werte übernehmen“). Neue Einstellung
+  `IMPORT_PATH` für den CSV-Ordner; die Messwerte stecken in den Sicherungen.
+
 ### Entfernt (gegenüber dem Shopfloor Board)
 - Daily Huddle, SQIDP-Board, Tageskennzahlen, Tagesbericht, TV-Modus und Monatsbericht.
