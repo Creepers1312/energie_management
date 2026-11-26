@@ -39,6 +39,7 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   Maßnahmen-Tracking.
 - Teil-Wiederherstellung aus Sicherungen mit dem Teil „Energiedaten“.
 - Im lokalen Testmodus (ohne Server) kann auch der Demo-Zugang Dashboards anpassen, kopieren und neu anlegen.
+- Fenster für Zähler, Zählerwechsel, Ablesung, ILV-Regel und Maßnahme mit Reitern (z. B. Grunddaten, Einbau & Messung, Technische Eigenschaften); fehlt ein Pflichtfeld, springt das Fenster zum passenden Reiter.
 
 ### Entfernt (gegenüber dem Shopfloor Board)
 - Daily Huddle, SQIDP-Board, Tageskennzahlen, Tagesbericht, TV-Modus und Monatsbericht.

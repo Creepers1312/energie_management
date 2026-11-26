@@ -2068,6 +2068,7 @@ tr.me-removed td:first-child b { text-decoration: line-through; }
 .pv-up { color: var(--crit-text); }
 .pv-down { color: var(--good-text); }
 tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
+.md-new, #cgNewBox { display: flex; flex-direction: column; gap: 12px; }
 .rd-input, .rd-date, .rl-factor { padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
 .rd-input:focus, .rd-date:focus, .rl-factor:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); border-color: var(--accent); }
 @media (max-width: 560px) { .pv-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -2909,6 +2910,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       <button type="button" class="btn ghost sm" id="dlgClose" aria-label="Schließen">✕</button>
     </div>
     <div class="dlg-body">
+      <div class="dtabs" role="tablist" aria-label="Bereiche der Maßnahme">
+        <button type="button" class="dtab" role="tab" data-tab="main" aria-selected="true">Maßnahme</button>
+        <button type="button" class="dtab" role="tab" data-tab="why" aria-selected="false">5-Why-Analyse</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="main">
       <div class="field">
         <label for="fTitle">Titel</label>
         <input id="fTitle" required placeholder="z. B. Druckluftleckage Halle 2 beheben">
@@ -2951,10 +2957,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <label for="fDesc">Beschreibung (Pflicht)</label>
         <textarea id="fDesc" required placeholder="Was ist aufgefallen, was ist geplant oder wurde sofort getan?"></textarea>
       </div>
-      <details class="whys">
-        <summary>5-Why-Ursachenanalyse</summary>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="why" hidden>
+        <p class="mini-hint">Fünfmal „Warum?“ fragen, bis die eigentliche Ursache gefunden ist — dort setzt die Maßnahme an.</p>
         <div class="why-list" id="whyList"></div>
-      </details>
+      </div>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn ghost danger" id="dlgDelete" hidden>Löschen</button>
@@ -2972,6 +2979,12 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       <button type="button" class="btn ghost sm" id="mdClose" aria-label="Schließen">✕</button>
     </div>
     <div class="dlg-body">
+      <div class="dtabs" role="tablist" aria-label="Bereiche des Zählers">
+        <button type="button" class="dtab" role="tab" data-tab="base" aria-selected="true">Grunddaten</button>
+        <button type="button" class="dtab" role="tab" data-tab="mess" id="mdTabMess" aria-selected="false">Einbau &amp; Messung</button>
+        <button type="button" class="dtab" role="tab" data-tab="tech" aria-selected="false">Technische Eigenschaften</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="base">
       <div class="field-row">
         <div class="field"><label for="mdNo">Zählernummer</label><input id="mdNo" required maxlength="40" autocomplete="off" placeholder="z. B. E-4711"></div>
         <div class="field"><label for="mdName">Bezeichnung</label><input id="mdName" required maxlength="80" autocomplete="off" placeholder="z. B. Hauptzähler Halle 1"></div>
@@ -2985,6 +2998,8 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <select id="mdParent"></select>
         <p class="mini-hint" id="mdParentHint">Unterzähler werden in der ILV beim Hauptzähler abgezogen. Der Gesamtverbrauch je Energieart zählt nur Zähler ohne übergeordneten Zähler.</p>
       </div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="mess" hidden>
       <div class="md-new" id="mdNewBox">
         <div class="field-row">
           <div class="field"><label for="mdInstalled">Einbaudatum</label><input id="mdInstalled" type="date" required></div>
@@ -2996,8 +3011,8 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         </div>
         <label class="check-line"><input type="checkbox" id="mdAutoRule" checked> ILV-Regel automatisch anlegen (Kostenstelle erhält den Verbrauch, beim Hauptzähler wird er abgezogen)</label>
       </div>
-      <details class="whys" open>
-        <summary>Weitere technische Eigenschaften</summary>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="tech" hidden>
         <div class="field-row">
           <div class="field"><label for="mdLocation">Einbauort</label><input id="mdLocation" maxlength="80" autocomplete="off"></div>
           <div class="field"><label for="mdManufacturer">Hersteller</label><input id="mdManufacturer" maxlength="60" autocomplete="off"></div>
@@ -3011,7 +3026,7 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
           <div class="field"><label for="mdCalib">Eichung gültig bis</label><input id="mdCalib" type="date"></div>
         </div>
         <div class="field"><label for="mdNote">Bemerkung</label><textarea id="mdNote" maxlength="500"></textarea></div>
-      </details>
+      </div>
       <p class="login-error" id="mdError" hidden></p>
     </div>
     <div class="dlg-foot">
@@ -3058,7 +3073,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
     </div>
     <div class="dlg-body">
       <p class="cf-text" id="cgSub"></p>
-      <div class="set-card-title">Alter Zähler abschließen</div>
+      <div class="dtabs" role="tablist" aria-label="Schritte des Zählerwechsels">
+        <button type="button" class="dtab" role="tab" data-tab="old" aria-selected="true">1. Alter Zähler</button>
+        <button type="button" class="dtab" role="tab" data-tab="new" id="cgTabNew" aria-selected="false">2. Neuer Zähler</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="old">
       <div class="field-row">
         <div class="field"><label for="cgRemoveDate">Ausbaudatum</label><input id="cgRemoveDate" type="date" required></div>
         <div class="field"><label for="cgRemoveValue">Ausbauzählerstand</label><input id="cgRemoveValue" inputmode="decimal" autocomplete="off" required></div>
@@ -3068,8 +3087,9 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <div class="field"><label>Verbrauch des alten Zählers</label><div class="calc-out" id="cgRemoveCalc">—</div></div>
       </div>
       <label class="check-line" id="cgRolloverLine" hidden><input type="checkbox" id="cgRollover"> Zählerüberlauf: der Stand ist über den Überlaufwert gelaufen</label>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="new" hidden>
       <div id="cgNewBox">
-        <div class="set-card-title">Neuen Zähler anlegen</div>
         <div class="field-row">
           <div class="field"><label for="cgNo">Neue Zählernummer</label><input id="cgNo" maxlength="40" autocomplete="off"></div>
           <div class="field"><label for="cgName">Bezeichnung</label><input id="cgName" maxlength="80" autocomplete="off"></div>
@@ -3087,6 +3107,7 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
           <div class="field"><label for="cgSerial">Seriennummer</label><input id="cgSerial" maxlength="60" autocomplete="off"></div>
         </div>
         <p class="mini-hint">Der Verbrauch von altem und neuem Zähler wird getrennt berechnet. ILV-Regeln, Unterzähler und Auswertungen gehen auf den neuen Zähler über; die Daten des alten Zählers bleiben erhalten.</p>
+      </div>
       </div>
       <p class="login-error" id="cgError" hidden></p>
     </div>
@@ -3106,6 +3127,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
     </div>
     <div class="dlg-body">
       <p class="cf-text" id="rgSub"></p>
+      <div class="dtabs" role="tablist" aria-label="Bereiche der Ablesung">
+        <button type="button" class="dtab" role="tab" data-tab="val" aria-selected="true">Ablesung</button>
+        <button type="button" class="dtab" role="tab" data-tab="hist" id="rgTabHist" aria-selected="false">Verlauf</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="val">
       <div class="field-row">
         <div class="field"><label for="rgDate">Ablesedatum</label><input id="rgDate" type="date" required></div>
         <div class="field"><label for="rgMonth">Abrechnungsmonat</label><input id="rgMonth" type="month" required></div>
@@ -3115,7 +3141,10 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <div class="field"><label>Verbrauch</label><div class="calc-out" id="rgCalc">—</div></div>
       </div>
       <div class="field"><label for="rgNote">Bemerkung / Grund der Änderung</label><input id="rgNote" maxlength="200" autocomplete="off"></div>
-      <div class="rg-history" id="rgHistory"></div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="hist" hidden>
+        <div class="rg-history" id="rgHistory"></div>
+      </div>
       <p class="login-error" id="rgError" hidden></p>
     </div>
     <div class="dlg-foot">
@@ -3152,6 +3181,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
       <button type="button" class="btn ghost sm" id="rlClose" aria-label="Schließen">✕</button>
     </div>
     <div class="dlg-body">
+      <div class="dtabs" role="tablist" aria-label="Bereiche der Regel">
+        <button type="button" class="dtab" role="tab" data-tab="calc" aria-selected="true">Berechnung</button>
+        <button type="button" class="dtab" role="tab" data-tab="hist" id="rlTabHist" aria-selected="false">Versionen</button>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="calc">
       <div class="field-row">
         <div class="field"><label for="rlCc">Kostenstelle</label><select id="rlCc" required></select></div>
         <div class="field"><label for="rlType">Energieart</label><select id="rlType"></select></div>
@@ -3168,7 +3202,10 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
         <input id="rlFrom" type="month" required>
         <p class="mini-hint" id="rlRetro"></p>
       </div>
-      <div class="rg-history" id="rlHistory"></div>
+      </div>
+      <div class="dpanel" role="tabpanel" data-tab="hist" hidden>
+        <div class="rg-history" id="rlHistory"></div>
+      </div>
       <p class="login-error" id="rlError" hidden></p>
     </div>
     <div class="dlg-foot">
@@ -4535,6 +4572,37 @@ window.EN = (function () {
     var o = noneLabel ? [{ v: "", t: noneLabel }] : [];
     return o.concat(list.map(function (m) { return { v: m.id, t: m.no + " · " + m.name + (m.removed ? " (ausgebaut)" : "") }; }));
   }
+  // Reiter in Fenstern (.dtabs/.dpanel): beim Öffnen steht immer der erste Reiter vorn; meldet der Browser ein
+  // fehlendes Pflichtfeld auf einem verdeckten Reiter, wird dieser Reiter gezeigt
+  function dlgTab(dlg, key) {
+    dlg.querySelectorAll(".dtab").forEach(function (b) {
+      var on = b.dataset.tab === key;
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+    });
+    dlg.querySelectorAll(".dpanel").forEach(function (pn) { pn.hidden = pn.dataset.tab !== key; });
+  }
+  function dlgFirstTab(dlg) {
+    var first = [].filter.call(dlg.querySelectorAll(".dtab"), function (b) { return !b.hidden; })[0];
+    if (first) dlgTab(dlg, first.dataset.tab);
+  }
+  document.querySelectorAll("dialog").forEach(function (dlg) {
+    if (!dlg.querySelector(".dtabs")) return;
+    dlg.querySelectorAll(".dtab").forEach(function (b) {
+      b.addEventListener("click", function () { dlgTab(dlg, b.dataset.tab); });
+      b.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        var list = [].filter.call(dlg.querySelectorAll(".dtab"), function (x) { return !x.hidden; }), i = list.indexOf(b);
+        var nx = list[(i + (e.key === "ArrowRight" ? 1 : list.length - 1)) % list.length];
+        dlgTab(dlg, nx.dataset.tab); nx.focus();
+      });
+    });
+    dlg.addEventListener("invalid", function (e) {
+      var pn = e.target.closest && e.target.closest(".dpanel");
+      if (pn && pn.hidden) dlgTab(dlg, pn.dataset.tab);
+    }, true);
+    new MutationObserver(function () { if (dlg.open) dlgFirstTab(dlg); }).observe(dlg, { attributes: true, attributeFilter: ["open"] });
+  });
   function showErr(id, msg) { var e = byId(id); e.hidden = !msg; e.textContent = msg || ""; }
   function monthInputMax(input) { input.max = DUE_MONTH > EN.monthOf(TODAY_ISO) ? DUE_MONTH : EN.monthOf(TODAY_ISO); }
   // Energiedaten nach einer Änderung speichern und alles neu zeichnen
@@ -6467,6 +6535,7 @@ window.EN = (function () {
     $("#mdDigits").value = m && m.digits ? m.digits : "";
     $("#mdCalib").value = m && m.calib ? m.calib : "";
     $("#mdNewBox").hidden = !!m;
+    $("#mdTabMess").hidden = !!m;
     $("#mdInstalled").required = !m;
     $("#mdInstalled").value = m ? "" : TODAY_ISO;
     $("#mdInstalled").max = TODAY_ISO;
@@ -6613,6 +6682,7 @@ window.EN = (function () {
     var lr = lastReading(m);
     $("#cgSub").textContent = m.name + " · letzter Stand " + (lr ? fmtValue(EN.num(lr.value)) + " " + meterUnit(m.type) + " am " + fmtDate(lr.date) : "—") + ".";
     $("#cgNewBox").hidden = !withNew;
+    $("#cgTabNew").hidden = !withNew;
     $("#cgSave").textContent = withNew ? "Zähler wechseln" : "Ausbauen";
     $("#cgRemoveDate").value = TODAY_ISO; $("#cgRemoveDate").max = TODAY_ISO;
     $("#cgRemoveValue").value = "";
@@ -7043,6 +7113,7 @@ window.EN = (function () {
         h.appendChild(el("div", "mini-hint", fmtDateTime(x.at) + " · " + (x.by || "") + ": " + fmtValue(EN.num(x.value)) + " am " + fmtDate(x.date) + " (" + monthShort(x.month || "") + ")" + (x.reason ? " — " + x.reason : "")));
       });
     }
+    $("#rgTabHist").hidden = !r;
     if (r) h.appendChild(el("div", "mini-hint", "Erfasst " + fmtDateTime(r.at) + (r.by ? " von " + r.by : "") + (r.note ? " · " + r.note : "")));
     rgCalc();
     rgDlg.showModal();
@@ -7390,6 +7461,7 @@ window.EN = (function () {
     rlTerms = v ? EN.clone(v.terms) : [];
     $("#rlFrom").value = r ? next : (dm ? dm.first : DUE_MONTH);
     $("#rlEnd").hidden = !r;
+    $("#rlTabHist").hidden = !r;
     var h = $("#rlHistory"); h.innerHTML = "";
     if (r) {
       h.appendChild(el("div", "set-card-title", "Versionen"));
