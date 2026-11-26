@@ -144,8 +144,8 @@ const READ_ONLY = new Set(["checkmk", "count-users"]);
   } catch (err) {
     if (cmd === "checkmk") {
       // Für Checkmk immer eine auswertbare Zeile statt eines Programmfehlers
-      const p = args[0] || "Shopfloor";
-      console.log(`2 "${p} Board" - Statusabfrage fehlgeschlagen (!!): ${String(err.message).replace(/[\r\n|]+/g, " ")}`);
+      const p = args[0] || "Energie";
+      console.log(`2 "${p} App" - Statusabfrage fehlgeschlagen (!!): ${String(err.message).replace(/[\r\n|]+/g, " ")}`);
       console.log(`3 "${p} Backup" - Status unbekannt, Datenbank nicht erreichbar`);
       process.exit(0);
     }

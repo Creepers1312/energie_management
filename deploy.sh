@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Shopfloor Board — Deploy-Skript
+#  Energie Management — Deploy-Skript
 #
 #  Erstinstallation (frisches System, Docker wird bei Bedarf eingerichtet):
-#     git clone https://github.com/Creepers1312/shopfloor.git && cd shopfloor && ./deploy.sh
+#     git clone https://github.com/Creepers1312/energie_management.git && cd energie_management && ./deploy.sh
 #  Update (später, im selben Ordner):
 #     ./deploy.sh                 Sicherung → git pull → neu bauen → starten (Einstellungen bleiben)
 #
@@ -36,12 +36,12 @@
 #            — im Proxy als Ziel http://<projekt>-web:8080 eintragen
 #
 #  Ohne Rückfragen, z. B.:
-#    DEPLOY_MODE=proxy PROXY_NETWORK=npm_default PUBLIC_URL=https://shopfloor.firma.de \
+#    DEPLOY_MODE=proxy PROXY_NETWORK=npm_default PUBLIC_URL=https://energie.firma.de \
 #    ADMIN_NAME="Max Mustermann" ADMIN_USERNAME="max.mustermann" ADMIN_EMAIL="…" ADMIN_PASSWORD="…" ./deploy.sh -y
 # =============================================================================
 set -Eeuo pipefail
 
-SCRIPT_VERSION="1.6.0"
+SCRIPT_VERSION="1.0.0"
 cd "$(dirname "$(readlink -f "$0")")"
 
 ENV_FILE=".env"
@@ -177,15 +177,15 @@ cli_in() { dc exec -T api node src/cli.js "$@"; }
 # ---------- Einstellungen ----------------------------------------------------
 # Name | Standard | Typ | Beschreibung
 SETTINGS=(
-  "COMPOSE_PROJECT_NAME|shopfloor|name|Projektname (eindeutig auf diesem Server; Präfix für Container, Netze, Volumes)"
+  "COMPOSE_PROJECT_NAME|energie|name|Projektname (eindeutig auf diesem Server; Präfix für Container, Netze, Volumes)"
   "DEPLOY_MODE|__auto__|mode|Betriebsart: port = eigener Port · proxy = im Docker-Netz eines vorhandenen Reverse Proxys (z. B. Nginx Proxy Manager)"
   "PROXY_NETWORK|__auto__|network|Docker-Netz des Reverse Proxys"
   "WEB_BIND|__auto__|ip|IP-Adresse, an die der Web-Port gebunden wird (127.0.0.1 = nur lokal)"
-  "WEB_PORT|8080|port|Port für das Board auf diesem Server"
-  "PUBLIC_URL|__auto__|url|Adresse, unter der das Board erreichbar ist (z. B. https://shopfloor.firma.de)"
+  "WEB_PORT|8080|port|Port für die Anwendung auf diesem Server"
+  "PUBLIC_URL|__auto__|url|Adresse, unter der die Anwendung erreichbar ist (z. B. https://energie.firma.de)"
   "TZ|Europe/Berlin|text|Zeitzone (für Sicherungszeiten und Dateinamen)"
-  "DB_NAME|shopfloor|name|Name der Datenbank"
-  "DB_USER|shopfloor|name|Datenbank-Benutzer"
+  "DB_NAME|energie|name|Name der Datenbank"
+  "DB_USER|energie|name|Datenbank-Benutzer"
   "DB_PASSWORD|__random__|secret|Datenbank-Passwort"
   "APP_SECRET|__random__|keep|Schlüssel für gespeicherte Zugangsdaten, z. B. SMB-Passwort (wird erzeugt, nicht ändern)"
   "ALLOW_REGISTER|false|bool|Dürfen sich neue Benutzer selbst registrieren?"
@@ -199,13 +199,13 @@ SETTINGS=(
   "BACKUP_ENABLED|true|bool|Standard für tägliche automatische Sicherung"
   "BACKUP_TIME|02:00|time|Uhrzeit der täglichen Sicherung (HH:MM)"
   "BACKUP_KEEP|14|int|Wie viele automatische Sicherungen aufbewahren?"
-  "CHECKMK|__auto__|bool|Checkmk-Überwachung (Local Check für Board und Sicherungen) einrichten?"
+  "CHECKMK|__auto__|bool|Checkmk-Überwachung (Local Check für Anwendung und Sicherungen) einrichten?"
   "SMTP_HOST||opthost|Mailserver für „Passwort vergessen“ — Startwert, später in der Oberfläche änderbar (leer = später dort einrichten)"
   "SMTP_PORT|587|port|Port des Mailservers (587 = STARTTLS, 465 = TLS, 25 = ohne)"
   "SMTP_SECURITY|starttls|smtpsec|Verschlüsselung zum Mailserver: starttls, tls oder none"
   "SMTP_USER||opttext|Benutzername am Mailserver (leer = ohne Anmeldung)"
   "SMTP_PASSWORD||mailpass|Passwort am Mailserver"
-  "SMTP_FROM||mailfrom|Absender, z. B. Shopfloor Board <shopfloor@firma.de>"
+  "SMTP_FROM||mailfrom|Absender, z. B. Energie Management <energie@firma.de>"
   "COMPOSE_FILE|__auto__|derived|Compose-Dateien (ergibt sich aus der Betriebsart, nicht von Hand ändern)"
 )
 
@@ -239,7 +239,7 @@ network_subnets() {   # Netzname → Subnetze mit Komma getrennt
   "${DOCKER[@]}" network inspect "$1" --format '{{range .IPAM.Config}}{{.Subnet}},{{end}}' 2>/dev/null | sed 's/,$//' || true
 }
 port_in_use() {   # Port → belegt (und nicht von diesem Projekt)?
-  local port="$1" project="${VAL[COMPOSE_PROJECT_NAME]:-shopfloor}"
+  local port="$1" project="${VAL[COMPOSE_PROJECT_NAME]:-energie}"
   if "${DOCKER[@]}" ps --filter "label=com.docker.compose.project=$project" --format '{{.Ports}}' 2>/dev/null | grep -q ":$port->"; then
     return 1
   fi
@@ -313,7 +313,7 @@ hint_for() {
     smtpsec) echo "starttls, tls oder none" ;;
     opttext) echo "ohne Leerzeichen, oder leer" ;;
     mailpass) echo "keine Zeilenumbrüche und kein '" ;;
-    mailfrom) echo "E-Mail-Adresse, z. B. Shopfloor Board <shopfloor@firma.de>" ;;
+    mailfrom) echo "E-Mail-Adresse, z. B. Energie Management <energie@firma.de>" ;;
     network) echo "Name eines vorhandenen Docker-Netzes (docker network ls)" ;;
     bool) echo "ja oder nein" ;;
     url) echo "mit http:// oder https://" ;;
@@ -460,7 +460,7 @@ write_env() {
   (
   umask 077
   {
-    echo "# Shopfloor Board — erzeugt von deploy.sh $SCRIPT_VERSION am $(date '+%F %T')"
+    echo "# Energie Management — erzeugt von deploy.sh $SCRIPT_VERSION am $(date '+%F %T')"
     echo "# Änderungen am besten über ./deploy.sh config vornehmen."
     for entry in "${SETTINGS[@]}"; do
       IFS='|' read -r key _ _ desc <<< "$entry"
@@ -488,7 +488,7 @@ confirm() {
 }
 
 db_volume_exists() {
-  local project="${VAL[COMPOSE_PROJECT_NAME]:-${CUR[COMPOSE_PROJECT_NAME]:-shopfloor}}"
+  local project="${VAL[COMPOSE_PROJECT_NAME]:-${CUR[COMPOSE_PROJECT_NAME]:-energie}}"
   "${DOCKER[@]}" volume inspect "${project}_db-data" >/dev/null 2>&1
 }
 
@@ -516,8 +516,8 @@ as_root() {
   elif command -v sudo >/dev/null 2>&1; then sudo "$@"
   else return 1; fi
 }
-checkmk_script() { echo "$CHECKMK_LOCAL_DIR/300/shopfloor_${VAL[COMPOSE_PROJECT_NAME]}"; }
-checkmk_prefix() { [[ "${VAL[COMPOSE_PROJECT_NAME]}" == shopfloor ]] && echo "Shopfloor" || echo "Shopfloor ${VAL[COMPOSE_PROJECT_NAME]}"; }
+checkmk_script() { echo "$CHECKMK_LOCAL_DIR/300/energie_${VAL[COMPOSE_PROJECT_NAME]}"; }
+checkmk_prefix() { [[ "${VAL[COMPOSE_PROJECT_NAME]}" == energie ]] && echo "Energie" || echo "Energie ${VAL[COMPOSE_PROJECT_NAME]}"; }
 setup_checkmk() {
   local target project="${VAL[COMPOSE_PROJECT_NAME]}" prefix
   target="$(checkmk_script)"; prefix="$(checkmk_prefix)"
@@ -533,21 +533,21 @@ setup_checkmk() {
   as_root mkdir -p "$CHECKMK_LOCAL_DIR/300"
   as_root tee "$target" >/dev/null <<EOF_CMK
 #!/bin/sh
-# Shopfloor Board (Projekt $project) — Checkmk-Local-Check, von deploy.sh installiert.
-# Dienste: "$prefix Board", "$prefix Backup" und — wenn eingeschaltet — "$prefix Backup SMB".
+# Energie Management (Projekt $project) — Checkmk-Local-Check, von deploy.sh installiert.
+# Dienste: "$prefix App", "$prefix Backup" und — wenn eingeschaltet — "$prefix Backup SMB".
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 C=\$(docker ps -q --filter label=com.docker.compose.project=$project --filter label=com.docker.compose.service=api --filter status=running 2>/dev/null | head -n 1)
 if [ -z "\$C" ]; then
-  echo '2 "$prefix Board" - API-Container läuft nicht (!!)'
+  echo '2 "$prefix App" - API-Container läuft nicht (!!)'
   echo '3 "$prefix Backup" - Status unbekannt, API-Container läuft nicht'
   exit 0
 fi
 timeout 60 docker exec "\$C" node src/cli.js checkmk "$prefix" 2>/dev/null \\
-  || echo '2 "$prefix Board" - Statusabfrage fehlgeschlagen (!!)'
+  || echo '2 "$prefix App" - Statusabfrage fehlgeschlagen (!!)'
 EOF_CMK
   as_root chmod 755 "$target"
   ok "Checkmk-Local-Check eingerichtet: $target"
-  info "In Checkmk beim Host eine Service-Erkennung ausführen — neue Dienste: „$prefix Board“, „$prefix Backup“."
+  info "In Checkmk beim Host eine Service-Erkennung ausführen — neue Dienste: „$prefix App“, „$prefix Backup“."
 }
 
 pre_backup() {
@@ -567,13 +567,13 @@ wait_healthy() {
 
   for _ in $(seq 1 60); do
     if dc exec -T web wget -qO- http://127.0.0.1:8080/api/health 2>/dev/null </dev/null | grep -q '"mode":"server"'; then
-      ok "Board antwortet, Datenbank verbunden."
+      ok "Anwendung antwortet, Datenbank verbunden."
       return 0
     fi
     sleep 2
   done
   dc ps
-  die "Das Board ist nach 120 s nicht erreichbar — Logs: ./deploy.sh logs"
+  die "Die Anwendung ist nach 120 s nicht erreichbar — Logs: ./deploy.sh logs"
 }
 
 ensure_admin() {
@@ -630,7 +630,7 @@ create_admin_interactive() {
 summary() {
   local url="${VAL[PUBLIC_URL]}"
   title "Fertig"
-  echo "  Board:            $url"
+  echo "  Anwendung:        $url"
   if [[ "${VAL[WEB_BIND]}" != "127.0.0.1" ]]; then
     echo "  Direkt im LAN:    http://$(primary_ip):${VAL[WEB_PORT]}"
     [[ "${VAL[COOKIE_SECURE]}" == true ]] && echo "                    (Anmeldung dort nicht möglich, da COOKIE_SECURE=true — nur über HTTPS)"
@@ -674,7 +674,7 @@ git_update() {
 }
 
 do_deploy() {
-  title "Shopfloor Board — Deploy $SCRIPT_VERSION"
+  title "Energie Management — Deploy $SCRIPT_VERSION"
   _log INFO "===== deploy ($COMMAND) gestartet ====="
   title "Voraussetzungen"
   ensure_docker true

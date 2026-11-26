@@ -162,10 +162,10 @@ async function create(kind, note) {
   busy = true;
   try {
     await fs.promises.mkdir(config.backupDir, { recursive: true });
-    let filename = `shopfloor_${stamp(new Date())}_${kind}.dump`;
+    let filename = `energie_${stamp(new Date())}_${kind}.dump`;
     let n = 1;
     while (fs.existsSync(path.join(config.backupDir, filename))) {
-      filename = `shopfloor_${stamp(new Date())}-${n++}_${kind}.dump`;
+      filename = `energie_${stamp(new Date())}-${n++}_${kind}.dump`;
     }
     const file = path.join(config.backupDir, filename);
     const args = ["--format=custom", "--no-owner", "--no-privileges", "--file", file];
@@ -225,7 +225,7 @@ async function restore(filename, by) {
     // Alle Geräte sollen den wiederhergestellten Stand neu laden
     await db.tx(async (c) => {
       await db.lockRevision(c);
-      await db.bumpRevision(c, ["state", "settings", "users"], by || "Wiederherstellung");
+      await db.bumpRevision(c, ["state", "settings", "users", "energy"], by || "Wiederherstellung");
     });
     console.log(`[backup] ${filename} wiederhergestellt`);
   } finally {
@@ -272,17 +272,16 @@ function startScheduler() {
 /* ---------- Teilweise Wiederherstellung (Standard: CLAUDE.md „Wiederherstellung & Konsistenz“) ----------
    Die Sicherung wird mit pg_restore als Text (COPY-Blöcke) gelesen und in Objekte zerlegt; danach werden nur
    die gewählten Teile bzw. einzelnen Datensätze in EINER Transaktion übernommen. Regeln:
-     1. Zusammengehöriges kommt als Einheit: ein Tag = Tageswerte + SQIDP-Status + Begründungen + Huddle-Haken +
-        Sicherheitseintrag. Berechnete Werte (OEE, Ampeln) werden nie gespeichert, sondern neu berechnet.
+     1. Zusammengehöriges kommt als Einheit: die Energiedaten (Zähler, Ablesungen, Kostenstellen, ILV-Regeln, Preise,
+        Änderungsprotokoll, Berechnungsstände) nur als Ganzes, weil Verbräuche und Verrechnung voneinander abhängen.
      2. Zuordnung über eindeutige Kennungen: Abweichungen über id, Konten über Anmeldenamen, Dashboards über id.
         Vorhanden → auf den Stand der Sicherung setzen, sonst neu anlegen. Zähler (seq, users.id) werden nachgezogen.
-     3. Verknüpfungen werden erkannt und als Hinweis gemeldet (Abweichung ↔ Tag über created/due).
+     3. Verknüpfungen werden erkannt und als Hinweis gemeldet (Maßnahme ↔ Zähler).
      4. dryRun liefert nur den Plan (ersetzt/neu/unverändert, Hinweise) und ändert nichts.
      5. Vor dem Speichern wird das Ergebnis geprüft (validateResult); ein Verstoß bricht alles ab (Rollback).
      6. Vorher automatische Sicherung, danach Sicherheitsprotokoll mit den Datensätzen.
-   Teile: daily | deviations | settings | users | dashboards */
-const PARTS = ["daily", "deviations", "settings", "users", "dashboards"];
-const DAILY_KEYS = ["dailyData", "boards", "huddleLog", "reasons", "safetyLog"];
+   Teile: energy | deviations | settings | users | dashboards */
+const PARTS = ["energy", "deviations", "settings", "users", "dashboards"];
 
 // Ein Feld im Textformat von COPY entschlüsseln (\N = NULL, Backslash-Folgen)
 function copyField(v) {
@@ -323,79 +322,33 @@ async function readDump(filename) {
     if (!d || d.value == null) return null;
     try { return JSON.parse(d.value); } catch (e) { return null; }
   };
-  return { row, tables: t, state: doc("state"), settings: doc("settings") };
+  return { row, tables: t, state: doc("state"), settings: doc("settings"), energy: doc("energy") };
 }
 
 const isIso = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""));
-const devDay = (d) => (d && (d.created || d.due)) || null;
 const devNum = (id) => { const m = /(\d+)$/.exec(String(id || "")); return m ? +m[1] : 0; };
 const lc = (v) => String(v == null ? "" : v).trim().toLowerCase();
 const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
-
-// Alles, was zu einem Tag gehört (Einheit für Vergleich und Übernahme)
-function dayUnit(st, iso) {
-  st = st || {};
-  const p = iso.split("-"), mk = `${+p[0]}-${+p[1]}`, d = +p[2];
-  const board = {};
-  const bm = (st.boards || {})[mk] || {};
-  Object.keys(bm).forEach((cat) => { if (bm[cat] && bm[cat][d] != null) board[cat] = bm[cat][d]; });
-  const reasons = {};
-  Object.keys(st.reasons || {}).forEach((k) => { if (k.split("|")[0] === iso) reasons[k] = st.reasons[k]; });
-  return {
-    daily: (st.dailyData || {})[iso] || null, huddle: (st.huddleLog || {})[iso] || null,
-    safety: (st.safetyLog || {})[iso] || null, board, reasons
-  };
-}
-function unitEmpty(u) {
-  return !u.daily && !u.huddle && !u.safety && !Object.keys(u.board).length && !Object.keys(u.reasons).length;
-}
-// Tage (Einheiten) aus der Sicherung in den aktuellen Stand übernehmen
-function applyDays(cur, bak, days) {
-  ["dailyData", "huddleLog", "safetyLog", "reasons", "boards"].forEach((k) => { if (!cur[k] || typeof cur[k] !== "object") cur[k] = {}; });
-  days.forEach((iso) => {
-    const u = dayUnit(bak, iso);
-    [["dailyData", "daily"], ["huddleLog", "huddle"], ["safetyLog", "safety"]].forEach(([k, f]) => {
-      if (u[f] != null) cur[k][iso] = u[f]; else delete cur[k][iso];
-    });
-    Object.keys(cur.reasons).forEach((k) => { if (k.split("|")[0] === iso) delete cur.reasons[k]; });
-    Object.assign(cur.reasons, u.reasons);
-    const p = iso.split("-"), mk = `${+p[0]}-${+p[1]}`, d = +p[2];
-    const cm = cur.boards[mk] || (cur.boards[mk] = {});
-    new Set(Object.keys(cm).concat(Object.keys((bak.boards || {})[mk] || {}))).forEach((cat) => {
-      const col = cm[cat] = Object.assign({}, cm[cat] || {});
-      if (u.board[cat] != null) col[d] = u.board[cat]; else delete col[d];
-    });
-  });
-}
-function daysInRange(st, from, to) {
-  const set = new Set();
-  const add = (iso) => { if (isIso(iso) && (!from || iso >= from) && (!to || iso <= to)) set.add(iso); };
-  st = st || {};
-  ["dailyData", "huddleLog", "safetyLog"].forEach((k) => Object.keys(st[k] || {}).forEach(add));
-  Object.keys(st.reasons || {}).forEach((k) => add(k.split("|")[0]));
-  Object.keys(st.boards || {}).forEach((mk) => {
-    const m = /^(\d{4})-(\d{1,2})$/.exec(mk);
-    if (!m) return;
-    Object.values(st.boards[mk] || {}).forEach((col) => Object.keys(col || {}).forEach((d) =>
-      add(`${m[1]}-${String(+m[2]).padStart(2, "0")}-${String(+d).padStart(2, "0")}`)));
-  });
-  return [...set].sort();
-}
 
 // Inhalt einer Sicherung für das Auswahlfenster (mit Listen für die Einzelauswahl)
 async function inspect(filename) {
   const d = await readDump(filename);
   const st = d.state || {};
-  const days = Object.keys(st.dailyData || {}).filter(isIso).sort();
+  const en = d.energy || {};
+  const rd = (Array.isArray(en.readings) ? en.readings : []).filter((x) => x && !x.deleted && isIso(x.date)).map((x) => x.date).sort();
   const devs = Array.isArray(st.deviations) ? st.deviations.filter(Boolean) : [];
   const users = (d.tables.users && d.tables.users.rows) || [];
   const dash = ((d.tables.dashboards && d.tables.dashboards.rows) || []).filter((x) => x.visibility !== "standard");
   return {
     filename, createdAt: d.row.created_at, kind: d.row.kind, note: d.row.note,
-    daily: { days: days.length, from: days[0] || null, to: days[days.length - 1] || null, list: days },
+    energy: {
+      present: !!d.energy, meters: (Array.isArray(en.meters) ? en.meters : []).length,
+      costCenters: (Array.isArray(en.costCenters) ? en.costCenters : []).length,
+      readings: rd.length, from: rd[0] || null, to: rd[rd.length - 1] || null
+    },
     deviations: {
       total: devs.length, open: devs.filter((x) => x.phase !== "done").length,
-      list: devs.map((x) => ({ id: x.id, title: x.title || "Abweichung", cat: x.cat, phase: x.phase, owner: x.owner || "", due: x.due || null, day: devDay(x) }))
+      list: devs.map((x) => ({ id: x.id, title: x.title || "Abweichung", cat: x.cat, phase: x.phase, owner: x.owner || "", due: x.due || null, day: x.created || x.due || null }))
     },
     settings: { present: !!d.settings, lineName: (d.settings && d.settings.lineName) || "" },
     users: {
@@ -429,7 +382,6 @@ function cleanSelect(sel) {
   sel = sel && typeof sel === "object" ? sel : {};
   const list = (v, max, ok) => (Array.isArray(v) ? [...new Set(v.map(String))].filter(ok).slice(0, max) : null);
   return {
-    days: list(sel.days, 1000, isIso),
     deviations: list(sel.deviations, 2000, (x) => x.length <= 64),
     users: list(sel.users, 500, (x) => x.length <= 64),
     dashboards: list(sel.dashboards, 500, (x) => x.length <= 64),
@@ -446,7 +398,6 @@ async function validateResult(c, state, parts) {
     if (dup.length) problems.push(`Doppelte Abweichungsnummern: ${[...new Set(dup)].join(", ")}`);
     const maxN = Math.max(0, ...ids.map(devNum));
     if ((Number(state.seq) || 0) <= maxN) problems.push("Nummernzähler der Abweichungen zu klein");
-    Object.keys(state.reasons || {}).forEach((k) => { if (!isIso(k.split("|")[0])) problems.push(`Ungültige Begründung „${k}“`); });
   }
   if (parts.includes("users")) {
     const r = await c.query(`SELECT
@@ -464,14 +415,12 @@ async function validateResult(c, state, parts) {
 }
 
 async function restoreParts(filename, opts = {}, by) {
-  let { parts, from, to } = opts;
+  let { parts } = opts;
   const dryRun = !!opts.dryRun;
   const sel = cleanSelect(opts.select);
   parts = Array.isArray(parts) ? [...new Set(parts)].filter((p) => PARTS.includes(p)) : [];
   if (!parts.length) throw new HttpError(400, "Bitte mindestens einen Teil zum Wiederherstellen wählen.");
-  if ((from && !isIso(from)) || (to && !isIso(to)) || (from && to && from > to)) throw new HttpError(400, "Ungültiger Zeitraum.");
-  const pick = { daily: !!(from || to || sel.days), deviations: !!sel.deviations, users: !!sel.users, dashboards: !!sel.dashboards };
-  if (pick.daily && sel.days && !sel.days.length && !from && !to) throw new HttpError(400, "Bitte mindestens einen Tag wählen.");
+  const pick = { energy: false, deviations: !!sel.deviations, users: !!sel.users, dashboards: !!sel.dashboards };
   ["deviations", "users", "dashboards"].forEach((k) => {
     if (parts.includes(k) && pick[k] && !sel[k].length) throw new HttpError(400, "Bitte mindestens einen Eintrag wählen.");
   });
@@ -480,11 +429,12 @@ async function restoreParts(filename, opts = {}, by) {
   if (parts.length === PARTS.length && !anyPick && !dryRun) { await restore(filename, by); return { full: true, parts }; }
 
   const d = await readDump(filename);
-  if ((parts.includes("daily") || parts.includes("deviations")) && !d.state) throw new HttpError(400, "Die Sicherung enthält keine Board-Daten.");
+  if (parts.includes("deviations") && !d.state) throw new HttpError(400, "Die Sicherung enthält keine Maßnahmen.");
+  if (parts.includes("energy") && !d.energy) throw new HttpError(400, "Die Sicherung enthält keine Energiedaten.");
   if (parts.includes("settings") && !d.settings) throw new HttpError(400, "Die Sicherung enthält keine Stammdaten.");
 
-  const curDocs = await db.pool.query("SELECT name, value FROM documents WHERE name IN ('state', 'settings')");
-  const cur = { state: {}, settings: null };
+  const curDocs = await db.pool.query("SELECT name, value FROM documents WHERE name IN ('state', 'settings', 'energy')");
+  const cur = { state: {}, settings: null, energy: null };
   curDocs.rows.forEach((r) => { cur[r.name] = r.value; });
   const curState = JSON.parse(JSON.stringify(cur.state || {}));
   const bak = d.state || {};
@@ -496,21 +446,13 @@ async function restoreParts(filename, opts = {}, by) {
     if (label && kind !== "unchanged") (plan.records[part] = plan.records[part] || []).push(label);
   };
 
-  // Tageswerte
-  let days = [];
-  if (parts.includes("daily")) {
-    if (pick.daily) {
-      const set = new Set(sel.days || []);
-      if (from || to) { daysInRange(bak, from, to).forEach((x) => set.add(x)); daysInRange(curState, from, to).forEach((x) => set.add(x)); }
-      days = [...set].sort();
-    } else {
-      days = [...new Set(daysInRange(bak).concat(daysInRange(curState)))].sort();
-    }
-    days.forEach((iso) => {
-      const a = dayUnit(curState, iso), b = dayUnit(bak, iso);
-      if (same(a, b)) count("daily", "unchanged");
-      else if (unitEmpty(b)) count("daily", "removed", iso);
-      else count("daily", unitEmpty(a) ? "added" : "replaced", iso);
+  // Energiedaten (nur als Ganzes)
+  if (parts.includes("energy")) {
+    count("energy", same(cur.energy, d.energy) ? "unchanged" : "replaced", "Energiedaten");
+    const ids = new Set(((d.energy && d.energy.meters) || []).filter(Boolean).map((m) => m.id));
+    const devs = ((parts.includes("deviations") && !pick.deviations ? bak.deviations : curState.deviations) || []).filter(Boolean);
+    devs.forEach((x) => {
+      if (x.meter && !ids.has(x.meter)) plan.warnings.push(`Die Maßnahme „${x.title || x.id}“ verweist auf einen Zähler, den es in der Sicherung nicht gibt.`);
     });
   }
   // Abweichungen
@@ -527,11 +469,6 @@ async function restoreParts(filename, opts = {}, by) {
         if (i < 0) { newDevs.push(b); count("deviations", "added", b.title || id); }
         else if (same(newDevs[i], b)) count("deviations", "unchanged");
         else { newDevs[i] = b; count("deviations", "replaced", b.title || id); }
-        // Verknüpfung: gehört zu einem Tag, der sich seither geändert hat und nicht mit ausgewählt ist?
-        const day = devDay(b);
-        if (day && !days.includes(day) && !same(dayUnit(curState, day), dayUnit(bak, day))) {
-          plan.warnings.push(`„${b.title || id}“ gehört zum ${day.split("-").reverse().join(".")} — die Tageswerte dieses Tags haben sich seit der Sicherung geändert und sind nicht ausgewählt.`);
-        }
       });
     } else {
       newDevs = bDevs;
@@ -543,15 +480,6 @@ async function restoreParts(filename, opts = {}, by) {
         else count("deviations", same(a, b) ? "unchanged" : "replaced", b.title || id);
       });
     }
-  }
-  // Tage gewählt, zugehörige Abweichungen der Sicherung fehlen heute und sind nicht gewählt → Hinweis
-  if (parts.includes("daily") && pick.daily) {
-    const cIds = new Set(((newDevs || curState.deviations) || []).filter(Boolean).map((x) => x.id));
-    (bak.deviations || []).filter(Boolean).forEach((b) => {
-      if (days.includes(devDay(b)) && !cIds.has(b.id)) {
-        plan.warnings.push(`Zum ${devDay(b).split("-").reverse().join(".")} gehört die Abweichung „${b.title || b.id}“, die es heute nicht mehr gibt — bei Bedarf unter „Abweichungen & Maßnahmen“ mit auswählen.`);
-      }
-    });
   }
   if (parts.includes("settings")) count("settings", same(cur.settings, d.settings) ? "unchanged" : "replaced", "Stammdaten");
 
@@ -611,14 +539,10 @@ async function restoreParts(filename, opts = {}, by) {
     await db.tx(async (c) => {
       await db.lockRevision(c);
       let newState = null;
-      if (parts.includes("daily") || parts.includes("deviations")) {
+      if (parts.includes("deviations")) {
         const r = await c.query("SELECT value FROM documents WHERE name = 'state' FOR UPDATE");
         newState = (r.rows[0] && r.rows[0].value) || {};
-        if (parts.includes("daily")) {
-          if (pick.daily) applyDays(newState, bak, days);
-          else DAILY_KEYS.forEach((k) => { newState[k] = bak[k] !== undefined ? bak[k] : {}; });
-        }
-        if (parts.includes("deviations")) newState.deviations = newDevs;
+        newState.deviations = newDevs;
         const maxN = Math.max(0, ...((newState.deviations || []).filter(Boolean).map((x) => devNum(x.id))));
         newState.seq = Math.max(Number(newState.seq) || 1, Number(bak.seq) || 1, maxN + 1);
       }
@@ -677,6 +601,10 @@ async function restoreParts(filename, opts = {}, by) {
         await c.query("UPDATE documents SET value = $1::jsonb, updated_at = now(), updated_by = $2 WHERE name = 'state'", [JSON.stringify(newState), by || null]);
         changed.push("state");
       }
+      if (parts.includes("energy")) {
+        await c.query("UPDATE documents SET value = $1::jsonb, updated_at = now(), updated_by = $2 WHERE name = 'energy'", [JSON.stringify(d.energy), by || null]);
+        changed.push("energy");
+      }
       if (parts.includes("settings")) {
         await c.query("UPDATE documents SET value = $1::jsonb, updated_at = now(), updated_by = $2 WHERE name = 'settings'", [JSON.stringify(d.settings), by || null]);
         changed.push("settings");
@@ -684,7 +612,7 @@ async function restoreParts(filename, opts = {}, by) {
       if (changed.length) await db.bumpRevision(c, changed, by || "Wiederherstellung");
     });
     console.log(`[backup] aus ${filename} wiederhergestellt: ${parts.join(", ")} (${plan.replaced} ersetzt, ${plan.added} neu, ${plan.removed} entfernt)`);
-    return { full: false, parts, from: from || null, to: to || null, plan };
+    return { full: false, parts, plan };
   } finally {
     busy = false;
   }

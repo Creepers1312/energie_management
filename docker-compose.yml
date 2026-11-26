@@ -1,11 +1,11 @@
-# Shopfloor Board — drei getrennte Container:
+# Energie Management — drei getrennte Container:
 #   web  Nginx: liefert die Oberfläche aus, reicht /api weiter (einziger veröffentlichter Port)
 #   api  Node.js: Anmeldung, Daten, Sicherungen
 #   db   PostgreSQL: nur im internen Netz "backend" erreichbar, kein Port nach außen
 #
 # Konfiguration über .env — am einfachsten mit ./deploy.sh anlegen.
 
-name: ${COMPOSE_PROJECT_NAME:-shopfloor}
+name: ${COMPOSE_PROJECT_NAME:-energie}
 
 # Container-Logs begrenzen: je Container höchstens 3 Dateien à 10 MB
 x-logging: &logging
@@ -32,8 +32,8 @@ services:
           memory: 1g
           cpus: "2"
     environment:
-      POSTGRES_DB: ${DB_NAME:-shopfloor}
-      POSTGRES_USER: ${DB_USER:-shopfloor}
+      POSTGRES_DB: ${DB_NAME:-energie}
+      POSTGRES_USER: ${DB_USER:-energie}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt - bitte ./deploy.sh ausführen}
       TZ: ${TZ:-Europe/Berlin}
     volumes:
@@ -49,7 +49,7 @@ services:
 
   api:
     build: ./backend
-    image: ${COMPOSE_PROJECT_NAME:-shopfloor}-api:latest
+    image: ${COMPOSE_PROJECT_NAME:-energie}-api:latest
     restart: unless-stopped
     logging: *logging
     <<: *hardening
@@ -69,8 +69,8 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-shopfloor}
-      DB_USER: ${DB_USER:-shopfloor}
+      DB_NAME: ${DB_NAME:-energie}
+      DB_USER: ${DB_USER:-energie}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt - bitte ./deploy.sh ausführen}
       # Schlüssel für gespeicherte Zugangsdaten (SMB-Passwort der Sicherungskopie)
       APP_SECRET: ${APP_SECRET:-}
@@ -104,7 +104,7 @@ services:
 
   web:
     build: ./frontend
-    image: ${COMPOSE_PROJECT_NAME:-shopfloor}-web:latest
+    image: ${COMPOSE_PROJECT_NAME:-energie}-web:latest
     restart: unless-stopped
     logging: *logging
     <<: *hardening

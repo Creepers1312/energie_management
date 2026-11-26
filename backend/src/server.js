@@ -10,7 +10,7 @@ const { createApp, loadDbVersion } = require("./app");
 process.umask(0o077);
 
 async function main() {
-  console.log(`[api] Shopfloor Board API ${config.version} startet …`);
+  console.log(`[api] Energie Management API ${config.version} startet …`);
   if (!config.db.password) console.warn("[api] WARNUNG: DB_PASSWORD ist leer.");
   await db.waitForDb();
   await db.migrate();
@@ -23,7 +23,6 @@ async function main() {
   const purgeResets = () => db.pool.query("DELETE FROM password_resets WHERE expires_at <= now()").catch(() => {});
   setInterval(() => { sessions.purgeExpired(); audit.purge(); purgeResets(); }, 60 * 60 * 1000).unref();
   backups.startScheduler();
-  require("./monthlyreport").startScheduler();
 
   const server = createApp().listen(config.port, () => {
     console.log(`[api] lauscht auf Port ${config.port} · Registrierung: ${config.allowRegister ? "an" : "aus"} · Demo: ${config.allowDemo ? "an" : "aus"}`);

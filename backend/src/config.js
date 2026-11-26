@@ -22,8 +22,8 @@ module.exports = {
   db: {
     host: env.DB_HOST || "db",
     port: int(env.DB_PORT, 5432, 1, 65535),
-    database: env.DB_NAME || "shopfloor",
-    user: env.DB_USER || "shopfloor",
+    database: env.DB_NAME || "energie",
+    user: env.DB_USER || "energie",
     password: env.DB_PASSWORD || ""
   },
   allowRegister: bool(env.ALLOW_REGISTER, false),
@@ -43,17 +43,17 @@ module.exports = {
     password: String(env.SMTP_PASSWORD || ""),
     from: String(env.SMTP_FROM || "").trim()
   },
-  // Erlaubte Herkunft schreibender Anfragen zusätzlich zur eigenen Adresse (z. B. https://shopfloor.firma.de)
+  // Erlaubte Herkunft schreibender Anfragen zusätzlich zur eigenen Adresse (z. B. https://energie.firma.de)
   publicUrl: String(env.PUBLIC_URL || "").replace(/\/+$/, ""),
   cookieSecure: bool(env.COOKIE_SECURE, false),
   // Mit HTTPS: __Host-Präfix — der Browser nimmt das Cookie dann nur über HTTPS und nur für genau diese Adresse an
   cookieName: bool(env.COOKIE_SECURE, false) ? "__Host-sfm_session" : "sfm_session",
   trustProxy: env.TRUST_PROXY || "loopback, linklocal, uniquelocal",
-  bodyLimit: env.BODY_LIMIT || "25mb",      // nur für Dokumente (Board, Wiederherstellung aus Datei)
+  bodyLimit: env.BODY_LIMIT || "25mb",      // nur für Dokumente (Energiedaten, Wiederherstellung aus Datei)
   smallBodyLimit: "32kb",                   // alle übrigen Anfragen (Anmeldung, Konten, Sicherungen …)
   backupDir: env.BACKUP_DIR || "/backups",
   // Name einer Sicherungsdatei (auch Schutz gegen Pfadangaben in Anfragen)
-  backupFileRe: /^shopfloor_[0-9_-]+_(auto|manual)\.dump$/,
+  backupFileRe: /^energie_[0-9_-]+_(auto|manual)\.dump$/,
   // Schlüssel für gespeicherte Zugangsdaten (SMB-Passwort); erzeugt deploy.sh in der .env
   appSecret: env.APP_SECRET || "",
   smbclient: env.SMBCLIENT || "smbclient",

@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const LOGO_FILE = path.join(__dirname, "..", "assets", "mail-logo.png");
-const LOGO_CID = "logo@shopfloor-board";
+const LOGO_CID = "logo@energie-management";
 let logo = null;
 try { logo = fs.readFileSync(LOGO_FILE); } catch (e) { /* ohne Logo */ }
 
@@ -47,7 +47,7 @@ const facts = (rows) => `
 
 // Rahmen jeder Mail: Kopf mit Logo und Linie, Karte mit Inhalt, Fußzeile
 function layout({ title, preheader, heading, body, lineName }) {
-  const brand = esc(lineName ? `Shopfloor Board · ${lineName}` : "Shopfloor Board");
+  const brand = esc(lineName ? `Energie Management · ${lineName}` : "Energie Management");
   const logoImg = logo
     ? `<img src="cid:${LOGO_CID}" width="40" height="40" alt="" style="display:block;border:0;border-radius:8px;">`
     : "";
@@ -68,7 +68,7 @@ function layout({ title, preheader, heading, body, lineName }) {
       <tr><td style="padding:0 4px 16px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
           ${logoImg ? `<td style="padding-right:12px;">${logoImg}</td>` : ""}
-          <td style="font:600 15px/1.3 ${FONT};color:${C.ink};">${brand}<br><span style="font-weight:400;font-size:13px;color:${C.muted};">Digitales Shopfloor Management</span></td>
+          <td style="font:600 15px/1.3 ${FONT};color:${C.ink};">${brand}<br><span style="font-weight:400;font-size:13px;color:${C.muted};">Verbrauch, Zähler und interne Leistungsverrechnung</span></td>
         </tr></table>
       </td></tr>
       <tr><td bgcolor="${C.card}" style="background:${C.card};border:1px solid ${C.line};border-radius:12px;padding:32px 32px 16px;">
@@ -91,11 +91,11 @@ function attachments() {
 
 // „Passwort vergessen“: Link zum Zurücksetzen
 function passwordReset({ name, username, link, minutes, lineName, requestedAt = new Date() }) {
-  const subject = "Shopfloor Board: neues Passwort vergeben";
+  const subject = "Energie Management: neues Passwort vergeben";
   const text = [
     `Hallo ${name},`,
     "",
-    "für Ihr Konto im Shopfloor Board wurde ein neues Passwort angefordert.",
+    "für Ihr Konto im Energie Management wurde ein neues Passwort angefordert.",
     `Über diesen Link vergeben Sie ein neues Passwort (gültig ${minutes} Minuten, nur einmal nutzbar):`,
     "",
     link,
@@ -104,11 +104,11 @@ function passwordReset({ name, username, link, minutes, lineName, requestedAt = 
     "",
     "Haben Sie das nicht selbst angefordert, ignorieren Sie diese E-Mail — Ihr bisheriges Passwort bleibt gültig.",
     "",
-    "— Shopfloor Board"
+    "— Energie Management"
   ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
   const body = [
     p(`Hallo ${esc(name)},`),
-    p("für Ihr Konto im Shopfloor Board wurde ein neues Passwort angefordert. Über den Knopf vergeben Sie ein neues:"),
+    p("für Ihr Konto im Energie Management wurde ein neues Passwort angefordert. Über den Knopf vergeben Sie ein neues:"),
     button("Neues Passwort vergeben", link),
     box(`Der Link gilt <strong>${esc(minutes)} Minuten</strong> und funktioniert nur einmal. Danach werden Sie auf allen Geräten abgemeldet und melden sich mit dem neuen Passwort an.`),
     facts([
@@ -128,27 +128,27 @@ function passwordReset({ name, username, link, minutes, lineName, requestedAt = 
 
 // Test-E-Mail aus den Einstellungen bzw. von der Kommandozeile
 function testMail({ lineName, host, port, by, sentAt = new Date() }) {
-  const subject = "Shopfloor Board: Test-E-Mail";
+  const subject = "Energie Management: Test-E-Mail";
   const rows = [
     ["Mailserver", host ? `${host}:${port}` : "—"],
     ["Gesendet am", fmtDate(sentAt)],
     ...(by ? [["Ausgelöst von", by]] : [])
   ];
   const text = [
-    "Diese Test-E-Mail kommt vom Shopfloor Board. Der E-Mail-Versand funktioniert.",
+    "Diese Test-E-Mail kommt vom Energie Management. Der E-Mail-Versand funktioniert.",
     "",
     ...rows.map(([k, v]) => `${k}: ${v}`),
     "",
-    "— Shopfloor Board"
+    "— Energie Management"
   ].join("\n");
   const body = [
-    p("diese Nachricht kommt vom Shopfloor Board. Wenn Sie sie lesen, stimmen Mailserver, Anmeldung und Absender."),
+    p("diese Nachricht kommt vom Energie Management. Wenn Sie sie lesen, stimmen Mailserver, Anmeldung und Absender."),
     box("&#10003;&nbsp; Der E-Mail-Versand funktioniert. „Passwort vergessen“ verschickt seine Links ab jetzt über diesen Weg."),
     facts(rows)
   ].join("\n");
   return {
     subject, text,
-    html: layout({ title: subject, preheader: "Der E-Mail-Versand des Shopfloor Boards funktioniert.", heading: "Test-E-Mail", body: p("Hallo,") + body, lineName }),
+    html: layout({ title: subject, preheader: "Der E-Mail-Versand des Energie Managements funktioniert.", heading: "Test-E-Mail", body: p("Hallo,") + body, lineName }),
     attachments: attachments()
   };
 }

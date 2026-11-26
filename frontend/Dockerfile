@@ -2,15 +2,15 @@
 FROM node:22-alpine AS csp
 WORKDIR /build
 COPY csp-hashes.js index.html ./
-RUN node csp-hashes.js index.html shopfloor-csp.conf
+RUN node csp-hashes.js index.html energie-csp.conf
 
 # Stufe 2: Nginx ohne Root-Rechte — läuft als Benutzer "nginx" und lauscht deshalb auf Port 8080
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY shopfloor-proxy.conf /etc/nginx/shopfloor-proxy.conf
-COPY --from=csp /build/shopfloor-csp.conf /etc/nginx/shopfloor-csp.conf
-COPY --chmod=755 05-shopfloor-proxy.sh /docker-entrypoint.d/05-shopfloor-proxy.sh
+COPY energie-proxy.conf /etc/nginx/energie-proxy.conf
+COPY --from=csp /build/energie-csp.conf /etc/nginx/energie-csp.conf
+COPY --chmod=755 05-energie-proxy.sh /docker-entrypoint.d/05-energie-proxy.sh
 COPY index.html /usr/share/nginx/html/index.html
 COPY fonts /usr/share/nginx/html/fonts
 COPY docs /usr/share/nginx/html/docs

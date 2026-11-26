@@ -9,7 +9,7 @@ services:
       frontend: {}
       proxy:
         aliases:
-          - ${COMPOSE_PROJECT_NAME:-shopfloor}-web
+          - ${COMPOSE_PROJECT_NAME:-energie}-web
 
 networks:
   proxy:

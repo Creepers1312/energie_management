@@ -1,7 +1,7 @@
 {
-  "name": "shopfloor-api",
-  "version": "1.6.0",
-  "description": "API und Datenbank-Anbindung für das Shopfloor Board",
+  "name": "energie-api",
+  "version": "1.0.0",
+  "description": "API und Datenbank-Anbindung für das Energie Management",
   "private": true,
   "main": "src/server.js",
   "scripts": {

@@ -1,17 +1,17 @@
 "use strict";
-// Gesamtdokumente (Board, Einstellungen, Kontenliste) — Lesen und Speichern mit Konfliktprüfung
+// Gesamtdokumente (Maßnahmen, Einstellungen, Kontenliste, Energiedaten) — Lesen und Speichern mit Konfliktprüfung
 const db = require("../db");
 const users = require("../users");
 const audit = require("../audit");
 const { HttpError, wrap, requireManager, requireEdit } = require("../http");
 
-const DOCS = ["state", "settings", "users"];
+const DOCS = ["state", "settings", "users", "energy"];
 
 /* ---------- Einstellungen schützen ----------
    Zugangsdaten (SMTP-Passwort) werden nie gespeichert oder ausgeliefert — der Server
    speichert das SMTP-Passwort getrennt (E-Mail-Versand). Was gespeichert werden darf, hängt an der Berechtigung:
    Administration alles; Teamleitung alles außer dem E-Mail-Versand (mail, bis auf das Protokoll);
-   Bearbeiten nur, was der Huddle braucht: Unfallchronik (safety) und Versandprotokoll (mail.log). */
+   Bearbeiten nichts außer dem Versandprotokoll (mail.log). */
 function stripSecrets(v) {
   if (v && v.mail && typeof v.mail === "object") delete v.mail.authPass;
   return v;
@@ -22,8 +22,6 @@ function mergeSettings(stored, incoming, perm) {
   const base = stored && typeof stored === "object" ? stripSecrets(JSON.parse(JSON.stringify(stored))) : {};
   if (perm === "manager") {
     Object.keys(clean).forEach((k) => { if (k !== "mail") base[k] = clean[k]; });
-  } else if (clean.safety !== undefined) {
-    base.safety = clean.safety;
   }
   if (clean.mail && Array.isArray(clean.mail.log)) {
     base.mail = base.mail && typeof base.mail === "object" ? base.mail : {};
@@ -32,13 +30,13 @@ function mergeSettings(stored, incoming, perm) {
   return base;
 }
 
-// Gesamtdokument für die Oberfläche. Ohne Anmeldung gibt es nur den Zähler —
-// Board, Einstellungen und Konten bleiben verborgen.
+// Gesamtdokument für die Oberfläche. Ohne Anmeldung gibt es nur die Revisionsnummer —
+// Daten, Einstellungen und Konten bleiben verborgen.
 async function buildDocument(q, user) {
   const revision = await db.getRevision(q);
-  if (!user) return { revision, state: null, settings: null, users: [] };
-  const r = await q.query("SELECT name, value FROM documents WHERE name IN ('state', 'settings')");
-  const doc = { revision, state: null, settings: null, users: [] };
+  if (!user) return { revision, state: null, settings: null, energy: null, users: [] };
+  const r = await q.query("SELECT name, value FROM documents WHERE name IN ('state', 'settings', 'energy')");
+  const doc = { revision, state: null, settings: null, energy: null, users: [] };
   r.rows.forEach((row) => { doc[row.name] = row.value; });
   stripSecrets(doc.settings);
   doc.users = await users.listForClient(q);

@@ -106,14 +106,14 @@ async function boardService(name) {
   const tool = await backups.checkTools();
   const state = tool.ok ? 0 : 2;
   return line(state, name, [`users=${u.rows[0].n};;;0`],
-    `API und Datenbank erreichbar — Board ${config.version}, PostgreSQL ${v.rows[0].server_version}, ${u.rows[0].n} aktive Konten`
+    `API und Datenbank erreichbar — Energie Management ${config.version}, PostgreSQL ${v.rows[0].server_version}, ${u.rows[0].n} aktive Konten`
     + (tool.ok ? "" : ", pg_dump fehlt (!!)"));
 }
 
-// prefix: Dienstname-Präfix, z. B. „Shopfloor“ oder „Shopfloor linie2“
+// prefix: Dienstname-Präfix, z. B. „Energie“ oder „Energie werk2“
 async function checkmk(prefix) {
-  const p = prefix || "Shopfloor";
-  const out = [await boardService(`${p} Board`), await backupService(`${p} Backup`)];
+  const p = prefix || "Energie";
+  const out = [await boardService(`${p} App`), await backupService(`${p} Backup`)];
   const smb = await smbService(`${p} Backup SMB`);
   if (smb) out.push(smb);
   return out.join("\n");

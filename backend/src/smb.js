@@ -162,11 +162,11 @@ async function run(raw, commands, { allowFail = false } = {}) {
 
 // Dateinamen der Sicherungen auf der Freigabe
 async function listFiles(raw) {
-  const { out } = await run(raw, ["ls shopfloor_*.dump"], { allowFail: true });
+  const { out } = await run(raw, ["ls energie_*.dump"], { allowFail: true });
   if (/NT_STATUS_(?!NO_SUCH_FILE)[A-Z_]+/.test(out)) throw new HttpError(502, explain(out));
   const files = [];
   out.split("\n").forEach((line) => {
-    const m = /^\s+(shopfloor_[0-9_-]+_(?:auto|manual)\.dump)\s+[A-Z]*\s+\d+\s/.exec(line);
+    const m = /^\s+(energie_[0-9_-]+_(?:auto|manual)\.dump)\s+[A-Z]*\s+\d+\s/.exec(line);
     if (m) files.push(m[1]);
   });
   return files;
@@ -187,8 +187,8 @@ async function deleteFile(raw, name) {
 // Verbindung prüfen: anmelden, in den Ordner wechseln, Testdatei schreiben und löschen
 async function test(body) {
   const raw = merge(await getRaw(), Object.assign({}, body || {}, { enabled: false }));
-  const tmpFile = path.join(os.tmpdir(), "shopfloor-smb-test-" + crypto.randomBytes(4).toString("hex"));
-  await fs.promises.writeFile(tmpFile, "Shopfloor Board – Verbindungstest " + new Date().toISOString() + "\n");
+  const tmpFile = path.join(os.tmpdir(), "energie-smb-test-" + crypto.randomBytes(4).toString("hex"));
+  await fs.promises.writeFile(tmpFile, "Energie Management – Verbindungstest " + new Date().toISOString() + "\n");
   try {
     // Fehlende Ordner unterhalb der Freigabe anlegen (Fehler „existiert schon“ sind egal)
     const { dir } = splitShare(raw.share);
@@ -196,7 +196,7 @@ async function test(body) {
       const steps = dir.split("/").map((_, i, a) => `mkdir "${a.slice(0, i + 1).join("/")}"`);
       await run(Object.assign({}, raw, { share: splitShare(raw.share).service }), steps, { allowFail: true });
     }
-    const name = ".shopfloor-test-" + crypto.randomBytes(4).toString("hex");
+    const name = ".energie-test-" + crypto.randomBytes(4).toString("hex");
     await run(raw, [`put "${tmpFile}" "${name}"`, `del "${name}"`]);
     const files = await listFiles(raw);
     return { ok: true, files: files.length };
