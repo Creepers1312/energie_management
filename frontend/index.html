@@ -2126,6 +2126,43 @@ tr.ci-err td { color: var(--crit-text); }
 .bl-table td:nth-child(2) { white-space: nowrap; }
 @media (max-width: 1000px) { .bl-grid { grid-template-columns: minmax(0, 1fr); } .bl-year { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
+/* Zählerbaum */
+.mt-tree-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.mt-tree-bar .mini-hint { margin-left: auto; }
+.mt-tree, .mt-tree ul { list-style: none; margin: 0; padding: 0; }
+.mt-type { margin-bottom: 10px; }
+.mt-type-head { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--surface-2); border: 0; border-radius: 9px; padding: 7px 10px; font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
+.mt-type-head .mini-hint { margin-left: auto; }
+.mt-toggle-txt { width: 14px; color: var(--muted); }
+.mt-children { position: relative; padding-left: 22px !important; }
+.mt-roots { padding-left: 10px !important; margin-top: 6px !important; }
+.mt-children > li { position: relative; }
+/* Verbindungslinien: senkrecht am Ast, waagrecht zum Knoten */
+.mt-children > li::before { content: ""; position: absolute; left: -12px; top: 0; bottom: 0; border-left: 1.5px solid var(--line); }
+.mt-children > li:last-child::before { bottom: auto; height: 22px; }
+.mt-children > li::after { content: ""; position: absolute; left: -12px; top: 22px; width: 12px; border-top: 1.5px solid var(--line); }
+.mt-roots > li::before, .mt-roots > li::after { display: none; }
+.mt-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.mt-toggle { width: 24px; height: 24px; flex: none; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); font-size: 11px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.mt-toggle.leaf { border-color: transparent; background: none; cursor: default; }
+.mt-toggle.leaf::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.mt-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line-soft); border-radius: 10px; padding: 7px 10px; background: var(--surface); cursor: pointer; }
+.mt-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.mt-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mt-row.sel .mt-card { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.mt-row.ctx .mt-card { opacity: .55; }
+.mt-txt { flex: 1; min-width: 0; }
+.mt-l1 { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.mt-l1 b { white-space: nowrap; }
+.mt-txt .me-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt-name { color: var(--ink-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mt-val { text-align: right; white-space: nowrap; flex: none; }
+.mt-qty { font-weight: 600; font-size: 13.5px; }
+.mt-qty.miss { color: var(--crit-text); font-weight: 500; font-size: 12.5px; }
+.mt-acts { display: flex; gap: 4px; flex: none; }
+@media (hover: hover) { .mt-acts { display: none; } .mt-row:hover .mt-acts, .mt-row:focus-within .mt-acts, .mt-row.sel .mt-acts { display: flex; } .mt-row:hover .mt-val .me-sub, .mt-row.sel .mt-val .me-sub { display: none; } }
+@media (max-width: 700px) { .mt-val .me-sub { display: none; } .mt-acts .btn:last-child { display: none; } .mt-children { padding-left: 14px !important; } }
+
 /* Zähler */
 .me-chips .trk-chip:not(.on) > span { text-decoration: none !important; }
 .me-chips .trk-chip:not(.on) .trk-chip-dot { opacity: 1; }
@@ -2348,13 +2385,17 @@ details.wd-group { padding-bottom: 4px; }
         <option value="out">Ausgebaute Zähler</option>
         <option value="">Alle Zähler</option>
       </select>
-      <button class="btn sm" id="mtTreeBtn" aria-pressed="true" title="Unterzähler unter ihrem Hauptzähler einrücken">Zählerbaum</button>
+      <div class="period-seg" id="mtViewSeg" role="radiogroup" aria-label="Darstellung">
+        <button type="button" data-view="list">Liste</button>
+        <button type="button" data-view="tree">Baum</button>
+      </div>
       <button class="btn sm ghost" id="mtReset" type="button" hidden>Filter zurücksetzen</button>
     </div>
   </div>
   <div class="me-layout">
     <div class="card me-list-card">
-      <div class="trk-table-wrap"><table class="trk-table me-table" id="mtTable"></table></div>
+      <div class="trk-table-wrap" id="mtTableWrap"><table class="trk-table me-table" id="mtTable"></table></div>
+      <div class="mt-tree-host" id="mtTreeHost" hidden></div>
       <p class="mini-hint" id="mtCount"></p>
     </div>
     <div class="card me-detail" id="mtDetail"></div>
@@ -7176,6 +7217,15 @@ window.EN = (function () {
     var tbl = $("#mtTable"); tbl.innerHTML = "";
     $("#mtCount").textContent = shown.length + " von " + energy.meters.length + " Zählern" + (mtFlag || mtType || mtCc || terms.length ? " — Filter aktiv" : "");
     $("#mtReset").hidden = !(mtFlag || mtType || mtCc || terms.length || mtState !== "in");
+    document.querySelectorAll("#mtViewSeg button").forEach(function (b) { b.classList.toggle("active", b.dataset.view === mtView); b.setAttribute("aria-checked", b.dataset.view === mtView ? "true" : "false"); });
+    $("#mtTableWrap").hidden = mtView === "tree";
+    $("#mtTreeHost").hidden = mtView !== "tree";
+    if (mtView === "tree") {
+      renderMeterTree($("#mtTreeHost"), shown, !!(terms.length || mtFlag));
+      if (!shown.some(function (m) { return m.id === mtSel; })) mtSel = shown.length ? sortedMeters(shown)[0].id : null;
+      renderMeterDetail();
+      return;
+    }
     if (!rows.length) {
       tbl.appendChild(emptyRow(4, energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen."));
     } else {
@@ -7244,13 +7294,6 @@ window.EN = (function () {
   $("#mtSearch").addEventListener("input", function () { mtSearch = this.value; renderMeters(); });
   $("#mtCc").addEventListener("change", function () { mtCc = this.value; renderMeters(); });
   $("#mtState").addEventListener("change", function () { mtState = this.value; mtFlag = ""; renderMeters(); });
-  $("#mtTreeBtn").addEventListener("click", function () {
-    mtTree = !mtTree;
-    this.classList.toggle("toggled", mtTree);
-    this.setAttribute("aria-pressed", mtTree ? "true" : "false");
-    renderMeters();
-  });
-  $("#mtTreeBtn").classList.add("toggled");
   // Menü „Weitere Aktionen“ schließt bei Klick daneben oder mit Esc
   document.addEventListener("click", function (e) {
     document.querySelectorAll(".me-more[open]").forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
@@ -7263,6 +7306,141 @@ window.EN = (function () {
     $("#mtSearch").value = "";
     renderMeters();
   });
+
+  /* ---------- Zählerbaum: Haupt- und Unterzähler als aufklappbare Äste ----------
+     Je Energieart ein Stamm, darunter die Zähler mit Verbindungslinien. Ein Ast zeigt den Verbrauch des fälligen Monats,
+     beim Hauptzähler zusätzlich die Summe der Unterzähler und den Rest (Hauptzähler − Unterzähler = nicht einzeln gemessen).
+     Bearbeiten und „+ Unterzähler“ direkt am Knoten; ein Klick wählt den Zähler für das Detail rechts.
+     Aufgeklappte Äste merkt sich das Gerät (sfm-meter-tree). Bei Suche/Filtern werden die Hauptzähler der Treffer mit
+     angezeigt (blass), damit der Zusammenhang erhalten bleibt. */
+  var mtView = (function () { try { return LS.getItem("sfm-meter-view") === "tree" ? "tree" : "list"; } catch (e) { return "list"; } })();
+  var mtCollapsed = (function () { try { return JSON.parse(LS.getItem("sfm-meter-tree") || "{}") || {}; } catch (e) { return {}; } })();
+  function mtSaveTree() { try { LS.setItem("sfm-meter-tree", JSON.stringify(mtCollapsed)); } catch (e) {} }
+  function mtMonthVal(m) {
+    var x = meterMonthC(m.id, DUE_MONTH);
+    return x.status === "ok" || x.status === "partial" ? x : null;
+  }
+  function renderMeterTree(host, shown, filtered) {
+    host.innerHTML = "";
+    var byId = {}, kids = {};
+    energy.meters.forEach(function (m) { byId[m.id] = m; });
+    // sichtbare Menge: Treffer + deren Hauptzähler (für den Zusammenhang)
+    var vis = {}, hit = {};
+    shown.forEach(function (m) {
+      hit[m.id] = true;
+      for (var p = m, g = 0; p && g < 50; g++) { vis[p.id] = true; p = p.parent ? byId[p.parent] : null; }
+    });
+    Object.keys(vis).forEach(function (id) {
+      var m = byId[id], par = m.parent && vis[m.parent] ? m.parent : "";
+      (kids[par] = kids[par] || []).push(m);
+    });
+    var bar = el("div", "mt-tree-bar");
+    var bOpen = el("button", "btn sm ghost", "Alle aufklappen"), bClose = el("button", "btn sm ghost", "Alle zuklappen");
+    bOpen.type = bClose.type = "button";
+    bOpen.addEventListener("click", function () { mtCollapsed = {}; mtSaveTree(); renderMeters(); });
+    bClose.addEventListener("click", function () { Object.keys(kids).forEach(function (id) { if (id) mtCollapsed[id] = true; }); EN.TYPE_KEYS.forEach(function (t) { mtCollapsed["t:" + t] = true; }); mtSaveTree(); renderMeters(); });
+    bar.appendChild(bOpen); bar.appendChild(bClose);
+    bar.appendChild(el("span", "mini-hint", "Verbrauch " + monthLabel(DUE_MONTH) + " · Rest = Hauptzähler − Unterzähler"));
+    host.appendChild(bar);
+    var roots = kids[""] || [];
+    if (!roots.length) { host.appendChild(el("p", "empty-hint", energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen.")); return; }
+    var tree = el("ul", "mt-tree");
+    tree.setAttribute("role", "tree");
+    var node = function (m, depth) {
+      var li = el("li", "mt-node"), ch = sortedMeters(kids[m.id] || []);
+      var open = !mtCollapsed[m.id] || filtered;
+      li.setAttribute("role", "treeitem");
+      if (ch.length) li.setAttribute("aria-expanded", open ? "true" : "false");
+      var row = el("div", "mt-row" + (m.id === mtSel ? " sel" : "") + (m.removed ? " me-removed" : "") + (hit[m.id] ? "" : " ctx"));
+      var tg = el("button", "mt-toggle" + (ch.length ? "" : " leaf"), ch.length ? (open ? "▾" : "▸") : "");
+      tg.type = "button";
+      if (ch.length) {
+        tg.setAttribute("aria-label", (open ? "Zuklappen: " : "Aufklappen: ") + m.no + " (" + ch.length + " Unterzähler)");
+        tg.addEventListener("click", function (e) { e.stopPropagation(); if (open) mtCollapsed[m.id] = true; else delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); });
+      } else { tg.tabIndex = -1; tg.setAttribute("aria-hidden", "true"); }
+      row.appendChild(tg);
+      var card = el("div", "mt-card");
+      card.tabIndex = 0;
+      card.appendChild(typeChip(m.type));
+      var tx = el("div", "mt-txt");
+      var l1 = el("div", "mt-l1"); l1.appendChild(el("b", null, m.no)); l1.appendChild(el("span", "mt-name", m.name));
+      tx.appendChild(l1);
+      tx.appendChild(el("div", "me-sub", [m.costCenter ? ccLabel(m.costCenter) : "keine Kostenstelle", m.location].filter(Boolean).join(" · ")));
+      card.appendChild(tx);
+      var val = el("div", "mt-val"), v = mtMonthVal(m), unit = billUnit(m.type);
+      if (m.removed) val.appendChild(el("span", "pill neutral", "ausgebaut"));
+      else {
+        val.appendChild(el("div", "mt-qty" + (v ? "" : " miss"), v ? fmtQty(v.energy, unit) : "Ablesung fehlt"));
+        if (ch.length && v) {
+          var sum = 0, ok = true;
+          ch.forEach(function (k) { if (k.removed) return; var kv = mtMonthVal(k); if (!kv) ok = false; else sum += kv.energy; });
+          var rest = EN.round(v.energy - sum);
+          val.appendChild(el("div", "me-sub", ok ? "Unterzähler " + fmtQty(EN.round(sum), unit) + " · Rest " + fmtQty(rest, unit) : "Unterzähler unvollständig"));
+          if (ok && rest < 0) val.lastChild.classList.add("crit-text");
+        }
+      }
+      card.appendChild(val);
+      var badges = el("div", "me-badges");
+      if (!m.removed && meterMissing(m)) badges.appendChild(el("span", "pill crit", "fehlt"));
+      if (meterOnline(m)) badges.appendChild(el("span", "pill onl-pill", "online"));
+      if (ch.length && !open) badges.appendChild(el("span", "pill neutral", "+" + ch.length));
+      card.appendChild(badges);
+      var select = function () { mtSel = m.id; renderMeters(); if (window.matchMedia && window.matchMedia("(max-width: 1150px)").matches) $("#mtDetail").scrollIntoView({ behavior: "smooth", block: "start" }); };
+      card.addEventListener("click", select);
+      card.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") select();
+        else if (e.key === "ArrowRight" && ch.length && !open) { delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); }
+        else if (e.key === "ArrowLeft" && ch.length && open) { mtCollapsed[m.id] = true; mtSaveTree(); renderMeters(); }
+      });
+      row.appendChild(card);
+      if (can("edit")) {
+        var acts = el("div", "mt-acts");
+        var be = el("button", "btn sm", "✎"); be.type = "button"; be.title = "Zähler " + m.no + " bearbeiten"; be.setAttribute("aria-label", be.title);
+        be.addEventListener("click", function (e) { e.stopPropagation(); openMeterDialog(m); });
+        acts.appendChild(be);
+        if (!m.removed) {
+          var bn = el("button", "btn sm", "+ Unterzähler"); bn.type = "button"; bn.title = "Neuen Unterzähler unter " + m.no + " anlegen";
+          bn.addEventListener("click", function (e) { e.stopPropagation(); openMeterDialog(null, { parent: m.id, type: m.type, costCenter: m.costCenter || "" }); });
+          acts.appendChild(bn);
+        }
+        card.appendChild(acts);
+      }
+      li.appendChild(row);
+      if (ch.length && open) {
+        var ul = el("ul", "mt-children"); ul.setAttribute("role", "group");
+        ch.forEach(function (k) { ul.appendChild(node(k, depth + 1)); });
+        li.appendChild(ul);
+      }
+      return li;
+    };
+    EN.TYPES.forEach(function (t) {
+      var rs = sortedMeters(roots.filter(function (m) { return m.type === t.key; }));
+      if (!rs.length) return;
+      var key = "t:" + t.key, open = !mtCollapsed[key] || filtered;
+      var li = el("li", "mt-type"); li.setAttribute("role", "treeitem"); li.setAttribute("aria-expanded", open ? "true" : "false");
+      var head = el("button", "mt-type-head"); head.type = "button";
+      head.appendChild(el("span", "mt-toggle-txt", open ? "▾" : "▸"));
+      var dot = el("span", "en-dot"); dot.style.background = t.color; head.appendChild(dot);
+      head.appendChild(el("b", null, t.label));
+      var n = Object.keys(vis).filter(function (id) { return byId[id].type === t.key; }).length;
+      head.appendChild(el("span", "mini-hint", n + (n === 1 ? " Zähler" : " Zähler") + " · " + meterUnit(t.key)));
+      head.addEventListener("click", function () { if (open) mtCollapsed[key] = true; else delete mtCollapsed[key]; mtSaveTree(); renderMeters(); });
+      li.appendChild(head);
+      if (open) {
+        var ul = el("ul", "mt-children mt-roots"); ul.setAttribute("role", "group");
+        rs.forEach(function (m) { ul.appendChild(node(m, 0)); });
+        li.appendChild(ul);
+      }
+      tree.appendChild(li);
+    });
+    host.appendChild(tree);
+  }
+  function setMeterView(v) {
+    mtView = v;
+    try { LS.setItem("sfm-meter-view", v); } catch (e) {}
+    renderMeters();
+  }
+  document.querySelectorAll("#mtViewSeg button").forEach(function (b) { b.addEventListener("click", function () { setMeterView(b.dataset.view); }); });
 
   function infoGrid(pairs) {
     var g = el("dl", "me-info");
@@ -7518,16 +7696,20 @@ window.EN = (function () {
 
   /* ---------- Zähler anlegen / bearbeiten ---------- */
   var mdDlg = $("#meterDialog"), mdEditing = null;
+  var mdPreset = null;
   function mdParentOptions() {
-    fillSelect($("#mdParent"), meterOptions($("#mdType").value, "Kein übergeordneter Zähler (Hauptzähler)", mdEditing ? mdEditing.id : null), mdEditing ? mdEditing.parent || "" : "");
+    fillSelect($("#mdParent"), meterOptions($("#mdType").value, "Kein übergeordneter Zähler (Hauptzähler)", mdEditing ? mdEditing.id : null), mdEditing ? mdEditing.parent || "" : mdPreset && mdPreset.type === $("#mdType").value ? mdPreset.parent || "" : "");
   }
-  function openMeterDialog(m) {
+  // preset (nur neuer Zähler): { parent, type, costCenter } — z. B. „+ Unterzähler“ im Zählerbaum
+  function openMeterDialog(m, preset) {
     mdEditing = m || null;
+    mdPreset = m ? null : preset || null;
     showErr("mdError", null);
-    $("#mdTitle").textContent = m ? "Zähler bearbeiten" : "Neuer Zähler";
-    fillSelect($("#mdType"), typeOptions(), m ? m.type : (mtType || "strom"));
+    var pm = mdPreset && mdPreset.parent ? EN.meterById(energy, mdPreset.parent) : null;
+    $("#mdTitle").textContent = m ? "Zähler bearbeiten" : pm ? "Neuer Unterzähler von " + pm.no : "Neuer Zähler";
+    fillSelect($("#mdType"), typeOptions(), m ? m.type : mdPreset && mdPreset.type ? mdPreset.type : (mtType || "strom"));
     $("#mdType").disabled = !!m;
-    fillSelect($("#mdCc"), ccOptions("Keine Kostenstelle", true, m ? m.costCenter : null), m ? m.costCenter || "" : (mtCc || ""));
+    fillSelect($("#mdCc"), ccOptions("Keine Kostenstelle", true, m ? m.costCenter : null), m ? m.costCenter || "" : mdPreset && mdPreset.costCenter != null ? mdPreset.costCenter : (mtCc || ""));
     mdParentOptions();
     $("#mdNo").value = m ? m.no : "";
     $("#mdName").value = m ? m.name : "";
@@ -7619,7 +7801,7 @@ window.EN = (function () {
         doc.readings.push({ id: EN.nextId(doc, "a"), meter: nm.id, kind: "install", date: inst, month: EN.billingMonth(inst, settings.cutoffDay),
           value: iv, rollover: false, zeroStart: false, note: "Einbau", by: w.by, at: w.at, edits: [], deleted: null });
         if (auto) EN.autoRulesForMeter(doc, nm, from, w);
-        if (doc === energy) mtSel = nm.id;
+        if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; delete mtCollapsed["t:" + nm.type]; }
       },
       done: function () { mdDlg.close(); }
     });
@@ -7758,7 +7940,7 @@ window.EN = (function () {
           var w = who();
           if (cgWithNew) {
             var nm = EN.changeMeter(doc, id, o, w);
-            if (doc === energy) mtSel = nm.id;
+            if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; delete mtCollapsed["t:" + nm.type]; }
           } else {
             var x = EN.meterById(doc, id);
             x.removed = rd;
@@ -12390,9 +12572,10 @@ window.EN = (function () {
     { id: "zaehler", group: "Zähler & Ablesung", title: "Zähler anlegen und pflegen",
       intro: "Jeder Zähler wird einzeln verwaltet. Unter „Zähler“ stehen alle Zähler als Liste oder als Zählerbaum (Unterzähler eingerückt unter ihrem Hauptzähler); rechts die Details des gewählten Zählers.",
       sections: [
-        { h: "Die Zählerseite im Überblick", list: [
+        { h: "Die Zählerseite im Überblick", img: "zaehlerbaum", cap: "Darstellung „Baum“: Haupt- und Unterzähler mit Rest", list: [
           "<b>Kacheln oben</b> — eingebaute Zähler, Zähler mit fehlender Ablesung, online angebundene und ausgebaute Zähler. Ein Klick auf eine Kachel zeigt nur diese Zähler.",
-          "<b>Energiearten</b> — die Schalter Alle / Strom / Wasser / Gas / Druckluft zeigen nur Zähler dieser Art; dazu Suche, Kostenstelle und „Zählerbaum“. „Filter zurücksetzen“ zeigt wieder alle eingebauten Zähler.",
+          "<b>Energiearten</b> — die Schalter Alle / Strom / Wasser / Gas / Druckluft zeigen nur Zähler dieser Art; dazu Suche, Kostenstelle und die Darstellung „Liste“ oder „Baum“. „Filter zurücksetzen“ zeigt wieder alle eingebauten Zähler.",
+          "<b>Baum</b> — Haupt- und Unterzähler als Äste je Energieart, mit Verbindungslinien. Mit ▸/▾ (oder Pfeiltaste links/rechts) Äste auf- und zuklappen, „Alle aufklappen/zuklappen“ für alles. Am Hauptzähler steht der Verbrauch der Unterzähler und der Rest (Hauptzähler − Unterzähler = nicht einzeln gemessen; negativ = Zuordnung prüfen). Beim Darüberfahren: ✎ bearbeiten und „+ Unterzähler“ (legt einen Zähler mit diesem Hauptzähler, Energieart und Kostenstelle an). Bei Suche oder Filter erscheinen die Hauptzähler der Treffer blass mit. Das Gerät merkt sich Darstellung und aufgeklappte Äste.",
           "<b>Liste</b> — je Zähler Nummer, Bezeichnung, Ort und Kostenstelle, der Verbrauch im fälligen Monat mit kleinem Verlauf der letzten 6 Monate (rot gepunktet = Ablesung fehlt), der letzte Stand und die Kennzeichen „fehlt“, „online“ oder „ausgebaut“.",
           "<b>Detail</b> — oben letzter Stand, Verbrauch mit Vormonatsvergleich und Kostenstelle; darunter „Ablesung erfassen“, „Bearbeiten“ und unter „Weitere Aktionen“ Messfaktor / Überlauf, Zählerwechsel, Ausbauen und Maßnahme anlegen."
         ] },

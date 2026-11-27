@@ -34,6 +34,8 @@ const W = 1440, H = 900;
   await p.click('#dashEditDone'); await p.evaluate(() => scrollTo(0, 0));
   // Zähler
   await p.click('.tab[data-view="meters"]'); await wait(700); await shot('zaehler');
+  await p.click('#mtViewSeg [data-view="tree"]'); await wait(500); await shot('zaehlerbaum');
+  await p.click('#mtViewSeg [data-view="list"]'); await wait(400);
   await p.click('.me-more summary'); await p.click('.me-more-menu >> text=Zählerwechsel'); await wait(400); await shot('zaehlerwechsel', { clip: await box('dialog[open]', 28) });
   await p.keyboard.press('Escape'); await wait(200);
   // Ablesung mit Prüfliste (W-220: Stand kleiner als vorher)

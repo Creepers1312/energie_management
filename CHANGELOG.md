@@ -84,6 +84,10 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   Probe an sich selbst, jederzeit ab- und wieder einschaltbar.
 - **Diagramme** im Dashboard wahlweise als Balken und je Quartal oder Jahr zusammengefasst.
 
+- **Zählerbaum:** neue Darstellung „Baum“ auf der Zählerseite — Haupt- und Unterzähler als auf- und zuklappbare Äste
+  je Energieart mit Verbindungslinien, Verbrauch und Rest (Hauptzähler − Unterzähler); Zähler direkt am Knoten
+  bearbeiten oder einen Unterzähler anlegen.
+
 ### Geändert
 - Der Reiter „Anwenderdoku“ zeigt nur noch das Symbol (Name beim Darüberfahren), damit alle Reiter mit Namen in die Leiste passen.
 - „Alle Energiedaten löschen“ entfernt auch die Abrechnungen und ist dann nur noch für Administratoren möglich.
