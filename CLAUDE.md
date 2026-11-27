@@ -115,7 +115,9 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
   `sfm-connections-v1`, Werte aus den Ablesungen nachgebildet (`onlLocalValue`). Beim Zählerwechsel geht `source` mit.
 - **Zählerseite** (`renderMeters`/`renderMeterDetail`): Statuskacheln `#mtStats` (Filter `mtFlag` missing/online + `mtState`),
   Energieart-Schalter `#mtTypeChips` (`mtType`), Darstellung `#mtViewSeg` Liste/Baum (`mtView`, gemerkt in `sfm-meter-view`;
-  Baum `renderMeterTree` mit `mtCollapsed` in `sfm-meter-tree`, Knoten-Aktionen ✎ und „+ Unterzähler“ =
+  Baum `renderMeterTree` = Organigramm: Reiter je Energieart `mtTreeType`, Äste `mtCollapsed`, Zoom `mtZoom` (CSS `zoom`)
+  in `sfm-meter-tree*`; `ul.oc-row` waagrecht, `ul.oc-stack` Endzähler untereinander ab Ebene 2 oder > 4; Linien per
+  `::before/::after`; Detail als Seitenleiste (`.me-layout.tree-mode`, `mtDrawer`, Esc); Knoten-Aktionen ✎ und „+“ =
   `openMeterDialog(null, {parent, type, costCenter})`), Liste gruppiert je Energieart; Detail mit Kennzahlen, Menü `.me-more`
   („Weitere Aktionen“) und Reitern `mtTab` (over/read/onl/hist/dev). Passt der gewählte Zähler nicht zu den Filtern, wird der
   erste der Liste gewählt; `meterLink` setzt die Filter zurück. `meterHay`, `flagText`, `lastReading`, `meterStatus` nutzt auch die Ablesung.

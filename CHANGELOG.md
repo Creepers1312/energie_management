@@ -84,9 +84,9 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   Probe an sich selbst, jederzeit ab- und wieder einschaltbar.
 - **Diagramme** im Dashboard wahlweise als Balken und je Quartal oder Jahr zusammengefasst.
 
-- **Zählerbaum:** neue Darstellung „Baum“ auf der Zählerseite — Haupt- und Unterzähler als auf- und zuklappbare Äste
-  je Energieart mit Verbindungslinien, Verbrauch und Rest (Hauptzähler − Unterzähler); Zähler direkt am Knoten
-  bearbeiten oder einen Unterzähler anlegen.
+- **Zählerbaum:** neue Darstellung „Baum“ auf der Zählerseite — Organigramm je Energieart (eigener Reiter) mit
+  Verbindungslinien, auf- und zuklappbaren Ästen, Verbrauch und Rest (Hauptzähler − Unterzähler), Zoom, Einpassen und
+  Verschieben; Zähler direkt an der Karte bearbeiten oder einen Unterzähler anlegen, Detail als Seitenleiste.
 
 ### Geändert
 - Der Reiter „Anwenderdoku“ zeigt nur noch das Symbol (Name beim Darüberfahren), damit alle Reiter mit Namen in die Leiste passen.

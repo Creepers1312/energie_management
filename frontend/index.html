@@ -2126,42 +2126,73 @@ tr.ci-err td { color: var(--crit-text); }
 .bl-table td:nth-child(2) { white-space: nowrap; }
 @media (max-width: 1000px) { .bl-grid { grid-template-columns: minmax(0, 1fr); } .bl-year { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
-/* Zählerbaum */
-.mt-tree-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-.mt-tree-bar .mini-hint { margin-left: auto; }
-.mt-tree, .mt-tree ul { list-style: none; margin: 0; padding: 0; }
-.mt-type { margin-bottom: 10px; }
-.mt-type-head { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--surface-2); border: 0; border-radius: 9px; padding: 7px 10px; font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
-.mt-type-head .mini-hint { margin-left: auto; }
-.mt-toggle-txt { width: 14px; color: var(--muted); }
-.mt-children { position: relative; padding-left: 22px !important; }
-.mt-roots { padding-left: 10px !important; margin-top: 6px !important; }
-.mt-children > li { position: relative; }
-/* Verbindungslinien: senkrecht am Ast, waagrecht zum Knoten */
-.mt-children > li::before { content: ""; position: absolute; left: -12px; top: 0; bottom: 0; border-left: 1.5px solid var(--line); }
-.mt-children > li:last-child::before { bottom: auto; height: 22px; }
-.mt-children > li::after { content: ""; position: absolute; left: -12px; top: 22px; width: 12px; border-top: 1.5px solid var(--line); }
-.mt-roots > li::before, .mt-roots > li::after { display: none; }
-.mt-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
-.mt-toggle { width: 24px; height: 24px; flex: none; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); font-size: 11px; cursor: pointer; display: grid; place-items: center; padding: 0; }
-.mt-toggle.leaf { border-color: transparent; background: none; cursor: default; }
-.mt-toggle.leaf::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
-.mt-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line-soft); border-radius: 10px; padding: 7px 10px; background: var(--surface); cursor: pointer; }
-.mt-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.mt-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.mt-row.sel .mt-card { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
-.mt-row.ctx .mt-card { opacity: .55; }
-.mt-txt { flex: 1; min-width: 0; }
-.mt-l1 { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
-.mt-l1 b { white-space: nowrap; }
-.mt-txt .me-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mt-name { color: var(--ink-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mt-val { text-align: right; white-space: nowrap; flex: none; }
-.mt-qty { font-weight: 600; font-size: 13.5px; }
-.mt-qty.miss { color: var(--crit-text); font-weight: 500; font-size: 12.5px; }
-.mt-acts { display: flex; gap: 4px; flex: none; }
-@media (hover: hover) { .mt-acts { display: none; } .mt-row:hover .mt-acts, .mt-row:focus-within .mt-acts, .mt-row.sel .mt-acts { display: flex; } .mt-row:hover .mt-val .me-sub, .mt-row.sel .mt-val .me-sub { display: none; } }
-@media (max-width: 700px) { .mt-val .me-sub { display: none; } .mt-acts .btn:last-child { display: none; } .mt-children { padding-left: 14px !important; } }
+/* Zählerbaum (Organigramm) */
+.me-layout.tree-mode { grid-template-columns: minmax(0, 1fr); }
+.me-layout.tree-mode .me-detail { position: fixed; right: 16px; top: calc(var(--topbar-h, 96px) + 12px); bottom: 16px; width: min(500px, calc(100vw - 32px)); max-height: none; z-index: 40; box-shadow: 0 18px 50px rgba(0,0,0,.28); }
+.me-layout.tree-mode .me-detail[hidden] { display: none; }
+.me-drawer-close { align-self: flex-end; margin-bottom: -8px; }
+.oc-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.oc-tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.oc-tab { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; font-weight: 600; color: var(--ink-2); cursor: pointer; margin-bottom: -1px; }
+.oc-tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+.oc-tab:disabled { opacity: .4; cursor: default; }
+.oc-tools { display: flex; gap: 4px; align-items: center; }
+.oc-zoom { font-size: 12px; color: var(--muted); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+.oc-wrap { overflow: auto; height: max(460px, calc(100vh - var(--topbar-h, 96px) - 150px)); border: 1px solid var(--line-soft); border-radius: 12px; background:
+  radial-gradient(circle, color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 1px) 0 0 / 22px 22px, var(--surface-2); cursor: grab; }
+.oc-wrap.dragging { cursor: grabbing; user-select: none; }
+.oc-canvas { display: inline-block; min-width: 100%; padding: 24px 32px 40px; box-sizing: border-box; }
+.oc-canvas ul { list-style: none; margin: 0; padding: 0; }
+.oc-canvas .oc-top { display: flex; justify-content: center; }
+.oc-row { display: flex; justify-content: center; padding-top: 22px !important; position: relative; }
+.oc-row > li { position: relative; padding: 22px 8px 0; display: flex; flex-direction: column; align-items: center; }
+.oc-top > li { padding-top: 0; }
+/* Verbindungslinien: waagrecht über den Geschwistern, senkrecht zu jeder Karte */
+.oc-row > li::before, .oc-row > li::after { content: ""; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 1.5px solid var(--oc-line); }
+.oc-row > li::after { right: auto; left: 50%; border-left: 1.5px solid var(--oc-line); }
+.oc-row > li:first-child::before, .oc-row > li:last-child::after { border: 0; }
+.oc-row > li:last-child::before { border-right: 1.5px solid var(--oc-line); border-radius: 0 8px 0 0; }
+.oc-row > li:first-child::after { border-radius: 8px 0 0 0; }
+.oc-row > li:only-child::before { display: none; }
+.oc-row > li:only-child::after { border-radius: 0; border-top: 0; border-left: 1.5px solid var(--oc-line); }
+.oc-row::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid var(--oc-line); }
+.oc-top::before, .oc-top > li::before, .oc-top > li::after { display: none; }
+/* Endzähler untereinander: Linie links, rechts davon die Karten */
+.oc-canvas .oc-stack { align-self: center; margin-left: var(--oc-w); width: calc(var(--oc-w) + 26px); padding-top: 14px !important; position: relative; }
+.oc-stack::before { content: ""; position: absolute; left: 12px; top: 0; height: 14px; border-left: 1.5px solid var(--oc-line); }
+.oc-stack > li { position: relative; padding: 10px 0 0 26px; }
+.oc-stack > li::before { content: ""; position: absolute; left: 12px; top: 0; height: 50px; width: 14px; border-left: 1.5px solid var(--oc-line); border-bottom: 1.5px solid var(--oc-line); border-radius: 0 0 0 8px; }
+.oc-stack > li:not(:last-child)::after { content: ""; position: absolute; left: 12px; top: 50px; bottom: 0; border-left: 1.5px solid var(--oc-line); }
+.oc-canvas { --oc-w: 232px; --oc-line: color-mix(in srgb, var(--ink) 30%, transparent); }
+.oc-node { position: relative; padding-bottom: 12px; }
+.oc-card { position: relative; width: var(--oc-w); box-sizing: border-box; min-height: 66px; display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); cursor: pointer; text-align: left; }
+.oc-card:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+.oc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.oc-node.sel .oc-card { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.oc-node.ctx .oc-card { opacity: .5; }
+.oc-root .oc-card { cursor: default; border-width: 1.5px; }
+.oc-node.oc-root { padding-bottom: 0; }
+.oc-av { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 700; }
+.oc-txt { min-width: 0; flex: 1; line-height: 1.3; }
+.oc-txt b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-name, .oc-sub { font-size: 11.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-sub { color: var(--muted); }
+.oc-val { font-size: 12px; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oc-val.miss { color: var(--crit-text); }
+.oc-rest { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+.oc-flags { position: absolute; top: 6px; right: 8px; display: flex; gap: 3px; }
+.oc-flag { font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; }
+.oc-flag.crit { background: color-mix(in srgb, var(--crit) 18%, transparent); color: var(--crit-text); }
+.oc-flag.onl { color: var(--accent); font-size: 9px; }
+.oc-acts { position: absolute; right: 6px; bottom: 6px; display: none; gap: 3px; }
+.oc-card:hover .oc-acts, .oc-card:focus-within .oc-acts, .oc-node.sel .oc-acts { display: flex; }
+.oc-act { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 12px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.oc-act:hover { color: var(--accent); border-color: var(--accent); }
+.oc-tg { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; z-index: 2; line-height: 1; }
+.oc-tg:hover { border-color: var(--accent); color: var(--accent); }
+.oc-tg.closed { background: var(--accent); color: #fff; border-color: var(--accent); }
+.oc-hint { margin: 8px 0 0; }
+@media (hover: none) { .oc-acts { display: flex; } }
 
 /* Zähler */
 .me-chips .trk-chip:not(.on) > span { text-decoration: none !important; }
@@ -7220,12 +7251,16 @@ window.EN = (function () {
     document.querySelectorAll("#mtViewSeg button").forEach(function (b) { b.classList.toggle("active", b.dataset.view === mtView); b.setAttribute("aria-checked", b.dataset.view === mtView ? "true" : "false"); });
     $("#mtTableWrap").hidden = mtView === "tree";
     $("#mtTreeHost").hidden = mtView !== "tree";
+    $(".me-layout").classList.toggle("tree-mode", mtView === "tree");
+    $("#mtTypeChips").hidden = mtView === "tree";
     if (mtView === "tree") {
       renderMeterTree($("#mtTreeHost"), shown, !!(terms.length || mtFlag));
-      if (!shown.some(function (m) { return m.id === mtSel; })) mtSel = shown.length ? sortedMeters(shown)[0].id : null;
-      renderMeterDetail();
+      if (!shown.some(function (m) { return m.id === mtSel; })) { mtSel = shown.length ? sortedMeters(shown)[0].id : null; mtDrawer = false; }
+      $("#mtDetail").hidden = !mtDrawer;
+      if (mtDrawer) renderMeterDetail();
       return;
     }
+    $("#mtDetail").hidden = false;
     if (!rows.length) {
       tbl.appendChild(emptyRow(4, energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen."));
     } else {
@@ -7307,24 +7342,29 @@ window.EN = (function () {
     renderMeters();
   });
 
-  /* ---------- Zählerbaum: Haupt- und Unterzähler als aufklappbare Äste ----------
-     Je Energieart ein Stamm, darunter die Zähler mit Verbindungslinien. Ein Ast zeigt den Verbrauch des fälligen Monats,
-     beim Hauptzähler zusätzlich die Summe der Unterzähler und den Rest (Hauptzähler − Unterzähler = nicht einzeln gemessen).
-     Bearbeiten und „+ Unterzähler“ direkt am Knoten; ein Klick wählt den Zähler für das Detail rechts.
-     Aufgeklappte Äste merkt sich das Gerät (sfm-meter-tree). Bei Suche/Filtern werden die Hauptzähler der Treffer mit
-     angezeigt (blass), damit der Zusammenhang erhalten bleibt. */
+  /* ---------- Zählerbaum als Organigramm ----------
+     Je Energieart ein Reiter. Oben der Gesamtknoten der Energieart, darunter die Hauptzähler und ihre Unterzähler von
+     oben nach unten; hat ein Zähler nur noch Zähler ohne eigene Unterzähler, stehen diese untereinander (spart Breite).
+     Knopf unter der Karte klappt einen Ast auf/zu. ✎ und „+“ an der Karte, Klick öffnet das Detail als Seitenleiste.
+     Verschieben mit gedrückter Maus, Zoom mit −/+/Einpassen oder Strg + Mausrad. Gerät merkt sich Reiter, Zoom und Äste. */
   var mtView = (function () { try { return LS.getItem("sfm-meter-view") === "tree" ? "tree" : "list"; } catch (e) { return "list"; } })();
   var mtCollapsed = (function () { try { return JSON.parse(LS.getItem("sfm-meter-tree") || "{}") || {}; } catch (e) { return {}; } })();
-  function mtSaveTree() { try { LS.setItem("sfm-meter-tree", JSON.stringify(mtCollapsed)); } catch (e) {} }
+  var mtTreeType = (function () { try { return LS.getItem("sfm-meter-tree-type") || "strom"; } catch (e) { return "strom"; } })();
+  var mtZoom = (function () { try { var z = +LS.getItem("sfm-meter-tree-zoom"); return z >= 0.3 && z <= 1.6 ? z : 1; } catch (e) { return 1; } })();
+  var mtDrawer = false;
+  function mtSaveTree() {
+    try { LS.setItem("sfm-meter-tree", JSON.stringify(mtCollapsed)); LS.setItem("sfm-meter-tree-type", mtTreeType); LS.setItem("sfm-meter-tree-zoom", String(mtZoom)); } catch (e) {}
+  }
   function mtMonthVal(m) {
     var x = meterMonthC(m.id, DUE_MONTH);
     return x.status === "ok" || x.status === "partial" ? x : null;
   }
   function renderMeterTree(host, shown, filtered) {
+    var keepScroll = host.querySelector(".oc-wrap");
+    var sx = keepScroll ? keepScroll.scrollLeft : null, sy = keepScroll ? keepScroll.scrollTop : null;
     host.innerHTML = "";
     var byId = {}, kids = {};
     energy.meters.forEach(function (m) { byId[m.id] = m; });
-    // sichtbare Menge: Treffer + deren Hauptzähler (für den Zusammenhang)
     var vis = {}, hit = {};
     shown.forEach(function (m) {
       hit[m.id] = true;
@@ -7334,113 +7374,159 @@ window.EN = (function () {
       var m = byId[id], par = m.parent && vis[m.parent] ? m.parent : "";
       (kids[par] = kids[par] || []).push(m);
     });
-    var bar = el("div", "mt-tree-bar");
-    var bOpen = el("button", "btn sm ghost", "Alle aufklappen"), bClose = el("button", "btn sm ghost", "Alle zuklappen");
-    bOpen.type = bClose.type = "button";
-    bOpen.addEventListener("click", function () { mtCollapsed = {}; mtSaveTree(); renderMeters(); });
-    bClose.addEventListener("click", function () { Object.keys(kids).forEach(function (id) { if (id) mtCollapsed[id] = true; }); EN.TYPE_KEYS.forEach(function (t) { mtCollapsed["t:" + t] = true; }); mtSaveTree(); renderMeters(); });
-    bar.appendChild(bOpen); bar.appendChild(bClose);
-    bar.appendChild(el("span", "mini-hint", "Verbrauch " + monthLabel(DUE_MONTH) + " · Rest = Hauptzähler − Unterzähler"));
-    host.appendChild(bar);
-    var roots = kids[""] || [];
-    if (!roots.length) { host.appendChild(el("p", "empty-hint", energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen.")); return; }
-    var tree = el("ul", "mt-tree");
-    tree.setAttribute("role", "tree");
-    var node = function (m, depth) {
-      var li = el("li", "mt-node"), ch = sortedMeters(kids[m.id] || []);
-      var open = !mtCollapsed[m.id] || filtered;
-      li.setAttribute("role", "treeitem");
-      if (ch.length) li.setAttribute("aria-expanded", open ? "true" : "false");
-      var row = el("div", "mt-row" + (m.id === mtSel ? " sel" : "") + (m.removed ? " me-removed" : "") + (hit[m.id] ? "" : " ctx"));
-      var tg = el("button", "mt-toggle" + (ch.length ? "" : " leaf"), ch.length ? (open ? "▾" : "▸") : "");
-      tg.type = "button";
-      if (ch.length) {
-        tg.setAttribute("aria-label", (open ? "Zuklappen: " : "Aufklappen: ") + m.no + " (" + ch.length + " Unterzähler)");
-        tg.addEventListener("click", function (e) { e.stopPropagation(); if (open) mtCollapsed[m.id] = true; else delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); });
-      } else { tg.tabIndex = -1; tg.setAttribute("aria-hidden", "true"); }
-      row.appendChild(tg);
-      var card = el("div", "mt-card");
-      card.tabIndex = 0;
-      card.appendChild(typeChip(m.type));
-      var tx = el("div", "mt-txt");
-      var l1 = el("div", "mt-l1"); l1.appendChild(el("b", null, m.no)); l1.appendChild(el("span", "mt-name", m.name));
-      tx.appendChild(l1);
-      tx.appendChild(el("div", "me-sub", [m.costCenter ? ccLabel(m.costCenter) : "keine Kostenstelle", m.location].filter(Boolean).join(" · ")));
-      card.appendChild(tx);
-      var val = el("div", "mt-val"), v = mtMonthVal(m), unit = billUnit(m.type);
-      if (m.removed) val.appendChild(el("span", "pill neutral", "ausgebaut"));
+    // Reiter je Energieart
+    var counts = {};
+    Object.keys(vis).forEach(function (id) { counts[byId[id].type] = (counts[byId[id].type] || 0) + 1; });
+    if (!counts[mtTreeType]) { var first = EN.TYPE_KEYS.filter(function (t) { return counts[t]; })[0]; if (first) mtTreeType = first; }
+    var tabs = el("div", "oc-tabs"); tabs.setAttribute("role", "tablist");
+    EN.TYPES.forEach(function (t) {
+      var b = el("button", "oc-tab" + (t.key === mtTreeType ? " on" : "")); b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", t.key === mtTreeType ? "true" : "false");
+      var dot = el("span", "en-dot"); dot.style.background = t.color; b.appendChild(dot);
+      b.appendChild(el("span", null, t.label)); b.appendChild(el("span", "trk-chip-n", String(counts[t.key] || 0)));
+      b.disabled = !counts[t.key];
+      b.addEventListener("click", function () { mtTreeType = t.key; mtSaveTree(); renderMeters(); });
+      tabs.appendChild(b);
+    });
+    var tools = el("div", "oc-tools");
+    var tb = function (label, title, fn) { var b = el("button", "btn sm", label); b.type = "button"; b.title = title; b.setAttribute("aria-label", title); b.addEventListener("click", fn); tools.appendChild(b); return b; };
+    tb("Alle auf", "Alle Äste aufklappen", function () { mtCollapsed = {}; mtSaveTree(); renderMeters(); });
+    tb("Alle zu", "Alle Äste zuklappen", function () { Object.keys(kids).forEach(function (id) { if (id && byId[id].type === mtTreeType) mtCollapsed[id] = true; }); mtSaveTree(); renderMeters(); });
+    tb("−", "Verkleinern", function () { setZoom(mtZoom - 0.1); });
+    var zl = el("span", "oc-zoom", Math.round(mtZoom * 100) + " %"); tools.appendChild(zl);
+    tb("+", "Vergrößern", function () { setZoom(mtZoom + 0.1); });
+    tb("Einpassen", "Ganzen Baum in die Breite einpassen", function () { fit(); });
+    var head = el("div", "oc-head"); head.appendChild(tabs); head.appendChild(tools);
+    host.appendChild(head);
+    var wrap = el("div", "oc-wrap"), canvas = el("div", "oc-canvas");
+    wrap.appendChild(canvas); host.appendChild(wrap);
+    host.appendChild(el("p", "mini-hint oc-hint", "Verbrauch " + monthLabel(DUE_MONTH) + " · Rest = Hauptzähler − Unterzähler · Verschieben mit gedrückter Maus, Zoom mit Strg + Mausrad · Klick auf einen Zähler öffnet das Detail"));
+    var roots = sortedMeters((kids[""] || []).filter(function (m) { return m.type === mtTreeType; }));
+    if (!roots.length) { canvas.appendChild(el("p", "empty-hint", energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen.")); return; }
+    var t = EN.typeOf(mtTreeType), unit = billUnit(mtTreeType);
+    var card = function (m, ch, open) {
+      var box = el("div", "oc-node" + (m.id === mtSel && mtDrawer ? " sel" : "") + (m.removed ? " me-removed" : "") + (hit[m.id] ? "" : " ctx"));
+      var c = el("div", "oc-card"); c.tabIndex = 0;
+      var av = el("span", "oc-av", t.label.charAt(0)); av.style.background = t.color;
+      c.appendChild(av);
+      var tx = el("div", "oc-txt");
+      tx.appendChild(el("b", null, m.no));
+      tx.appendChild(el("div", "oc-name", m.name || ""));
+      tx.appendChild(el("div", "oc-sub", m.costCenter ? ccLabel(m.costCenter) : "keine Kostenstelle"));
+      var v = mtMonthVal(m), line = el("div", "oc-val");
+      if (m.removed) line.textContent = "ausgebaut";
+      else if (!v) { line.textContent = "Ablesung fehlt"; line.classList.add("miss"); }
       else {
-        val.appendChild(el("div", "mt-qty" + (v ? "" : " miss"), v ? fmtQty(v.energy, unit) : "Ablesung fehlt"));
-        if (ch.length && v) {
+        line.textContent = fmtQty(v.energy, unit);
+        var live = ch.filter(function (k) { return !k.removed; });
+        if (live.length) {
           var sum = 0, ok = true;
-          ch.forEach(function (k) { if (k.removed) return; var kv = mtMonthVal(k); if (!kv) ok = false; else sum += kv.energy; });
-          var rest = EN.round(v.energy - sum);
-          val.appendChild(el("div", "me-sub", ok ? "Unterzähler " + fmtQty(EN.round(sum), unit) + " · Rest " + fmtQty(rest, unit) : "Unterzähler unvollständig"));
-          if (ok && rest < 0) val.lastChild.classList.add("crit-text");
+          live.forEach(function (k) { var kv = mtMonthVal(k); if (!kv) ok = false; else sum += kv.energy; });
+          var r = el("span", "oc-rest", ok ? "Rest " + fmtQty(EN.round(v.energy - sum), unit) : "Unterzähler unvollständig");
+          r.title = ok ? "Unterzähler zusammen " + fmtQty(EN.round(sum), unit) + " — Rest = nicht einzeln gemessen" : "Mindestens ein Unterzähler ist nicht abgelesen";
+          if (ok && v.energy - sum < -1e-6) r.classList.add("crit-text");
+          line.appendChild(r);
         }
       }
-      card.appendChild(val);
-      var badges = el("div", "me-badges");
-      if (!m.removed && meterMissing(m)) badges.appendChild(el("span", "pill crit", "fehlt"));
-      if (meterOnline(m)) badges.appendChild(el("span", "pill onl-pill", "online"));
-      if (ch.length && !open) badges.appendChild(el("span", "pill neutral", "+" + ch.length));
-      card.appendChild(badges);
-      var select = function () { mtSel = m.id; renderMeters(); if (window.matchMedia && window.matchMedia("(max-width: 1150px)").matches) $("#mtDetail").scrollIntoView({ behavior: "smooth", block: "start" }); };
-      card.addEventListener("click", select);
-      card.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") select();
-        else if (e.key === "ArrowRight" && ch.length && !open) { delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); }
-        else if (e.key === "ArrowLeft" && ch.length && open) { mtCollapsed[m.id] = true; mtSaveTree(); renderMeters(); }
-      });
-      row.appendChild(card);
+      tx.appendChild(line);
+      c.appendChild(tx);
+      var flags = el("div", "oc-flags");
+      if (!m.removed && meterMissing(m)) { var f1 = el("span", "oc-flag crit", "!"); f1.title = "Ablesung fehlt"; flags.appendChild(f1); }
+      if (meterOnline(m)) { var f2 = el("span", "oc-flag onl", "●"); f2.title = "online angebunden"; flags.appendChild(f2); }
+      c.appendChild(flags);
       if (can("edit")) {
-        var acts = el("div", "mt-acts");
-        var be = el("button", "btn sm", "✎"); be.type = "button"; be.title = "Zähler " + m.no + " bearbeiten"; be.setAttribute("aria-label", be.title);
+        var acts = el("div", "oc-acts");
+        var be = el("button", "oc-act", "✎"); be.type = "button"; be.title = "Zähler " + m.no + " bearbeiten"; be.setAttribute("aria-label", be.title);
         be.addEventListener("click", function (e) { e.stopPropagation(); openMeterDialog(m); });
         acts.appendChild(be);
         if (!m.removed) {
-          var bn = el("button", "btn sm", "+ Unterzähler"); bn.type = "button"; bn.title = "Neuen Unterzähler unter " + m.no + " anlegen";
+          var bn = el("button", "oc-act", "+"); bn.type = "button"; bn.title = "Unterzähler unter " + m.no + " anlegen"; bn.setAttribute("aria-label", bn.title);
           bn.addEventListener("click", function (e) { e.stopPropagation(); openMeterDialog(null, { parent: m.id, type: m.type, costCenter: m.costCenter || "" }); });
           acts.appendChild(bn);
         }
-        card.appendChild(acts);
+        c.appendChild(acts);
       }
-      li.appendChild(row);
-      if (ch.length && open) {
-        var ul = el("ul", "mt-children"); ul.setAttribute("role", "group");
-        ch.forEach(function (k) { ul.appendChild(node(k, depth + 1)); });
-        li.appendChild(ul);
+      var select = function () { mtSel = m.id; mtDrawer = true; renderMeters(); };
+      c.addEventListener("click", select);
+      c.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") select();
+        else if (e.key === "ArrowDown" && ch.length && !open) { delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); }
+        else if (e.key === "ArrowUp" && ch.length && open) { mtCollapsed[m.id] = true; mtSaveTree(); renderMeters(); }
+      });
+      box.appendChild(c);
+      if (ch.length) {
+        var tg = el("button", "oc-tg" + (open ? "" : " closed"), open ? "−" : "+" + ch.length); tg.type = "button";
+        tg.title = (open ? "Zuklappen" : "Aufklappen") + " (" + ch.length + " Unterzähler)"; tg.setAttribute("aria-label", tg.title + " " + m.no);
+        tg.setAttribute("aria-expanded", open ? "true" : "false");
+        tg.addEventListener("click", function (e) { e.stopPropagation(); if (open) mtCollapsed[m.id] = true; else delete mtCollapsed[m.id]; mtSaveTree(); renderMeters(); });
+        box.appendChild(tg);
       }
+      return box;
+    };
+    var branch = function (m, depth) {
+      var li = el("li"), ch = sortedMeters(kids[m.id] || []), open = ch.length && (!mtCollapsed[m.id] || filtered);
+      li.appendChild(card(m, ch, open));
+      if (open) li.appendChild(level(ch, depth + 1));
       return li;
     };
-    EN.TYPES.forEach(function (t) {
-      var rs = sortedMeters(roots.filter(function (m) { return m.type === t.key; }));
-      if (!rs.length) return;
-      var key = "t:" + t.key, open = !mtCollapsed[key] || filtered;
-      var li = el("li", "mt-type"); li.setAttribute("role", "treeitem"); li.setAttribute("aria-expanded", open ? "true" : "false");
-      var head = el("button", "mt-type-head"); head.type = "button";
-      head.appendChild(el("span", "mt-toggle-txt", open ? "▾" : "▸"));
-      var dot = el("span", "en-dot"); dot.style.background = t.color; head.appendChild(dot);
-      head.appendChild(el("b", null, t.label));
-      var n = Object.keys(vis).filter(function (id) { return byId[id].type === t.key; }).length;
-      head.appendChild(el("span", "mini-hint", n + (n === 1 ? " Zähler" : " Zähler") + " · " + meterUnit(t.key)));
-      head.addEventListener("click", function () { if (open) mtCollapsed[key] = true; else delete mtCollapsed[key]; mtSaveTree(); renderMeters(); });
-      li.appendChild(head);
-      if (open) {
-        var ul = el("ul", "mt-children mt-roots"); ul.setAttribute("role", "group");
-        rs.forEach(function (m) { ul.appendChild(node(m, 0)); });
-        li.appendChild(ul);
-      }
-      tree.appendChild(li);
+    var level = function (list, depth) {
+      // nur noch Endzähler (ohne sichtbare Unterzähler): ab der 3. Ebene oder bei mehr als 4 untereinander (spart Breite)
+      var leaves = list.every(function (k) { return !(kids[k.id] || []).length; });
+      var ul = el("ul", leaves && list.length > 1 && (depth >= 2 || list.length > 4) ? "oc-stack" : "oc-row");
+      list.forEach(function (k) { ul.appendChild(branch(k, depth)); });
+      return ul;
+    };
+    // Gesamtknoten der Energieart
+    var top = el("ul", "oc-row oc-top"), tli = el("li");
+    var tot = 0, okAll = true;
+    roots.forEach(function (m) { if (m.removed) return; var v = mtMonthVal(m); if (v) tot += v.energy; else okAll = false; });
+    var tnode = el("div", "oc-node oc-root"), tc = el("div", "oc-card");
+    var tav = el("span", "oc-av", t.label.charAt(0)); tav.style.background = t.color; tc.appendChild(tav);
+    var ttx = el("div", "oc-txt"); ttx.appendChild(el("b", null, t.label)); ttx.appendChild(el("div", "oc-name", roots.length + (roots.length === 1 ? " Hauptzähler" : " Hauptzähler") + " · Abrechnung in " + unit));
+    ttx.appendChild(el("div", "oc-val", (okAll ? "" : "mind. ") + fmtQty(EN.round(tot), unit) + " im " + monthShort(DUE_MONTH)));
+    tc.appendChild(ttx);
+    if (can("edit")) {
+      var ta = el("div", "oc-acts"), tbn = el("button", "oc-act", "+"); tbn.type = "button"; tbn.title = "Neuen Hauptzähler " + t.label + " anlegen"; tbn.setAttribute("aria-label", tbn.title);
+      tbn.addEventListener("click", function (e) { e.stopPropagation(); openMeterDialog(null, { parent: "", type: t.key, costCenter: "" }); });
+      ta.appendChild(tbn); tc.appendChild(ta);
+    }
+    tnode.appendChild(tc); tli.appendChild(tnode);
+    tli.appendChild(level(roots, 0));
+    top.appendChild(tli); canvas.appendChild(top);
+    canvas.style.zoom = mtZoom;
+    function setZoom(z) { mtZoom = Math.max(0.3, Math.min(1.6, Math.round(z * 10) / 10)); canvas.style.zoom = mtZoom; zl.textContent = Math.round(mtZoom * 100) + " %"; mtSaveTree(); }
+    function fit() {
+      canvas.style.zoom = 1;
+      var need = top.scrollWidth + 40, have = wrap.clientWidth;
+      setZoom(need > have ? have / need : 1);
+      wrap.scrollLeft = 0;
+    }
+    // Verschieben mit gedrückter Maus (nicht auf Karten/Knöpfen)
+    var drag = null;
+    wrap.addEventListener("mousedown", function (e) {
+      if (e.button !== 0 || e.target.closest(".oc-card, button")) return;
+      drag = { x: e.clientX, y: e.clientY, l: wrap.scrollLeft, t: wrap.scrollTop }; wrap.classList.add("dragging"); e.preventDefault();
     });
-    host.appendChild(tree);
+    window.addEventListener("mousemove", function (e) { if (!drag) return; wrap.scrollLeft = drag.l - (e.clientX - drag.x); wrap.scrollTop = drag.t - (e.clientY - drag.y); });
+    window.addEventListener("mouseup", function () { if (drag) { drag = null; wrap.classList.remove("dragging"); } });
+    wrap.addEventListener("wheel", function (e) { if (!e.ctrlKey) return; e.preventDefault(); setZoom(mtZoom + (e.deltaY < 0 ? 0.1 : -0.1)); }, { passive: false });
+    // Ansicht: bisherige Position behalten, sonst den Gesamtknoten mittig zeigen
+    requestAnimationFrame(function () {
+      if (sx != null) { wrap.scrollLeft = sx; wrap.scrollTop = sy; return; }
+      var tn = tnode.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+      wrap.scrollLeft = Math.max(0, wrap.scrollLeft + tn.left + tn.width / 2 - wr.left - wr.width / 2);
+    });
   }
   function setMeterView(v) {
-    mtView = v;
+    mtView = v; mtDrawer = false;
     try { LS.setItem("sfm-meter-view", v); } catch (e) {}
     renderMeters();
   }
+  function closeMeterDrawer() { mtDrawer = false; renderMeters(); }
   document.querySelectorAll("#mtViewSeg button").forEach(function (b) { b.addEventListener("click", function () { setMeterView(b.dataset.view); }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && mtDrawer && mtView === "tree" && !document.querySelector("dialog[open]")) closeMeterDrawer();
+  });
 
   function infoGrid(pairs) {
     var g = el("dl", "me-info");
@@ -7517,6 +7603,11 @@ window.EN = (function () {
   }
   function renderMeterDetail() {
     var host = $("#mtDetail"); host.innerHTML = "";
+    if (mtView === "tree") {
+      var xb = el("button", "btn sm ghost me-drawer-close", "✕ Schließen"); xb.type = "button"; xb.title = "Detail schließen (Esc)";
+      xb.addEventListener("click", closeMeterDrawer);
+      host.appendChild(xb);
+    }
     var m = mtSel && EN.meterById(energy, mtSel);
     if (!m) { host.appendChild(el("div", "empty-hint", "Einen Zähler in der Liste wählen.")); return; }
     var unit = meterUnit(m.type), bunit = billUnit(m.type), p = EN.propsAt(m, DUE_MONTH);
@@ -7801,7 +7892,7 @@ window.EN = (function () {
         doc.readings.push({ id: EN.nextId(doc, "a"), meter: nm.id, kind: "install", date: inst, month: EN.billingMonth(inst, settings.cutoffDay),
           value: iv, rollover: false, zeroStart: false, note: "Einbau", by: w.by, at: w.at, edits: [], deleted: null });
         if (auto) EN.autoRulesForMeter(doc, nm, from, w);
-        if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; delete mtCollapsed["t:" + nm.type]; }
+        if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; mtTreeType = nm.type; mtSaveTree(); }
       },
       done: function () { mdDlg.close(); }
     });
@@ -7940,7 +8031,7 @@ window.EN = (function () {
           var w = who();
           if (cgWithNew) {
             var nm = EN.changeMeter(doc, id, o, w);
-            if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; delete mtCollapsed["t:" + nm.type]; }
+            if (doc === energy) { mtSel = nm.id; for (var pp = nm.parent; pp; pp = (EN.meterById(doc, pp) || {}).parent) delete mtCollapsed[pp]; mtTreeType = nm.type; mtSaveTree(); }
           } else {
             var x = EN.meterById(doc, id);
             x.removed = rd;
@@ -12572,10 +12663,10 @@ window.EN = (function () {
     { id: "zaehler", group: "Zähler & Ablesung", title: "Zähler anlegen und pflegen",
       intro: "Jeder Zähler wird einzeln verwaltet. Unter „Zähler“ stehen alle Zähler als Liste oder als Zählerbaum (Unterzähler eingerückt unter ihrem Hauptzähler); rechts die Details des gewählten Zählers.",
       sections: [
-        { h: "Die Zählerseite im Überblick", img: "zaehlerbaum", cap: "Darstellung „Baum“: Haupt- und Unterzähler mit Rest", list: [
+        { h: "Die Zählerseite im Überblick", img: "zaehlerbaum", cap: "Darstellung „Baum“ als Organigramm je Energieart", list: [
           "<b>Kacheln oben</b> — eingebaute Zähler, Zähler mit fehlender Ablesung, online angebundene und ausgebaute Zähler. Ein Klick auf eine Kachel zeigt nur diese Zähler.",
           "<b>Energiearten</b> — die Schalter Alle / Strom / Wasser / Gas / Druckluft zeigen nur Zähler dieser Art; dazu Suche, Kostenstelle und die Darstellung „Liste“ oder „Baum“. „Filter zurücksetzen“ zeigt wieder alle eingebauten Zähler.",
-          "<b>Baum</b> — Haupt- und Unterzähler als Äste je Energieart, mit Verbindungslinien. Mit ▸/▾ (oder Pfeiltaste links/rechts) Äste auf- und zuklappen, „Alle aufklappen/zuklappen“ für alles. Am Hauptzähler steht der Verbrauch der Unterzähler und der Rest (Hauptzähler − Unterzähler = nicht einzeln gemessen; negativ = Zuordnung prüfen). Beim Darüberfahren: ✎ bearbeiten und „+ Unterzähler“ (legt einen Zähler mit diesem Hauptzähler, Energieart und Kostenstelle an). Bei Suche oder Filter erscheinen die Hauptzähler der Treffer blass mit. Das Gerät merkt sich Darstellung und aufgeklappte Äste.",
+          "<b>Baum</b> — Organigramm je Energieart (Reiter Strom, Wasser, Gas, Druckluft): oben die Energieart mit ihrem Gesamtverbrauch, darunter die Hauptzähler und ihre Unterzähler mit Verbindungslinien. Endzähler ab der dritten Ebene stehen untereinander. Der Knopf unter einer Karte (− / +Anzahl) klappt den Ast zu und auf; „Alle auf/zu“, Zoom mit −/+ oder Strg + Mausrad, „Einpassen“ zeigt den ganzen Baum; verschieben mit gedrückter Maus. Am Hauptzähler steht der Rest (Hauptzähler − Unterzähler = nicht einzeln gemessen; rot = negativ, Zuordnung prüfen). An der Karte: ✎ bearbeiten und + Unterzähler anlegen (Hauptzähler, Energieart und Kostenstelle vorbelegt); + am Energieart-Knoten legt einen Hauptzähler an. Ein Klick öffnet das Detail als Seitenleiste (Esc schließt). Das Gerät merkt sich Darstellung, Reiter, Zoom und Äste.",
           "<b>Liste</b> — je Zähler Nummer, Bezeichnung, Ort und Kostenstelle, der Verbrauch im fälligen Monat mit kleinem Verlauf der letzten 6 Monate (rot gepunktet = Ablesung fehlt), der letzte Stand und die Kennzeichen „fehlt“, „online“ oder „ausgebaut“.",
           "<b>Detail</b> — oben letzter Stand, Verbrauch mit Vormonatsvergleich und Kostenstelle; darunter „Ablesung erfassen“, „Bearbeiten“ und unter „Weitere Aktionen“ Messfaktor / Überlauf, Zählerwechsel, Ausbauen und Maßnahme anlegen."
         ] },
