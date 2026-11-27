@@ -20,6 +20,7 @@
   <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></symbol>
   <symbol id="i-meter" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 14 4-5"/><circle cx="12" cy="14" r="1.3"/><path d="M3 21h18"/></symbol>
   <symbol id="i-reading" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="18" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 11h7M8.5 15h4"/></symbol>
+  <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></symbol>
   <symbol id="i-bill" viewBox="0 0 24 24"><path d="M6 2.5h8.5L19 7v14.5H6z"/><path d="M14 2.5V7h5"/><path d="m9 14 2 2 4-4.5"/></symbol>
   <symbol id="i-ilv" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M7.2 12h9.6M7 11l10-5M7 13l10 5"/></symbol>
 </svg>
@@ -38,10 +39,11 @@
       <button class="tab" role="tab" data-view="meters" aria-selected="false" aria-label="Zähler"><svg class="ico" aria-hidden="true"><use href="#i-meter"/></svg><span class="tab-label">Zähler</span></button>
       <button class="tab" role="tab" data-view="readings" aria-selected="false" aria-label="Ablesung"><svg class="ico" aria-hidden="true"><use href="#i-reading"/></svg><span class="tab-label">Ablesung</span><span class="tab-badge" id="readBadge" hidden></span></button>
       <button class="tab" role="tab" data-view="ilv" aria-selected="false" aria-label="ILV"><svg class="ico" aria-hidden="true"><use href="#i-ilv"/></svg><span class="tab-label">ILV</span></button>
+      <button class="tab" role="tab" data-view="cc" aria-selected="false" aria-label="Kostenstellen"><svg class="ico" aria-hidden="true"><use href="#i-cc"/></svg><span class="tab-label">Kostenstellen</span></button>
       <button class="tab" role="tab" data-view="billing" aria-selected="false" aria-label="Abrechnung"><svg class="ico" aria-hidden="true"><use href="#i-bill"/></svg><span class="tab-label">Abrechnung</span></button>
       <button class="tab" role="tab" data-view="actions" aria-selected="false" aria-label="Maßnahmen"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span class="tab-label">Maßnahmen</span><span class="tab-badge" id="actionsBadge" hidden></span></button>
       <button class="tab" role="tab" data-view="tracking" aria-selected="false" aria-label="Maßnahmen-Tracking"><svg class="ico" aria-hidden="true"><use href="#i-track"/></svg><span class="tab-label">Tracking</span></button>
-      <button class="tab" role="tab" data-view="doku" aria-selected="false" aria-label="Anwenderdoku"><svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span class="tab-label">Anwenderdoku</span></button>
+      <button class="tab tab-icon-only" role="tab" data-view="doku" aria-selected="false" aria-label="Anwenderdoku"><svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span class="tab-label">Anwenderdoku</span></button>
       <button class="tab" role="tab" data-view="settings" aria-selected="false" aria-label="Einstellungen"><svg class="ico" aria-hidden="true"><use href="#i-settings"/></svg><span class="tab-label">Einstellungen</span></button>
     </nav>
     <div class="topbar-right">
@@ -885,6 +887,7 @@ table.board th.is-today .wd { color: var(--accent); }
    Leiste (breiter Bildschirm), stehen sie dauerhaft neben den Symbolen (.labeled). */
 .tab-label { display: none; white-space: nowrap; margin-left: 8px; }
 .tabs.labeled .tab-label { display: inline; }
+.tabs.labeled .tab-icon-only .tab-label { display: none; }
 .tabs.labeled .tab-badge { position: static; margin-left: 6px; }
 .tab-tip {
   position: fixed; z-index: 60; pointer-events: none;
@@ -2012,6 +2015,29 @@ dialog.wide-dialog .dlg-body { max-height: calc(100dvh - 170px); overflow-y: aut
 @media (max-width: 1100px) { .en-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .en-sum-grid { grid-template-columns: minmax(0, 1fr); } }
 
+/* Kostenstellenübersicht */
+.cv-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.cv-filter #cvScope { min-width: 240px; flex: 1 1 240px; max-width: 360px; }
+.cv-custom { display: flex; gap: 6px; align-items: center; }
+.cv-hint { flex-basis: 100%; margin: 0; }
+.cv-body { display: flex; flex-direction: column; gap: 16px; }
+.cv-table tr.cv-dept td { font-size: 12.5px; }
+.cv-table td.cv-strong { font-weight: 600; }
+.cv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.cv-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.cv-tile .mini-label .cat-chip { vertical-align: -3px; }
+.cv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.cv-grid .me-dev-row { width: 100%; margin-bottom: 6px; }
+.cv-bars { height: 170px; margin-top: 8px; }
+.cv-bars .me-bar { cursor: default; max-width: 64px; }
+.cv-bars { justify-content: center; }
+.cv-tile .mini-label { display: flex; gap: 6px; align-items: center; }
+.cv-meter { display: flex; gap: 6px; align-items: center; }
+.cv-stack { display: flex; flex-direction: column; border-radius: 4px 4px 1px 1px; overflow: hidden; }
+.cv-stack i { display: block; min-height: 1px; }
+.ci-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; margin: 12px 0; }
+tr.ci-err td { color: var(--crit-text); }
+
 /* Abrechnung */
 .bl-head { margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
 .bl-head .period-controls .pill { margin-left: 8px; }
@@ -2391,9 +2417,13 @@ details.wd-group { padding-bottom: 4px; }
       <div class="bk-head">
         <div>
           <div class="settings-title">Kostenstellen</div>
-          <p class="settings-sub">Kostenstellen, auf die verrechnet wird. Inaktive Kostenstellen bleiben für die Historie erhalten.</p>
+          <p class="settings-sub">Kostenstellen, auf die verrechnet wird, mit Abteilung. Inaktive Kostenstellen bleiben für die Historie erhalten. Beim Import werden vorhandene Kostenstellen über die Nummer aktualisiert.</p>
         </div>
-        <button class="btn primary" id="ccNewBtn" type="button">+ Kostenstelle</button>
+        <div class="head-actions">
+          <button class="btn" id="ccImportBtn" type="button" title="Kostenstellen aus Excel (.xlsx) oder CSV übernehmen">Import Excel/CSV</button>
+          <input type="file" id="ccImportFile" accept=".xlsx,.csv,.txt" hidden>
+          <button class="btn primary" id="ccNewBtn" type="button">+ Kostenstelle</button>
+        </div>
       </div>
       <div class="trk-table-wrap"><table class="trk-table" id="ccTable"></table></div>
     </div>
@@ -2424,6 +2454,47 @@ details.wd-group { padding-bottom: 4px; }
 </section>
 
 <!-- Ansicht: actions -->
+<section class="view" id="view-cc" role="tabpanel">
+  <div class="view-head">
+    <div>
+      <div class="eyebrow">Kostenstellen</div>
+      <h1>Kostenstellenübersicht</h1>
+      <p>Verbrauch und Kosten je Kostenstelle und Abteilung, getrennt nach Energieart. Zeitraum frei wählbar, mit Vergleich zur Vorperiode oder zum Vorjahr. Ein Klick auf eine Kostenstelle zeigt Details, Zähler und Regeln.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="cvCsvBtn" title="Werte des Zeitraums als CSV exportieren">CSV-Export</button>
+    </div>
+  </div>
+  <div class="card cv-filter">
+    <select class="perm-select" id="cvScope" aria-label="Kostenstelle oder Abteilung"></select>
+    <div class="period-seg" id="cvKind" role="radiogroup" aria-label="Zeitraum">
+      <button type="button" data-kind="month" class="active">Monat</button>
+      <button type="button" data-kind="quarter">Quartal</button>
+      <button type="button" data-kind="year">Jahr</button>
+      <button type="button" data-kind="custom">Zeitraum</button>
+    </div>
+    <div class="period-controls" id="cvNav">
+      <button class="btn sm icon-btn" id="cvPrev" aria-label="Vorheriger Zeitraum">◀</button>
+      <span class="month-label" id="cvLabel"></span>
+      <button class="btn sm icon-btn" id="cvNext" aria-label="Nächster Zeitraum">▶</button>
+    </div>
+    <div class="cv-custom" id="cvCustom" hidden>
+      <input type="month" class="perm-select" id="cvFrom" aria-label="Von Monat"> <span>bis</span> <input type="month" class="perm-select" id="cvTo" aria-label="Bis Monat">
+    </div>
+    <select class="perm-select" id="cvCmp" aria-label="Vergleich">
+      <option value="prev">Vergleich mit Vorperiode</option>
+      <option value="year">Vergleich mit Vorjahr</option>
+      <option value="">Ohne Vergleich</option>
+    </select>
+    <div class="period-seg" id="cvShow" role="radiogroup" aria-label="Anzeige">
+      <button type="button" data-show="cost" class="active">Kosten</button>
+      <button type="button" data-show="qty">Verbrauch</button>
+    </div>
+    <p class="mini-hint cv-hint" id="cvHint"></p>
+  </div>
+  <div class="cv-body" id="cvBody"></div>
+</section>
+
 <section class="view" id="view-billing" role="tabpanel">
   <div class="view-head">
     <div>
@@ -3449,6 +3520,7 @@ details.wd-group { padding-bottom: 4px; }
         <div class="field"><label for="ccNo">Nummer</label><input id="ccNo" required maxlength="20" autocomplete="off" placeholder="z. B. 4100"></div>
         <div class="field"><label for="ccName">Bezeichnung</label><input id="ccName" required maxlength="80" autocomplete="off" placeholder="z. B. Gießerei"></div>
       </div>
+      <div class="field"><label for="ccDept">Abteilung</label><input id="ccDept" maxlength="60" autocomplete="off" list="ccDeptList" placeholder="z. B. Produktion"><datalist id="ccDeptList"></datalist></div>
       <div class="field"><label for="ccNote">Bemerkung</label><input id="ccNote" maxlength="200" autocomplete="off"></div>
       <label class="check-line"><input type="checkbox" id="ccActive" checked> Aktiv</label>
       <p class="login-error" id="ccError" hidden></p>
@@ -3459,6 +3531,25 @@ details.wd-group { padding-bottom: 4px; }
       <button type="submit" class="btn primary" id="ccSave">Speichern</button>
     </div>
   </form>
+</dialog>
+
+<!-- Dialog: Kostenstellen importieren -->
+<dialog id="ccImportDialog" class="wide-dialog">
+  <div class="dlg-head">
+    <h2>Kostenstellen importieren</h2>
+    <button type="button" class="btn ghost sm" id="ciClose" aria-label="Schließen">✕</button>
+  </div>
+  <div class="dlg-body">
+    <p class="cf-text"><b id="ciFile"></b><br>Spalten zuordnen — die Kopfzeile wird automatisch erkannt. Vorhandene Kostenstellen (gleiche Nummer) werden aktualisiert, neue angelegt. Leere Spalten ändern nichts.</p>
+    <div class="ci-map" id="ciMap"></div>
+    <div class="pv-summary" id="ciSummary"></div>
+    <div class="trk-table-wrap pv-wrap"><table class="trk-table" id="ciTable"></table></div>
+    <p class="login-error" id="ciError" hidden></p>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn" id="ciCancel">Abbrechen</button>
+    <button type="button" class="btn primary" id="ciOk" disabled>Übernehmen</button>
+  </div>
 </dialog>
 
 <!-- Dialog: Verbindung der Online-Anbindung -->
@@ -4659,8 +4750,8 @@ window.EN = (function () {
   function demoEnergy() {
     var d = EN.emptyDoc(), rng = makeRng(20260101), w = { by: "Demo", at: Date.now() };
     var N = 15, M0 = EN.addMonths(DUE_MONTH, -(N - 1)), start = M0 + "-01";
-    [["4100", "Gießerei"], ["4200", "Mechanische Bearbeitung"], ["4300", "Montage"], ["4800", "Verwaltung"], ["4900", "Infrastruktur / Allgemein"]]
-      .forEach(function (c) { d.costCenters.push({ id: EN.nextId(d, "k"), no: c[0], name: c[1], note: "", active: true }); });
+    [["4100", "Gießerei", "Produktion"], ["4200", "Mechanische Bearbeitung", "Produktion"], ["4300", "Montage", "Produktion"], ["4800", "Verwaltung", "Verwaltung"], ["4900", "Infrastruktur / Allgemein", "Technik / Infrastruktur"]]
+      .forEach(function (c) { d.costCenters.push({ id: EN.nextId(d, "k"), no: c[0], name: c[1], dept: c[2], note: "", active: true }); });
     var cc = {};
     d.costCenters.forEach(function (c) { cc[c.no] = c.id; });
     var meters = {};
@@ -8708,12 +8799,13 @@ window.EN = (function () {
     $("#ccNewBtn").hidden = !can("edit");
     var tbl = $("#ccTable"); tbl.innerHTML = "";
     var list = energy.costCenters.slice().sort(function (a, b) { return String(a.no).localeCompare(String(b.no), "de", { numeric: true }); });
-    if (!list.length) { tbl.appendChild(emptyRow(6, "Noch keine Kostenstellen.")); return; }
-    tbl.appendChild(headRow(["Nummer", "Bezeichnung", "Bemerkung", "Zähler", "Regeln", "Status", ""], [0, 0, 0, 1, 1, 0, 0]));
+    $("#ccImportBtn").hidden = !can("edit");
+    if (!list.length) { tbl.appendChild(emptyRow(7, "Noch keine Kostenstellen — anlegen oder aus einer Excel-/CSV-Datei importieren.")); return; }
+    tbl.appendChild(headRow(["Nummer", "Bezeichnung", "Abteilung", "Bemerkung", "Zähler", "Regeln", "Status", ""], [0, 0, 0, 0, 1, 1, 0, 0]));
     var tb = document.createElement("tbody");
     list.forEach(function (c) {
       var tr = el("tr", c.active === false ? "me-removed" : "");
-      tr.appendChild(td(c.no)); tr.appendChild(td(c.name)); tr.appendChild(td(c.note || ""));
+      tr.appendChild(td(c.no)); tr.appendChild(td(c.name)); tr.appendChild(td(c.dept || "")); tr.appendChild(td(c.note || ""));
       tr.appendChild(td(String(energy.meters.filter(function (m) { return m.costCenter === c.id && !m.removed; }).length), "num"));
       tr.appendChild(td(String(energy.rules.filter(function (r) { return r.cc === c.id; }).length), "num"));
       var cs = document.createElement("td"); cs.appendChild(el("span", "pill " + (c.active === false ? "neutral" : "good"), c.active === false ? "Inaktiv" : "Aktiv")); tr.appendChild(cs);
@@ -8735,6 +8827,8 @@ window.EN = (function () {
     $("#ccTitle").textContent = c ? "Kostenstelle bearbeiten" : "Neue Kostenstelle";
     $("#ccNo").value = c ? c.no : ""; $("#ccName").value = c ? c.name : ""; $("#ccNote").value = c ? c.note || "" : "";
     $("#ccActive").checked = !c || c.active !== false;
+    $("#ccDept").value = c ? c.dept || "" : "";
+    var dl = $("#ccDeptList"); dl.innerHTML = ""; deptList().forEach(function (d) { var o = el("option"); o.value = d; dl.appendChild(o); });
     $("#ccDelete").hidden = !(c && can("delete"));
     ccDlg.showModal();
   }
@@ -8750,10 +8844,11 @@ window.EN = (function () {
     var c = ccEditing;
     if (c) {
       var was = c.no + " · " + c.name;
-      c.no = no; c.name = name; c.note = $("#ccNote").value.trim(); c.active = $("#ccActive").checked;
-      logChange("cc", "Kostenstelle " + was + " geändert → " + no + " · " + name + (c.active ? "" : " (inaktiv)"));
+      var wasDept = c.dept || "";
+      c.no = no; c.name = name; c.note = $("#ccNote").value.trim(); c.active = $("#ccActive").checked; c.dept = $("#ccDept").value.trim();
+      logChange("cc", "Kostenstelle " + was + " geändert → " + no + " · " + name + (c.dept !== wasDept ? ", Abteilung " + (wasDept || "—") + " → " + (c.dept || "—") : "") + (c.active ? "" : " (inaktiv)"));
     } else {
-      energy.costCenters.push({ id: EN.nextId(energy, "k"), no: no, name: name, note: $("#ccNote").value.trim(), active: $("#ccActive").checked });
+      energy.costCenters.push({ id: EN.nextId(energy, "k"), no: no, name: name, dept: $("#ccDept").value.trim(), note: $("#ccNote").value.trim(), active: $("#ccActive").checked });
       logChange("cc", "Kostenstelle " + no + " · " + name + " angelegt");
     }
     ccDlg.close();
@@ -8943,6 +9038,142 @@ window.EN = (function () {
       energyChanged("Berechnungsstand gelöscht");
     });
   });
+
+  /* ---------- Excel-Dateien (.xlsx) lesen und schreiben — ohne externe Bibliothek ----------
+     Lesen: ZIP-Verzeichnis auswerten, Einträge mit DecompressionStream("deflate-raw") entpacken, erstes Tabellenblatt.
+     Schreiben: unkomprimiertes ZIP (gespeichert) mit CRC32, Texte als Inline-Strings, Kopfzeile fett. */
+  var XL = (function () {
+    var enc = new TextEncoder(), dec = new TextDecoder("utf-8");
+    var CRC = (function () { var t = []; for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+    function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+    function unzip(buf) {
+      var v = new DataView(buf), u8 = new Uint8Array(buf), eocd = -1;
+      for (var i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--) { if (v.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+      if (eocd < 0) return Promise.reject(new Error("Keine gültige Excel-Datei (.xlsx)."));
+      var count = v.getUint16(eocd + 10, true), p = v.getUint32(eocd + 16, true), files = {};
+      for (var n = 0; n < count; n++) {
+        if (v.getUint32(p, true) !== 0x02014b50) break;
+        var method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nlen = v.getUint16(p + 28, true),
+          elen = v.getUint16(p + 30, true), clen = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true);
+        var name = dec.decode(u8.subarray(p + 46, p + 46 + nlen));
+        var data = off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true);
+        files[name] = { method: method, bytes: u8.subarray(data, data + csize) };
+        p += 46 + nlen + elen + clen;
+      }
+      return Promise.resolve(files);
+    }
+    function inflate(f) {
+      if (!f) return Promise.resolve("");
+      if (f.method === 0) return Promise.resolve(dec.decode(f.bytes));
+      if (typeof DecompressionStream === "undefined") return Promise.reject(new Error("Dieser Browser kann Excel-Dateien nicht lesen — bitte als CSV speichern."));
+      var s = new Blob([f.bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      return new Response(s).text();
+    }
+    function colIndex(ref) { var m = /^([A-Z]+)/.exec(ref || ""), n = 0; if (!m) return -1; for (var i = 0; i < m[1].length; i++) n = n * 26 + m[1].charCodeAt(i) - 64; return n - 1; }
+    // Erstes Tabellenblatt als Zeilen mit Zellwerten (Text oder Zahl)
+    function read(buf) {
+      return unzip(buf).then(function (files) {
+        var sheet = files["xl/worksheets/sheet1.xml"] ? "xl/worksheets/sheet1.xml" : Object.keys(files).filter(function (k) { return /^xl\/worksheets\/[^/]+\.xml$/.test(k); }).sort()[0];
+        if (!sheet) throw new Error("Die Excel-Datei enthält kein Tabellenblatt.");
+        return Promise.all([inflate(files["xl/sharedStrings.xml"]), inflate(files[sheet])]);
+      }).then(function (x) {
+        var P = new DOMParser(), strings = [];
+        if (x[0]) {
+          var ss = P.parseFromString(x[0], "application/xml").getElementsByTagName("si");
+          for (var i = 0; i < ss.length; i++) {
+            var ts = ss[i].getElementsByTagName("t"), t = "";
+            for (var j = 0; j < ts.length; j++) t += ts[j].textContent;
+            strings.push(t);
+          }
+        }
+        var rows = [], rs = P.parseFromString(x[1], "application/xml").getElementsByTagName("row");
+        for (var r = 0; r < rs.length; r++) {
+          var row = [], cs = rs[r].getElementsByTagName("c");
+          for (var c = 0; c < cs.length; c++) {
+            var cell = cs[c], idx = colIndex(cell.getAttribute("r")), type = cell.getAttribute("t"), vEl = cell.getElementsByTagName("v")[0], val = vEl ? vEl.textContent : "";
+            if (idx < 0) idx = row.length;
+            if (type === "s") val = strings[+val] || "";
+            else if (type === "inlineStr") { var it = cell.getElementsByTagName("t"); val = ""; for (var k = 0; k < it.length; k++) val += it[k].textContent; }
+            else if (type === "b") val = val === "1" ? "WAHR" : "FALSCH";
+            else if (type !== "str" && val !== "" && isFinite(+val)) val = +val;
+            while (row.length < idx) row.push("");
+            row[idx] = val;
+          }
+          var rn = +rs[r].getAttribute("r");
+          if (rn) while (rows.length < rn - 1) rows.push([]);
+          rows.push(row);
+        }
+        return rows;
+      });
+    }
+    function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""); }
+    function colName(i) { var s = ""; i++; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+    // sheets: [{ name, rows: [[...]], widths?: [..] }] — Zahlen bleiben Zahlen, erste Zeile fett
+    function write(sheets) {
+      var files = [], sheetXml = function (sh) {
+        var out = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'];
+        out.push('<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>');
+        var w = sh.widths || (sh.rows[0] || []).map(function (_, i) {
+          var mx = 8; sh.rows.slice(0, 200).forEach(function (r) { var l = String(r[i] == null ? "" : r[i]).length; if (l > mx) mx = l; }); return Math.min(60, mx + 2);
+        });
+        if (w.length) out.push("<cols>" + w.map(function (x, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + x + '" customWidth="1"/>'; }).join("") + "</cols>");
+        out.push("<sheetData>");
+        sh.rows.forEach(function (r, ri) {
+          out.push('<row r="' + (ri + 1) + '">');
+          r.forEach(function (v, ci) {
+            if (v == null || v === "") return;
+            var ref = colName(ci) + (ri + 1), st = ri === 0 ? ' s="1"' : "";
+            if (typeof v === "number" && isFinite(v)) out.push('<c r="' + ref + '"' + (ri === 0 ? st : ' s="2"') + "><v>" + v + "</v></c>");
+            else out.push('<c r="' + ref + '" t="inlineStr"' + st + '><is><t xml:space="preserve">' + esc(v) + "</t></is></c>");
+          });
+          out.push("</row>");
+        });
+        out.push("</sheetData></worksheet>");
+        return out.join("");
+      };
+      files.push(["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+        sheets.map(function (_, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join("") + "</Types>"]);
+      files.push(["_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>']);
+      files.push(["xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+        sheets.map(function (s, i) { return '<sheet name="' + esc(String(s.name || "Tabelle" + (i + 1)).replace(/[\\\/?*\[\]:]/g, " ").slice(0, 31)) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join("") + "</sheets></workbook>"]);
+      files.push(["xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        sheets.map(function (_, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join("") +
+        '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>']);
+      files.push(["xl/styles.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf fontId="1" applyFont="1"/><xf numFmtId="4" applyNumberFormat="1"/></cellXfs></styleSheet>']);
+      sheets.forEach(function (s, i) { files.push(["xl/worksheets/sheet" + (i + 1) + ".xml", sheetXml(s)]); });
+      // ZIP (gespeichert, ohne Kompression)
+      var parts = [], central = [], offset = 0;
+      files.forEach(function (f) {
+        var name = enc.encode(f[0]), data = enc.encode(f[1]), crc = crc32(data);
+        var lh = new DataView(new ArrayBuffer(30));
+        lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint32(14, crc, true);
+        lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+        parts.push(new Uint8Array(lh.buffer), name, data);
+        var ch = new DataView(new ArrayBuffer(46));
+        ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint32(16, crc, true);
+        ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+        central.push(new Uint8Array(ch.buffer), name);
+        offset += 30 + name.length + data.length;
+      });
+      var csize = central.reduce(function (n, x) { return n + x.length; }, 0), end = new DataView(new ArrayBuffer(22));
+      end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+      end.setUint32(12, csize, true); end.setUint32(16, offset, true);
+      return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    }
+    return { read: read, write: write };
+  })();
+  // Tabellendatei (CSV oder .xlsx) als Zeilen einlesen
+  function readTableFile(file) {
+    if (/\.xlsx$/i.test(file.name)) return file.arrayBuffer().then(XL.read);
+    if (/\.xls$/i.test(file.name)) return Promise.reject(new Error("Alte Excel-Dateien (.xls) bitte als .xlsx oder CSV speichern."));
+    return file.text().then(function (t) { return EN.parseCsv(t.replace(/^﻿/, "")); });
+  }
+  // Excel-Zahl (Tage seit 1899-12-30) → JJJJ-MM-TT
+  function excelDate(v) {
+    if (typeof v !== "number" || v < 20000 || v > 80000) return null;
+    var d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
 
   /* ---------- Abrechnung je Monat: prüfen, freigeben, wieder öffnen ----------
      Ablauf: Zählerstände → Verbrauch → ILV → Kosten → prüfen (Bearbeiten) → freigeben (Teamleitung/Administration).
@@ -9214,6 +9445,397 @@ window.EN = (function () {
       rows.push([mo, BL_STATUS[b ? b.status : "open"][0], ccLabel(p[0]), typeLabel(p[1]), fmtNum(x.qty, unitDigitsOf(billUnit(p[1]))), billUnit(p[1]), fmtNum((x.cost || 0) - base, 2), fmtNum(base, 2), fmtNum(x.cost || 0, 2)]);
     });
     csvDownload(rows, "abrechnung-" + mo + ".csv");
+  });
+
+  /* ---------- Zeiträume für Auswertungen (Monat, Quartal, Jahr, frei) ----------
+     p = { kind: "month"|"quarter"|"year"|"custom", ref: "JJJJ-MM", from, to } → Monate; Vergleich: Vorperiode oder Vorjahr */
+  function periodMonths(p) {
+    if (p.kind === "custom") return EN.monthRange(p.from <= p.to ? p.from : p.to, p.from <= p.to ? p.to : p.from);
+    var y = +p.ref.slice(0, 4), m = +p.ref.slice(5, 7);
+    if (p.kind === "year") return EN.monthRange(y + "-01", y + "-12");
+    if (p.kind === "quarter") { var q0 = Math.floor((m - 1) / 3) * 3 + 1, f = y + "-" + String(q0).padStart(2, "0"); return EN.monthRange(f, EN.addMonths(f, 2)); }
+    return [p.ref];
+  }
+  function periodLabel(p) {
+    var ms = periodMonths(p);
+    if (p.kind === "month") return monthLabel(p.ref);
+    if (p.kind === "quarter") return "Q" + (Math.floor((+p.ref.slice(5, 7) - 1) / 3) + 1) + " " + p.ref.slice(0, 4);
+    if (p.kind === "year") return "Jahr " + p.ref.slice(0, 4);
+    return ms.length ? monthShort(ms[0]) + " – " + monthShort(ms[ms.length - 1]) : "";
+  }
+  function periodShift(p, dir) {
+    var n = p.kind === "year" ? 12 : p.kind === "quarter" ? 3 : p.kind === "month" ? 1 : periodMonths(p).length;
+    if (p.kind === "custom") return { kind: "custom", from: EN.addMonths(p.from, dir * n), to: EN.addMonths(p.to, dir * n) };
+    return { kind: p.kind, ref: EN.addMonths(p.ref, dir * n) };
+  }
+  // Vergleichszeitraum: "prev" = Vorperiode gleicher Länge, "year" = gleiche Monate im Vorjahr.
+  // Ist der Zeitraum noch nicht vollständig (Monate nach dem fälligen Monat), werden nur die gleichen Monate verglichen.
+  function periodCompare(p, how) {
+    if (!how) return null;
+    var ms = periodMonths(p), avail = ms.filter(function (m) { return m <= DUE_MONTH; });
+    if (!avail.length) return null;
+    var shift = how === "year" ? 12 : ms.length;
+    var cm = avail.map(function (m) { return EN.addMonths(m, -shift); });
+    var label = cm.length === 1 ? monthLabel(cm[0]) : monthShort(cm[0]) + " – " + monthShort(cm[cm.length - 1]);
+    if (cm.length === ms.length && p.kind !== "custom" && how === "prev") label = periodLabel(periodShift(p, -1));
+    if (cm.length === ms.length && p.kind === "year" && how === "year") label = "Jahr " + cm[0].slice(0, 4);
+    return { months: cm, label: label };
+  }
+  // Verrechnete Werte eines Monats je „Kostenstelle|Energieart“ (freigegebene Monate: festgehaltener Stand)
+  function ccValuesMonth(mo) {
+    var c = calc(), k = "bv|" + mo;
+    if (!c[k]) c[k] = blValues(mo);
+    return c[k];
+  }
+  // Summen über Monate: { "cc|type": { qty, cost, base } }
+  function ccValues(months) {
+    var out = {};
+    months.forEach(function (mo) {
+      if (mo > DUE_MONTH) return;
+      var v = ccValuesMonth(mo).rows;
+      Object.keys(v).forEach(function (k) {
+        var x = out[k] || (out[k] = { qty: 0, cost: 0, base: 0 });
+        x.qty = EN.round(x.qty + v[k].qty); x.cost = EN.round(x.cost + (v[k].cost || 0), 2); x.base = EN.round(x.base + (v[k].base || 0), 2);
+      });
+    });
+    return out;
+  }
+  function ccDept(c) { return c && c.dept ? String(c.dept) : ""; }
+  function deptList() {
+    return energy.costCenters.map(ccDept).filter(function (d, i, a) { return d && a.indexOf(d) === i; }).sort(function (a, b) { return a.localeCompare(b, "de"); });
+  }
+  // Auswahl Kostenstellen/Abteilungen: "" = alle, "dept:<Name>", "cc:<id>"
+  function ccScopeOptions(allLabel) {
+    var o = [{ v: "", t: allLabel || "Alle Kostenstellen" }], depts = deptList();
+    if (depts.length) o.push({ group: "Abteilungen", opts: depts.map(function (d) { return { v: "dept:" + d, t: d }; }) });
+    o.push({ group: "Kostenstellen", opts: ccOptions(null).map(function (x) { return { v: "cc:" + x.v, t: x.t }; }) });
+    return o;
+  }
+  function ccInScope(ccId, scope) {
+    if (!scope) return true;
+    if (scope.indexOf("cc:") === 0) return ccId === scope.slice(3);
+    if (scope.indexOf("dept:") === 0) return ccDept(EN.ccById(energy, ccId)) === scope.slice(5);
+    return true;
+  }
+  function scopeLabel(scope) {
+    if (!scope) return "Alle Kostenstellen";
+    if (scope.indexOf("dept:") === 0) return "Abteilung " + scope.slice(5);
+    return "Kostenstelle " + ccLabel(scope.slice(3));
+  }
+
+  /* ---------- Kostenstellenübersicht ----------
+     Alle Kostenstellen nach Abteilungen mit Verbrauch und Kosten je Energieart; eine Kostenstelle gewählt: Kennzahlen je
+     Energieart mit Vergleich, Kosten je Monat, Zähler und Regeln mit Sprung in die Details. */
+  var cvScope = "", cvPeriod = null, cvCmp = "prev", cvShow = "cost";
+  function cvInit() { if (!cvPeriod) cvPeriod = { kind: "month", ref: DUE_MONTH }; }
+  function renderCcView() {
+    cvInit();
+    fillSelect($("#cvScope"), ccScopeOptions(), cvScope);
+    if ($("#cvScope").value !== cvScope) cvScope = "";
+    document.querySelectorAll("#cvKind button").forEach(function (b) { b.classList.toggle("active", b.dataset.kind === cvPeriod.kind); });
+    document.querySelectorAll("#cvShow button").forEach(function (b) { b.classList.toggle("active", b.dataset.show === cvShow); });
+    $("#cvCustom").hidden = cvPeriod.kind !== "custom";
+    $("#cvNav").hidden = cvPeriod.kind === "custom";
+    if (cvPeriod.kind === "custom") { $("#cvFrom").value = cvPeriod.from; $("#cvTo").value = cvPeriod.to; }
+    $("#cvLabel").textContent = periodLabel(cvPeriod);
+    $("#cvNext").disabled = periodMonths(cvPeriod)[periodMonths(cvPeriod).length - 1] >= DUE_MONTH;
+    $("#cvCmp").value = cvCmp;
+    var months = periodMonths(cvPeriod), cmpP = periodCompare(cvPeriod, cvCmp);
+    var cur = ccValues(months), prev = cmpP ? ccValues(cmpP.months) : null;
+    var host = $("#cvBody"); host.innerHTML = "";
+    var open = months.filter(function (m) { return m <= DUE_MONTH && !EN.isReleased(energy, m); }).length, rel = months.filter(function (m) { return m <= DUE_MONTH && EN.isReleased(energy, m); }).length;
+    $("#cvHint").textContent = (rel ? rel + (rel === 1 ? " Monat freigegeben" : " Monate freigegeben") + (open ? ", " : "") : "") + (open ? open + (open === 1 ? " Monat noch offen" : " Monate noch offen") + " (vorläufige Werte)" : "") +
+      (cmpP ? " · Vergleich: " + cmpP.label : "") + (months.some(function (m) { return m > DUE_MONTH; }) ? " · Monate nach " + monthLabel(DUE_MONTH) + " sind noch nicht fällig." : "");
+    if (cvScope.indexOf("cc:") === 0) renderCcDetail(host, cvScope.slice(3), months, cur, prev, cmpP);
+    else renderCcTableAll(host, cur, prev, cmpP);
+  }
+  function sumBy(vals, filter) {
+    var out = { qty: 0, cost: 0 };
+    Object.keys(vals).forEach(function (k) { var p = k.split("|"); if (filter(p[0], p[1])) { out.qty += vals[k].qty; out.cost += vals[k].cost || 0; } });
+    out.qty = EN.round(out.qty); out.cost = EN.round(out.cost, 2);
+    return out;
+  }
+  function deltaCell(cur, prev) {
+    var c = el("td", "num nowrap");
+    if (prev == null || !prev) { c.textContent = "—"; return c; }
+    var d = (cur - prev) / Math.abs(prev) * 100;
+    c.textContent = (d > 0 ? "+" : "") + fmtNum(d, 1) + " %";
+    c.className += d > 0.05 ? " pv-up" : d < -0.05 ? " pv-down" : "";
+    return c;
+  }
+  function renderCcTableAll(host, cur, prev, cmpP) {
+    var ccs = energy.costCenters.filter(function (c) { return ccInScope(c.id, cvScope); });
+    var used = EN.TYPES.filter(function (t) { return Object.keys(cur).some(function (k) { return k.split("|")[1] === t.key; }) || (prev && Object.keys(prev).some(function (k) { return k.split("|")[1] === t.key; })); });
+    var card = el("div", "card");
+    var head = el("div", "cv-card-head");
+    head.appendChild(el("div", "set-card-title", scopeLabel(cvScope) + " · " + (cvShow === "cost" ? "Kosten" : "Verbrauch") + " " + periodLabel(cvPeriod)));
+    card.appendChild(head);
+    var t = el("table", "trk-table cv-table");
+    var cols = ["Kostenstelle"].concat(used.map(function (x) { return x.label + (cvShow === "cost" ? "" : " (" + x.bill + ")"); }));
+    if (cvShow === "cost") cols.push("Gesamt");
+    if (cmpP && cvShow === "cost") cols.push("zu " + cmpP.label);
+    t.appendChild(headRow(cols, cols.map(function (_, i) { return i > 0; })));
+    var tb = document.createElement("tbody");
+    var groups = {};
+    ccs.forEach(function (c) { (groups[ccDept(c) || ""] = groups[ccDept(c) || ""] || []).push(c); });
+    var names = Object.keys(groups).sort(function (a, b) { return a === "" ? 1 : b === "" ? -1 : a.localeCompare(b, "de"); });
+    var grand = { cost: 0, prev: 0, types: {} };
+    names.forEach(function (dn) {
+      var list = groups[dn].sort(function (a, b) { return String(a.no).localeCompare(String(b.no), "de", { numeric: true }); });
+      var rowsHtml = [], dSum = { cost: 0, prev: 0, types: {} };
+      list.forEach(function (c) {
+        var tot = sumBy(cur, function (cc) { return cc === c.id; }), ptot = prev ? sumBy(prev, function (cc) { return cc === c.id; }) : null;
+        if (!tot.qty && !tot.cost && (!ptot || !ptot.cost) && c.active === false) return;
+        var tr = el("tr", "trk-row" + (c.active === false ? " me-removed" : "")); tr.tabIndex = 0;
+        var c0 = el("td"); c0.appendChild(el("div", null, c.no + " · " + c.name)); tr.appendChild(c0);
+        used.forEach(function (ty) {
+          var v = sumBy(cur, function (cc, tt) { return cc === c.id && tt === ty.key; });
+          tr.appendChild(td(!v.qty && !v.cost ? "—" : cvShow === "cost" ? fmtEuro(v.cost) : fmtQty(v.qty, ty.bill), "num nowrap"));
+          var dt = dSum.types[ty.key] || (dSum.types[ty.key] = { qty: 0, cost: 0 }); dt.qty += v.qty; dt.cost += v.cost;
+        });
+        if (cvShow === "cost") tr.appendChild(td(fmtEuro(tot.cost), "num nowrap cv-strong"));
+        if (cmpP && cvShow === "cost") tr.appendChild(deltaCell(tot.cost, ptot ? ptot.cost : null));
+        dSum.cost += tot.cost; dSum.prev += ptot ? ptot.cost : 0;
+        var go = function () { cvScope = "cc:" + c.id; renderCcView(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+        tr.addEventListener("click", go); tr.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
+        rowsHtml.push(tr);
+      });
+      if (!rowsHtml.length) return;
+      if (names.length > 1 || dn) {
+        var gr = el("tr", "me-group cv-dept"), gc = el("td", null, dn || "Ohne Abteilung");
+        gr.appendChild(gc);
+        used.forEach(function (ty) { var v = dSum.types[ty.key] || { qty: 0, cost: 0 }; gr.appendChild(td(cvShow === "cost" ? fmtEuro(v.cost) : fmtQty(EN.round(v.qty), ty.bill), "num nowrap")); });
+        if (cvShow === "cost") gr.appendChild(td(fmtEuro(dSum.cost), "num nowrap"));
+        if (cmpP && cvShow === "cost") gr.appendChild(deltaCell(dSum.cost, dSum.prev));
+        if (dn) { gr.classList.add("trk-row"); gr.tabIndex = 0; gr.title = "Nur diese Abteilung anzeigen"; gr.addEventListener("click", function () { cvScope = "dept:" + dn; renderCcView(); }); }
+        tb.appendChild(gr);
+      }
+      rowsHtml.forEach(function (r) { tb.appendChild(r); });
+      grand.cost += dSum.cost; grand.prev += dSum.prev;
+      used.forEach(function (ty) { var v = dSum.types[ty.key] || { qty: 0, cost: 0 }, g = grand.types[ty.key] || (grand.types[ty.key] = { qty: 0, cost: 0 }); g.qty += v.qty; g.cost += v.cost; });
+    });
+    if (!tb.children.length) tb.appendChild(emptyRow(cols.length, "Keine Werte im gewählten Zeitraum.").firstChild);
+    else {
+      var ft = el("tr", "bl-total"); ft.appendChild(td("Summe"));
+      used.forEach(function (ty) { var v = grand.types[ty.key] || { qty: 0, cost: 0 }; ft.appendChild(td(cvShow === "cost" ? fmtEuro(EN.round(v.cost, 2)) : fmtQty(EN.round(v.qty), ty.bill), "num nowrap")); });
+      if (cvShow === "cost") ft.appendChild(td(fmtEuro(EN.round(grand.cost, 2)), "num nowrap"));
+      if (cmpP && cvShow === "cost") ft.appendChild(deltaCell(grand.cost, grand.prev));
+      tb.appendChild(ft);
+    }
+    t.appendChild(tb);
+    var w = el("div", "trk-table-wrap"); w.appendChild(t); card.appendChild(w);
+    card.appendChild(el("p", "mini-hint", "Verrechnete Mengen und Kosten aus der ILV (Gas in kWh, Kosten inkl. anteiligem Grundpreis). Ein Klick auf eine Kostenstelle zeigt die Details, ein Klick auf eine Abteilung nur deren Kostenstellen. Einheiten werden nicht zusammengezählt — die Summe gibt es nur für Kosten."));
+    host.appendChild(card);
+  }
+  function renderCcDetail(host, ccId, months, cur, prev, cmpP) {
+    var c = EN.ccById(energy, ccId);
+    if (!c) return;
+    var head = el("div", "card cv-head");
+    var ht = el("div");
+    ht.appendChild(el("h2", "me-title", c.no + " · " + c.name));
+    ht.appendChild(el("div", "me-sub", (ccDept(c) ? "Abteilung " + ccDept(c) : "Ohne Abteilung") + (c.active === false ? " · inaktiv" : "") + (c.note ? " · " + c.note : "")));
+    head.appendChild(ht);
+    var back = el("button", "btn sm", "← Alle Kostenstellen"); back.type = "button";
+    back.addEventListener("click", function () { cvScope = ccDept(c) ? "dept:" + ccDept(c) : ""; renderCcView(); });
+    head.appendChild(back);
+    host.appendChild(head);
+    // Kennzahlen je Energieart
+    var tiles = el("div", "cv-tiles");
+    var tot = sumBy(cur, function (cc) { return cc === ccId; }), ptot = prev ? sumBy(prev, function (cc) { return cc === ccId; }) : null;
+    var tAll = el("div", "card mini-tile cv-tile"); tAll.appendChild(el("div", "mini-value", fmtEuro(tot.cost))); tAll.appendChild(el("div", "mini-label", "Kosten gesamt · " + periodLabel(cvPeriod)));
+    if (ptot) tAll.appendChild(deltaLine(tot.cost, ptot.cost, "€", cmpP.label));
+    tiles.appendChild(tAll);
+    EN.TYPES.forEach(function (ty) {
+      var v = sumBy(cur, function (cc, tt) { return cc === ccId && tt === ty.key; }), pv = prev ? sumBy(prev, function (cc, tt) { return cc === ccId && tt === ty.key; }) : null;
+      if (!v.qty && !v.cost && (!pv || !pv.qty)) return;
+      var tile = el("div", "card mini-tile cv-tile");
+      var lab = el("div", "mini-label"); lab.appendChild(typeChip(ty.key)); lab.appendChild(document.createTextNode(" " + ty.label));
+      tile.appendChild(lab);
+      tile.appendChild(el("div", "mini-value", fmtQty(v.qty, ty.bill)));
+      tile.appendChild(el("div", "mini-label", fmtEuro(v.cost)));
+      if (pv) tile.appendChild(deltaLine(v.qty, pv.qty, ty.bill, cmpP.label));
+      tiles.appendChild(tile);
+    });
+    host.appendChild(tiles);
+    // Kosten je Monat (gestapelt nach Energieart)
+    var chart = el("div", "card");
+    chart.appendChild(el("div", "set-card-title", "Kosten je Monat"));
+    var lastM = months[months.length - 1] > DUE_MONTH ? DUE_MONTH : months[months.length - 1];
+    var ms = months.length >= 6 ? months : EN.monthRange(EN.addMonths(lastM, -11), lastM);
+    var data = ms.map(function (mo) {
+      var v = mo <= DUE_MONTH ? ccValuesMonth(mo).rows : {}, by = {};
+      EN.TYPE_KEYS.forEach(function (t) { var x = v[ccId + "|" + t]; by[t] = x ? x.cost || 0 : 0; });
+      return { mo: mo, by: by, sum: EN.TYPE_KEYS.reduce(function (n, t) { return n + by[t]; }, 0) };
+    });
+    var max = Math.max.apply(null, data.map(function (d) { return d.sum; }).concat([1e-9]));
+    var bars = el("div", "me-bars cv-bars");
+    data.forEach(function (d) {
+      var col = el("div", "me-bar" + (EN.isReleased(energy, d.mo) ? " rel" : ""));
+      var stack = el("span", "cv-stack"); stack.style.height = Math.max(d.sum ? 3 : 0, d.sum / max * 100) + "%";
+      EN.TYPES.slice().reverse().forEach(function (t) { if (!d.by[t.key]) return; var seg = el("i"); seg.style.background = t.color; seg.style.flexGrow = d.by[t.key]; stack.appendChild(seg); });
+      col.appendChild(stack);
+      col.appendChild(el("span", "me-bar-lbl", MONTH_SHORT[+d.mo.slice(5, 7) - 1]));
+      col.title = monthLabel(d.mo) + ": " + fmtEuro(d.sum) + EN.TYPES.filter(function (t) { return d.by[t.key]; }).map(function (t) { return "\n" + t.label + ": " + fmtEuro(d.by[t.key]); }).join("") + (EN.isReleased(energy, d.mo) ? "\n(freigegeben)" : "");
+      bars.appendChild(col);
+    });
+    chart.appendChild(bars);
+    host.appendChild(chart);
+    // Zähler und Regeln
+    var grid = el("div", "cv-grid");
+    var mc = el("div", "card"); mc.appendChild(el("div", "set-card-title", "Zähler dieser Kostenstelle"));
+    var meters = sortedMeters(energy.meters.filter(function (m) { return m.costCenter === ccId; }));
+    if (!meters.length) mc.appendChild(el("p", "empty-hint", "Keine Zähler zugeordnet."));
+    else {
+      var t = el("table", "trk-table"); t.appendChild(headRow(["Zähler", "Verbrauch " + periodLabel(cvPeriod)], [0, 1]));
+      var tb = document.createElement("tbody");
+      meters.forEach(function (m) {
+        var q = 0; months.forEach(function (mo) { if (mo <= DUE_MONTH) q += meterMonthC(m.id, mo).energy; });
+        var tr = el("tr", m.removed ? "me-removed" : ""), c0 = el("td"), cw = el("div", "cv-meter");
+        cw.appendChild(typeChip(m.type)); cw.appendChild(meterLink(m.id)); c0.appendChild(cw);
+        tr.appendChild(c0); tr.appendChild(td(fmtQty(EN.round(q), billUnit(m.type)), "num nowrap"));
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); var w = el("div", "trk-table-wrap"); w.appendChild(t); mc.appendChild(w);
+    }
+    grid.appendChild(mc);
+    var rc = el("div", "card"); rc.appendChild(el("div", "set-card-title", "ILV-Regeln"));
+    var rules = energy.rules.filter(function (r) { return r.cc === ccId; });
+    if (!rules.length) rc.appendChild(el("p", "empty-hint", "Keine Regeln."));
+    rules.forEach(function (r) {
+      var mo = months[months.length - 1] > DUE_MONTH ? DUE_MONTH : months[months.length - 1];
+      var row = el("button", "me-dev-row"); row.type = "button";
+      row.appendChild(typeChip(r.type));
+      var tx = el("span", "me-dev-txt"); tx.appendChild(el("b", null, r.name || "Regel")); tx.appendChild(el("span", "me-sub", formulaText(EN.ruleTermsAt(r, mo), mo) || "beendet"));
+      row.appendChild(tx);
+      row.addEventListener("click", function () { ilvTab = "rules"; switchView("ilv"); });
+      rc.appendChild(row);
+    });
+    grid.appendChild(rc);
+    host.appendChild(grid);
+  }
+  $("#cvScope").addEventListener("change", function () { cvScope = this.value; renderCcView(); });
+  document.querySelectorAll("#cvKind button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      cvInit();
+      var ms = periodMonths(cvPeriod), last = ms[ms.length - 1] > DUE_MONTH ? DUE_MONTH : ms[ms.length - 1];
+      if (b.dataset.kind === "custom") cvPeriod = { kind: "custom", from: EN.addMonths(last, -11), to: last };
+      else cvPeriod = { kind: b.dataset.kind, ref: last };
+      renderCcView();
+    });
+  });
+  document.querySelectorAll("#cvShow button").forEach(function (b) { b.addEventListener("click", function () { cvShow = b.dataset.show; renderCcView(); }); });
+  $("#cvPrev").addEventListener("click", function () { cvPeriod = periodShift(cvPeriod, -1); renderCcView(); });
+  $("#cvNext").addEventListener("click", function () { cvPeriod = periodShift(cvPeriod, 1); renderCcView(); });
+  $("#cvFrom").addEventListener("change", function () { if (EN.isMonth(this.value)) { cvPeriod.from = this.value; renderCcView(); } });
+  $("#cvTo").addEventListener("change", function () { if (EN.isMonth(this.value)) { cvPeriod.to = this.value; renderCcView(); } });
+  $("#cvCmp").addEventListener("change", function () { cvCmp = this.value; renderCcView(); });
+  $("#cvCsvBtn").addEventListener("click", function () {
+    var months = periodMonths(cvPeriod), cur = ccValues(months), rows = [["Zeitraum", "Abteilung", "Kostenstelle", "Bezeichnung", "Energieart", "Menge", "Einheit", "Kosten €", "davon Grundpreis €"]];
+    energy.costCenters.filter(function (c) { return ccInScope(c.id, cvScope); }).forEach(function (c) {
+      EN.TYPES.forEach(function (t) {
+        var x = cur[c.id + "|" + t.key];
+        if (x) rows.push([periodLabel(cvPeriod), ccDept(c), c.no, c.name, t.label, fmtNum(x.qty, unitDigitsOf(t.bill)), t.bill, fmtNum(x.cost, 2), fmtNum(x.base, 2)]);
+      });
+    });
+    csvDownload(rows, "kostenstellen-" + periodLabel(cvPeriod).replace(/[^\w-]+/g, "_") + ".csv");
+  });
+
+  /* ---------- Kostenstellen importieren (CSV oder Excel) ----------
+     Spalten werden über die Kopfzeile erkannt (Nummer, Bezeichnung, Abteilung, Bemerkung, Aktiv) und lassen sich ändern.
+     Zuordnung über die Nummer: vorhanden → aktualisiert (Kennung und Historie bleiben), fehlt → neu. */
+  var ciDlg = $("#ccImportDialog"), ciRows = null, ciPlan = null;
+  var CI_FIELDS = [["no", "Nummer", /^(kst|kostenstelle|nummer|nr|kst\.?-?nr|kostenstellen-?nummer|no)\b/i], ["name", "Bezeichnung", /^(bezeichnung|name|kostenstellen-?bezeichnung|text|beschreibung)/i],
+    ["dept", "Abteilung", /^(abteilung|bereich|dept|department|abt)/i], ["note", "Bemerkung", /^(bemerkung|notiz|hinweis|kommentar)/i], ["active", "Aktiv", /^(aktiv|status|gesperrt|active)/i]];
+  $("#ccImportBtn").addEventListener("click", function () { $("#ccImportFile").value = ""; $("#ccImportFile").click(); });
+  $("#ccImportFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    readTableFile(f).then(function (rows) {
+      rows = rows.filter(function (r) { return r.some(function (v) { return String(v).trim(); }); });
+      if (rows.length < 2) throw new Error("Die Datei enthält keine Datenzeilen.");
+      ciRows = rows;
+      $("#ciFile").textContent = f.name + " · " + (rows.length - 1) + " Zeilen";
+      var host = $("#ciMap"); host.innerHTML = "";
+      CI_FIELDS.forEach(function (fd) {
+        var wrap = el("div", "field"), lab = el("label", null, fd[1] + (fd[0] === "no" || fd[0] === "name" ? " *" : "")), sel = el("select", "perm-select");
+        sel.id = "ciCol-" + fd[0]; lab.htmlFor = sel.id;
+        var opts = [{ v: "", t: "— nicht übernehmen —" }].concat(rows[0].map(function (h, i) { return { v: String(i), t: "Spalte " + (i + 1) + (String(h).trim() ? ": " + h : "") }; }));
+        var guess = rows[0].findIndex(function (h) { return fd[2].test(String(h).trim()); });
+        fillSelect(sel, opts, guess >= 0 ? String(guess) : "");
+        sel.addEventListener("change", ciPreview);
+        wrap.appendChild(lab); wrap.appendChild(sel); host.appendChild(wrap);
+      });
+      ciPreview();
+      ciDlg.showModal();
+    }).catch(function (e) { appAlert("Import nicht möglich", e.message || String(e)); });
+  });
+  function ciPreview() {
+    var col = {}; CI_FIELDS.forEach(function (fd) { var v = byId("ciCol-" + fd[0]).value; col[fd[0]] = v === "" ? -1 : +v; });
+    var plan = [], seen = {};
+    ciRows.slice(1).forEach(function (r, i) {
+      var g = function (k) { return col[k] < 0 ? null : String(r[col[k]] == null ? "" : r[col[k]]).trim(); };
+      var no = g("no"), name = g("name"), item = { line: i + 2, no: no, name: name, dept: g("dept"), note: g("note"), active: null, errors: [] };
+      var act = g("active");
+      if (act) item.active = !/^(nein|n|no|0|false|falsch|inaktiv|gesperrt|deaktiviert)$/i.test(act);
+      if (!no) item.errors.push("Nummer fehlt");
+      if (!name) item.errors.push("Bezeichnung fehlt");
+      if (no && seen[no.toLowerCase()]) item.errors.push("Nummer doppelt (Zeile " + seen[no.toLowerCase()] + ")");
+      if (no) seen[no.toLowerCase()] = item.line;
+      var ex = no ? energy.costCenters.filter(function (c) { return String(c.no).toLowerCase() === no.toLowerCase(); })[0] : null;
+      item.existing = ex || null;
+      if (!item.errors.length) {
+        if (!ex) item.action = "new";
+        else {
+          var ch = [];
+          if (name !== ex.name) ch.push("Bezeichnung");
+          if (item.dept != null && item.dept !== (ex.dept || "")) ch.push("Abteilung");
+          if (item.note != null && item.note !== (ex.note || "")) ch.push("Bemerkung");
+          if (item.active != null && item.active !== (ex.active !== false)) ch.push(item.active ? "aktiviert" : "deaktiviert");
+          item.action = ch.length ? "update" : "same"; item.changes = ch;
+        }
+      } else item.action = "error";
+      plan.push(item);
+    });
+    ciPlan = plan;
+    var n = function (a) { return plan.filter(function (x) { return x.action === a; }).length; };
+    var sum = $("#ciSummary"); sum.innerHTML = "";
+    [[n("new"), "neu"], [n("update"), "geändert"], [n("same"), "unverändert"], [n("error"), "mit Fehler (werden ausgelassen)"]].forEach(function (x) {
+      var t = el("div", "card mini-tile" + (x[1].indexOf("Fehler") >= 0 && x[0] ? " crit" : "")); t.appendChild(el("div", "mini-value", String(x[0]))); t.appendChild(el("div", "mini-label", x[1])); sum.appendChild(t);
+    });
+    var tbl = $("#ciTable"); tbl.innerHTML = "";
+    tbl.appendChild(headRow(["Zeile", "Nummer", "Bezeichnung", "Abteilung", "Ergebnis"], [1, 0, 0, 0, 0]));
+    var tb = document.createElement("tbody");
+    plan.slice(0, 500).forEach(function (x) {
+      var tr = el("tr", x.action === "error" ? "ci-err" : x.action === "same" ? "me-removed" : "");
+      tr.appendChild(td(x.line, "num")); tr.appendChild(td(x.no || "")); tr.appendChild(td(x.name || "")); tr.appendChild(td(x.dept || ""));
+      tr.appendChild(td(x.action === "new" ? "neu" : x.action === "update" ? "geändert: " + x.changes.join(", ") : x.action === "same" ? "unverändert" : "✕ " + x.errors.join(", ")));
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    $("#ciOk").disabled = !(n("new") + n("update"));
+    showErr("ciError", col.no < 0 || col.name < 0 ? "Bitte die Spalten für Nummer und Bezeichnung zuordnen." : null);
+  }
+  $("#ciCancel").addEventListener("click", function () { ciDlg.close(); });
+  $("#ciClose").addEventListener("click", function () { ciDlg.close(); });
+  $("#ciOk").addEventListener("click", function () {
+    if (!can("edit") || !ciPlan) return;
+    var nNew = 0, nUpd = 0;
+    ciPlan.forEach(function (x) {
+      if (x.action === "new") {
+        energy.costCenters.push({ id: EN.nextId(energy, "k"), no: x.no, name: x.name, dept: x.dept || "", note: x.note || "", active: x.active !== false });
+        nNew++;
+      } else if (x.action === "update") {
+        var c = EN.ccById(energy, x.existing.id);
+        c.name = x.name;
+        if (x.dept != null) c.dept = x.dept;
+        if (x.note != null) c.note = x.note;
+        if (x.active != null) c.active = x.active;
+        nUpd++;
+      }
+    });
+    logChange("cc", "Kostenstellen importiert (" + $("#ciFile").textContent + "): " + nNew + " neu, " + nUpd + " geändert");
+    ciDlg.close();
+    energyChanged(nNew + " neu, " + nUpd + " geändert");
   });
 
   /* ---------- ILV: Änderungsprotokoll ---------- */
@@ -9566,6 +10188,7 @@ window.EN = (function () {
     if (name === "readings") renderReadings();
     if (name === "ilv") renderIlv();
     if (name === "billing") renderBilling();
+    if (name === "cc") renderCcView();
   }
   document.querySelectorAll(".tab").forEach(function (t) {
     t.addEventListener("click", function () {
@@ -12214,6 +12837,7 @@ window.EN = (function () {
     if (viewActive("readings")) renderReadings();
     if (viewActive("ilv")) renderIlv();
     if (viewActive("billing")) renderBilling();
+    if (viewActive("cc")) renderCcView();
     renderTracking();
     if (viewActive("settings")) renderTypeTable();
   }
