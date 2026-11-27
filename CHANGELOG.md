@@ -48,5 +48,10 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   Ablesung erscheint der Stand zum Ablesedatum als Vorschlag („Online-Werte übernehmen“). Neue Einstellung
   `IMPORT_PATH` für den CSV-Ordner; die Messwerte stecken in den Sicherungen.
 
+- **Mehr Werte im Dashboard:** Verbrauch und Kosten je Kostenstelle, Monatsverbrauch je Zähler, Vorjahresvergleich,
+  Gesamtenergie, CO₂-Emissionen (Emissionsfaktoren in den Stammdaten), Preis und nicht verteilte Menge je Energieart;
+  für online angebundene Zähler Verbrauch je Tag, Grundlast und Verbrauch je Stunde. Kacheln für jeden Monatswert
+  und „Verbrauch gestern“. Die „Detaillierte Auswertung“ zeigt zusätzlich Gesamtenergie, CO₂ und den Vorjahresvergleich.
+
 ### Entfernt (gegenüber dem Shopfloor Board)
 - Daily Huddle, SQIDP-Board, Tageskennzahlen, Tagesbericht, TV-Modus und Monatsbericht.

@@ -2076,6 +2076,8 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
 .onl-copy { word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
 .onl-pre { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); font-size: 12px; overflow-x: auto; white-space: pre; }
 .onl-help td { vertical-align: top; font-size: 12.5px; }
+details.wd-group > summary { cursor: pointer; list-style: revert; }
+details.wd-group { padding-bottom: 4px; }
 .rd-sug { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
 .rd-input, .rd-date, .rl-factor { padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
 .rd-input:focus, .rd-date:focus, .rl-factor:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); border-color: var(--accent); }
@@ -2472,6 +2474,11 @@ tr.pv-meter td { color: var(--ink-2); font-size: 12.5px; }
             <div><div class="set-name">Warnung bei Mehrverbrauch</div><div class="set-desc">Ab dieser Steigerung gegenüber dem Vormonat (in %) wird ein Verbrauch im Dashboard und bei der Ablesung hervorgehoben. 0 = aus.</div></div>
             <div class="set-ctl"><input id="setWarnPct" type="number" min="0" max="1000" step="1" inputmode="numeric"></div>
           </div>
+        </div>
+        <div class="card set-card">
+          <div class="set-card-title">CO₂-Emissionsfaktoren</div>
+          <div class="set-desc">kg CO₂ je Abrechnungseinheit — Grundlage der Kennzahl „CO₂-Emissionen“ im Dashboard. Vorgaben: Strom 0,380 kg/kWh (Strommix, besser den Wert Ihres Versorgers eintragen), Gas 0,201 kg/kWh, Wasser und Druckluft 0 (der Strom der Kompressoren zählt schon beim Strom).</div>
+          <div class="targets-grid" id="setCo2"></div>
         </div>
         <div class="card set-card">
           <div class="set-card-title">Energiearten</div>
@@ -4299,6 +4306,9 @@ window.EN = (function () {
     lineName: "Werk Nord",
     cutoffDay: 5,     // Ablesungen bis zum 5. gehören zum Vormonat
     warnPct: 20,      // Mehrverbrauch gegenüber Vormonat hervorheben
+    // CO₂-Emissionsfaktoren in kg CO₂ je Abrechnungseinheit (Strom: Bundesmix, Gas: Erdgas je kWh Brennwert;
+    // Druckluft 0, weil der Strom der Kompressoren schon beim Strom zählt)
+    co2: { strom: 0.380, wasser: 0, gas: 0.201, druckluft: 0 },
     mail: { senderName: "", sender: "", replyTo: "", smtpHost: "", smtpPort: 587, enc: "STARTTLS", authUser: "", authPass: "", log: [] }
   };
   function clampNum(v, lo, hi, dflt) {
@@ -4321,6 +4331,12 @@ window.EN = (function () {
       lineName: (typeof s.lineName === "string" && s.lineName.trim()) ? s.lineName.trim() : DEFAULT_SETTINGS.lineName,
       cutoffDay: clampNum(s.cutoffDay, 0, 15, DEFAULT_SETTINGS.cutoffDay),
       warnPct: clampNum(s.warnPct, 0, 1000, DEFAULT_SETTINGS.warnPct),
+      co2: (function (c) {
+        c = c && typeof c === "object" ? c : {};
+        var o = {};
+        Object.keys(DEFAULT_SETTINGS.co2).forEach(function (k) { var v = Number(c[k]); o[k] = c[k] !== undefined && c[k] !== null && c[k] !== "" && isFinite(v) && v >= 0 && v <= 10 ? v : DEFAULT_SETTINGS.co2[k]; });
+        return o;
+      })(s.co2),
       mail: {
         senderName: str(m.senderName), sender: str(m.sender), replyTo: str(m.replyTo),
         smtpHost: str(m.smtpHost),
@@ -4918,28 +4934,78 @@ window.EN = (function () {
 
   /* ---------- Werte für Dashboard-Diagramme und -Kacheln ---------- */
   // Eine Quelle für Diagramme, Kacheln und Auswahllisten (Monatswerte; Gas in kWh)
-  var VALUE_CATALOG = [];
-  EN.TYPES.forEach(function (t) {
-    VALUE_CATALOG.push({ key: "q:" + t.key, type: t.key, label: "Verbrauch " + t.label, unit: t.bill, agg: "sum" });
-  });
-  EN.TYPES.forEach(function (t) {
-    VALUE_CATALOG.push({ key: "c:" + t.key, type: t.key, label: "Kosten " + t.label, unit: "€", agg: "sum" });
-  });
-  VALUE_CATALOG.push({ key: "c:total", label: "Kosten gesamt", unit: "€", agg: "sum" });
-  VALUE_CATALOG.forEach(function (c) { c.digits = unitDigitsOf(c.unit); });
-  var VALUE_UNITS = [];
-  VALUE_CATALOG.forEach(function (c) { if (VALUE_UNITS.indexOf(c.unit) < 0) VALUE_UNITS.push(c.unit); });
-  function valueInfo(key) { return VALUE_CATALOG.filter(function (c) { return c.key === key; })[0] || null; }
+  // Wird bei jeder Datenänderung neu gebildet (Kostenstellen, Zähler, Online-Anbindung kommen automatisch dazu).
+  // base: "month" = Monatswerte (Abrechnungsmonat), "day"/"hour" = Online-Messwerte (letzte 30 bzw. 7 Tage)
+  function valueCatalog() {
+    var c = calc();
+    if (c.catalog) return c.catalog;
+    var cat = [], add = function (o) { o.base = o.base || "month"; o.agg = "sum"; o.digits = unitDigitsOf(o.unit); cat.push(o); };
+    EN.TYPES.forEach(function (t) { add({ key: "q:" + t.key, group: "Energiearten — Verbrauch", type: t.key, label: "Verbrauch " + t.label, unit: t.bill }); });
+    EN.TYPES.forEach(function (t) { add({ key: "c:" + t.key, group: "Energiearten — Kosten", type: t.key, label: "Kosten " + t.label, unit: "€" }); });
+    add({ key: "c:total", group: "Energiearten — Kosten", label: "Kosten gesamt", unit: "€" });
+    EN.TYPES.forEach(function (t) { add({ key: "qy:" + t.key, group: "Vorjahresvergleich", type: t.key, label: "Verbrauch " + t.label + " (Vorjahresmonat)", unit: t.bill }); });
+    add({ key: "k:energy", group: "Kennzahlen", label: "Gesamtenergie (Strom + Gas)", unit: "kWh" });
+    add({ key: "k:co2", group: "Kennzahlen", label: "CO₂-Emissionen gesamt", unit: "t CO₂" });
+    EN.TYPES.forEach(function (t) { if (co2Factor(t.key)) add({ key: "k:co2:" + t.key, group: "Kennzahlen", type: t.key, label: "CO₂ " + t.label, unit: "t CO₂" }); });
+    EN.TYPES.forEach(function (t) { add({ key: "k:price:" + t.key, group: "Kennzahlen", type: t.key, label: "Preis " + t.label, unit: "€/" + t.bill }); });
+    EN.TYPES.forEach(function (t) { add({ key: "un:" + t.key, group: "Kennzahlen", type: t.key, label: "Nicht verteilt " + t.label, unit: t.bill }); });
+    energy.costCenters.slice().sort(function (a, b) { return String(a.no).localeCompare(String(b.no), "de", { numeric: true }); }).forEach(function (cc) {
+      var nm = cc.no + " " + cc.name;
+      add({ key: "cct:" + cc.id, group: "Kostenstellen", label: "Kosten gesamt · " + nm, unit: "€" });
+      EN.TYPES.forEach(function (t) {
+        if (!energy.rules.some(function (r) { return r.cc === cc.id && r.type === t.key; })) return;
+        add({ key: "cc:" + cc.id + ":" + t.key, group: "Kostenstellen", type: t.key, label: t.label + " · " + nm, unit: t.bill });
+        add({ key: "ccc:" + cc.id + ":" + t.key, group: "Kostenstellen", type: t.key, label: "Kosten " + t.label + " · " + nm, unit: "€" });
+      });
+    });
+    sortedMeters(energy.meters.filter(function (m) { return !m.successor; })).forEach(function (m) {
+      add({ key: "m:" + m.id, group: "Zähler (Monatsverbrauch)", type: m.type, label: m.no + " · " + m.name, unit: billUnit(m.type) });
+    });
+    sortedMeters(energy.meters.filter(function (m) { return m.source && m.source.enabled && !m.removed; })).forEach(function (m) {
+      var u = meterUnit(m.type);
+      add({ key: "o:d:" + m.id, group: "Online-Messwerte (letzte 30 Tage)", base: "day", type: m.type, label: "Verbrauch je Tag · " + m.no, unit: u });
+      add({ key: "o:b:" + m.id, group: "Online-Messwerte (letzte 30 Tage)", base: "day", type: m.type, label: "Grundlast (kleinster Stundenverbrauch) · " + m.no, unit: u + "/h" });
+      add({ key: "o:h:" + m.id, group: "Online-Messwerte (letzte 7 Tage)", base: "hour", type: m.type, label: "Verbrauch je Stunde · " + m.no, unit: u });
+    });
+    c.catalog = cat;
+    return cat;
+  }
+  function valueInfo(key) { return valueCatalog().filter(function (c) { return c.key === key; })[0] || null; }
+  function co2Factor(type) { var f = settings.co2 && EN.num(settings.co2[type]); return f && f > 0 ? f : 0; }
   function valueOfMonth(key, month) {
     var a = allocMonth(month), p = key.split(":");
-    if (p[1] === "total") {
+    var sumTypes = function (fn) {
       var sum = 0, any = false;
-      EN.TYPE_KEYS.forEach(function (t) { if (hasData(t, month) && a.totals[t].measuredCost != null) { sum += a.totals[t].measuredCost; any = true; } });
-      return any ? EN.round(sum, 2) : null;
+      EN.TYPE_KEYS.forEach(function (t) { if (!hasData(t, month)) return; var v = fn(t); if (v != null) { sum += v; any = true; } });
+      return any ? sum : null;
+    };
+    switch (p[0]) {
+      case "q": case "c":
+        if (p[1] === "total") { var tc = sumTypes(function (t) { return a.totals[t].measuredCost; }); return tc == null ? null : EN.round(tc, 2); }
+        if (!hasData(p[1], month)) return null;
+        return p[0] === "q" ? a.totals[p[1]].measured : a.totals[p[1]].measuredCost;
+      case "qy": return valueOfMonth("q:" + p[1], EN.addMonths(month, -12));
+      case "un": return hasData(p[1], month) ? a.totals[p[1]].unassigned : null;
+      case "k":
+        if (p[1] === "energy") { var e = sumTypes(function (t) { return t === "strom" || t === "gas" ? a.totals[t].measured : null; }); return e == null ? null : EN.round(e); }
+        if (p[1] === "co2" && !p[2]) { var co = sumTypes(function (t) { return co2Factor(t) ? a.totals[t].measured * co2Factor(t) / 1000 : null; }); return co == null ? null : EN.round(co, 3); }
+        if (p[1] === "co2") return hasData(p[2], month) ? EN.round(a.totals[p[2]].measured * co2Factor(p[2]) / 1000, 3) : null;
+        if (p[1] === "price") return a.totals[p[2]].price;
+        return null;
+      case "cc": case "ccc":
+        if (!hasData(p[2], month)) return null;
+        var q = 0, any = false;
+        a.rows.forEach(function (r) { if (r.cc === p[1] && r.type === p[2]) { var v = p[0] === "cc" ? r.qty : r.cost; if (v != null) { q += v; any = true; } } });
+        return any ? EN.round(q, p[0] === "ccc" ? 2 : 6) : null;
+      case "cct":
+        var tot = 0, anyc = false;
+        a.rows.forEach(function (r) { if (r.cc === p[1] && r.cost != null && hasData(r.type, month)) { tot += r.cost; anyc = true; } });
+        return anyc ? EN.round(tot, 2) : null;
+      case "m":
+        var cm = EN.chainMonth(energy, p[1], month, calc().en);
+        return cm.status === "ok" || cm.status === "partial" ? cm.energy : null;
     }
-    if (!hasData(p[1], month)) return null;
-    var tot = a.totals[p[1]];
-    return p[0] === "q" ? tot.measured : tot.measuredCost;
+    return null;
   }
   function valueSeriesForRange(keys, fromM, toM) {
     var isos = EN.monthRange(fromM, toM);
@@ -4985,18 +5051,23 @@ window.EN = (function () {
     if (key === "missing") return { kind: "missing", label: "Fehlende Ablesungen" };
     if (key === "cost") return { kind: "cost", label: "Kosten gesamt" };
     if (key === "online") return { kind: "online", label: "Online-Anbindung" };
+    var vk = /^val:(.+)$/.exec(String(key || ""));
+    if (vk) { var vi = valueInfo(vk[1]); return vi && vi.base === "month" ? { kind: "val", key: vk[1], label: vi.label, unit: vi.unit } : null; }
+    var ok = /^on:(.+)$/.exec(String(key || ""));
+    if (ok) { var om = EN.meterById(energy, ok[1]); return om && om.source && om.source.enabled ? { kind: "onday", meter: om, label: "Verbrauch gestern · " + om.no } : null; }
     var t = /^t:(.+)$/.exec(String(key || ""));
     if (t && EN.typeOf(t[1])) return { kind: "type", type: t[1], label: "Verbrauch " + typeLabel(t[1]) };
     return null;
   }
   // Veränderung zum Vormonat als kleine Zeile; Mehrverbrauch über der Warnschwelle rot
-  function deltaLine(cur, prev, unit) {
+  function deltaLine(cur, prev, unit, what) {
+    what = what || "Vormonat";
     var p = pctChange(cur, prev), line = el("div", "en-delta");
-    if (p == null) { line.textContent = "Vormonat: " + fmtQty(prev, unit); return line; }
+    if (p == null) { line.textContent = what + ": " + fmtQty(prev, unit); return line; }
     var up = p > 0;
     line.classList.add(up ? "up" : "down");
     if (up && settings.warnPct && p >= settings.warnPct) line.classList.add("crit");
-    line.textContent = (up ? "▲ +" : "▼ ") + fmtNum(p, 1) + " % zum Vormonat (" + fmtQty(prev, unit) + ")";
+    line.textContent = (up ? "▲ +" : "▼ ") + fmtNum(p, 1) + " % zum " + what + " (" + fmtQty(prev, unit) + ")";
     return line;
   }
   function buildMiniTile(m, ctx) {
@@ -5016,6 +5087,22 @@ window.EN = (function () {
       tile.appendChild(el("div", "mini-label", n === 1 ? "Fehlende Ablesung" : "Fehlende Ablesungen"));
       tile.title = "Bis " + monthLabel(DUE_MONTH) + " — zum Erfassen klicken";
       tile.addEventListener("click", function () { switchView("readings"); });
+    } else if (m.kind === "val") {
+      var v1 = valueOfMonth(m.key, ctx.month), v0 = valueOfMonth(m.key, ctx.prev);
+      tile.appendChild(el("div", "mini-value", m.unit === "€" ? fmtEuro(v1) : fmtQty(v1, m.unit)));
+      tile.appendChild(el("div", "mini-label", m.label + " · " + monthShort(ctx.month)));
+      tile.appendChild(deltaLine(v1, v0, m.unit));
+    } else if (m.kind === "onday") {
+      var mv = el("div", "mini-value", "…"), dl = el("div", "en-delta");
+      tile.appendChild(mv);
+      tile.appendChild(el("div", "mini-label", m.label));
+      tile.appendChild(dl);
+      onlChartData(["o:d:" + m.meter.id], "day").then(function (d) {
+        var vals = d.series[0], n = vals.length, unit = meterUnit(m.meter.type);
+        var y = n >= 1 ? vals[n - 1] : null, yy = n >= 2 ? vals[n - 2] : null;   // Tageswerte enden gestern
+        mv.textContent = fmtQty(y, unit);
+        dl.replaceWith(deltaLine(y, yy, unit, "Vortag"));
+      });
     } else if (m.kind === "online") {
       if (!onlStatus || !onlConns) {
         tile.appendChild(el("div", "mini-value", "…"));
@@ -5124,11 +5211,15 @@ window.EN = (function () {
   function defaultDetailWidgets() {
     var ws = [], n = 0;
     function add(o) { o.id = "dd" + (++n); ws.push(o); }
-    EN.TYPES.forEach(function (t, i) { add({ type: "tile", tile: "t:" + t.key, x: i * 3, y: 0, w: 3, h: 3 }); });
+    EN.TYPES.forEach(function (t, i) { add({ type: "tile", tile: "t:" + t.key, x: i * 2, y: 0, w: 2, h: 3 }); });
+    add({ type: "tile", tile: "val:k:energy", x: 8, y: 0, w: 2, h: 3 });
+    add({ type: "tile", tile: "val:k:co2", x: 10, y: 0, w: 2, h: 3 });
     add({ type: "chart", mode: "multi", series: ["q:strom", "q:gas"], title: "Strom und Gas (kWh)", x: 0, y: 3, w: 6, h: 9 });
     add({ type: "chart", mode: "multi", series: ["c:strom", "c:gas", "c:wasser", "c:druckluft"], title: "Kosten je Energieart (€)", x: 6, y: 3, w: 6, h: 9 });
     add({ type: "chart", mode: "multi", series: ["q:wasser", "q:druckluft"], title: "Wasser und Druckluft", x: 0, y: 12, w: 6, h: 9 });
     add({ type: "chart", mode: "single", series: ["c:total"], x: 6, y: 12, w: 6, h: 9 });
+    add({ type: "chart", mode: "multi", series: ["q:strom", "qy:strom"], title: "Strom: Monat und Vorjahresmonat (kWh)", x: 0, y: 21, w: 6, h: 9 });
+    add({ type: "chart", mode: "single", series: ["k:co2"], x: 6, y: 21, w: 6, h: 9 });
     return ws;
   }
 
@@ -5162,8 +5253,16 @@ window.EN = (function () {
   // steht bereits in der Periodenanzeige/im Zeitraum-Hinweis über den Diagrammen.
   // Nachkommastellen je Einheit für Diagramm-Werte (Tonnen: 2, Stückzahlen: 0, sonst 1)
   function unitDigits(unit) { return unitDigitsOf(unit); }
+  // Beschriftung eines Zeitpunkts: Monat „JJJJ-MM“, Stunde „JJJJ-MM-TTTHH“, sonst Tag
+  function isoLabel(iso) {
+    iso = String(iso);
+    if (iso.length === 7) return monthLabel(iso);
+    if (iso.length === 13) return fmtDate(iso.slice(0, 10)) + " " + iso.slice(11) + ":00 Uhr";
+    return fmtDate(iso);
+  }
   function fmtDateShort(iso) {
     if (String(iso).length === 7) return monthShort(iso);
+    if (String(iso).length === 13) { var hp = String(iso).split(/[-T]/); return hp[2] + "." + hp[1] + ". " + hp[3] + " Uhr"; }
     var p = String(iso).split("-");
     return p[2] + "." + p[1] + ".";
   }
@@ -5345,7 +5444,7 @@ window.EN = (function () {
       cross.style.opacity = "1";
 
       tip.textContent = "";
-      tip.appendChild(el("div", "chart-tooltip-date", String(isos[i]).length === 7 ? monthLabel(isos[i]) : fmtDate(isos[i])));
+      tip.appendChild(el("div", "chart-tooltip-date", isoLabel(isos[i])));
       group.fields.forEach(function (f, fi) {
         var v = series[fi][i];
         var row = el("div", "chart-tooltip-row");
@@ -5427,11 +5526,10 @@ window.EN = (function () {
   var DASH_COLS = 12;
   var DASH_SERIES_COLORS = ["var(--cat-s)", "var(--cat-q)", "var(--cat-c)", "var(--cat-d)", "var(--cat-p)"];
   var DASH_MAX_SERIES = DASH_SERIES_COLORS.length;
-  var DW_MIN = { bilanz: [6, 3], tile: [2, 2], chart: [3, 5], missing: [3, 3] };
-  var DASH_UNIT_TITLES = { "kWh": "Energie (kWh)", "m³": "Wasser (m³)", "Nm³": "Druckluft (Nm³)", "€": "Kosten (€)" };
+  var DW_MIN = { bilanz: [6, 3], tile: [2, 3], chart: [3, 5], missing: [3, 3] };
   // Zwei Einheiten je Diagramm: linke und rechte Achse
   var DASH_MAX_UNITS = 2;
-  function dashSeriesCatalog() { return VALUE_CATALOG; }
+  function dashSeriesCatalog() { return valueCatalog(); }
   function dashSeriesInfo(key) {
     return dashSeriesCatalog().filter(function (s) { return s.key === key; })[0] || null;
   }
@@ -5725,7 +5823,8 @@ window.EN = (function () {
     if (w.scale === "custom") group.ranges = w.ranges;
     var range = detailChartRange();
     var keys = group.fields.map(function (f) { return f.key; });
-    var data = valueSeriesForRange(keys, range.from, range.to);
+    var base = (valueInfo(keys[0]) || {}).base || "month";
+    var data = base === "month" ? valueSeriesForRange(keys, range.from, range.to) : null;
     var card = el("div", "card detail-chart-card dw-chart-card");
     var head = el("div", "detail-chart-head");
     head.appendChild(el("div", "detail-chart-title", group.title));
@@ -5739,12 +5838,24 @@ window.EN = (function () {
     // Kennzahl-Zeile (Ø/Min/Max) immer erzeugen — ob sie Platz hat, entscheidet das CSS nach der
     // echten Widget-Größe (Container-Abfrage), damit dem Diagramm genug Höhe bleibt
     var stats = el("div", "detail-chart-stats");
-    group.fields.forEach(function (f, fi) { var vi = valueInfo(f.key);
-      stats.appendChild(buildDetailStat(f.label, data.series[fi], f.unit || group.unit, !!(vi && vi.agg === "last"))); });
+    var fillStats = function (d) {
+      stats.innerHTML = "";
+      group.fields.forEach(function (f, fi) { stats.appendChild(buildDetailStat(f.label, d.series[fi], f.unit || group.unit, false)); });
+    };
+    if (data) fillStats(data);
     card.appendChild(stats);
     var host = el("div", "dw-chart-body detail-chart-svg-wrap");
     host._group = group; host._data = data;
     card.appendChild(host);
+    if (!data) {
+      host.appendChild(el("div", "empty-hint", "Lade Online-Messwerte …"));
+      onlChartData(keys, base).then(function (d) {
+        host._data = d; host._w = null; host._cardKey = null;
+        fillStats(d);
+        if (!d.series.some(function (sv) { return sv.some(function (v) { return v != null; }); })) { host.innerHTML = ""; host.appendChild(el("div", "empty-hint", "Noch keine Online-Messwerte im Zeitraum.")); host._data = null; return; }
+        dwRenderChart(host);
+      });
+    }
     return card;
   }
   // Diagramm in der echten Pixelgröße seines Widgets zeichnen (Schrift bleibt lesbar, füllt die Fläche).
@@ -5752,6 +5863,7 @@ window.EN = (function () {
   var DW_AUTOSIZE = ".dw-chart-body, .dw .kpi-spark";
   function dwRenderChart(host) {
     if (!host || (!host._group && !host._draw)) return;
+    if (host._group && !host._data) return;   // Online-Werte werden noch geladen
     var W = Math.round(host.clientWidth), H = Math.round(host.clientHeight);
     if (host._w === W && host._h === H) return;
     host._w = W; host._h = H;
@@ -6199,7 +6311,11 @@ window.EN = (function () {
     return [
       { label: "Karten", opts: [{ v: "bilanz", t: "Übersicht je Energieart" }, { v: "missing", t: "Fehlende Zählerstände (Liste)" }] },
       { label: "Kacheln", opts: EN.TYPES.map(function (t) { return { v: "tile:t:" + t.key, t: "Verbrauch " + t.label + " mit Vormonat" }; }).concat([
-        { v: "tile:cost", t: "Kosten gesamt" }, { v: "tile:missing", t: "Anzahl fehlende Ablesungen" }, { v: "tile:actions", t: "Offene Maßnahmen" }, { v: "tile:online", t: "Online-Anbindung (Status)" }]) }
+        { v: "tile:cost", t: "Kosten gesamt" }, { v: "tile:missing", t: "Anzahl fehlende Ablesungen" }, { v: "tile:actions", t: "Offene Maßnahmen" }, { v: "tile:online", t: "Online-Anbindung (Status)" }]) },
+      { label: "Kacheln — Kennzahlen", opts: valueCatalog().filter(function (c) { return c.group === "Kennzahlen" || c.group === "Vorjahresvergleich"; }).map(function (c) { return { v: "tile:val:" + c.key, t: c.label }; }) },
+      { label: "Kacheln — Kostenstellen", opts: valueCatalog().filter(function (c) { return c.group === "Kostenstellen"; }).map(function (c) { return { v: "tile:val:" + c.key, t: c.label }; }) },
+      { label: "Kacheln — Zähler (Monatsverbrauch)", opts: valueCatalog().filter(function (c) { return c.key.indexOf("m:") === 0; }).map(function (c) { return { v: "tile:val:" + c.key, t: c.label }; }) },
+      { label: "Kacheln — Online (Verbrauch gestern)", opts: energy.meters.filter(function (mm) { return mm.source && mm.source.enabled && !mm.removed; }).map(function (mm) { return { v: "tile:on:" + mm.id, t: mm.no + " · " + mm.name }; }) }
     ];
   }
   function wdKind() { return wdDlg.querySelector('input[name="wdKind"]:checked').value; }
@@ -6224,7 +6340,8 @@ window.EN = (function () {
     $("#wdMulti").querySelectorAll(".wd-check").forEach(function (lbl) {
       var inp = lbl.querySelector("input");
       var info = dashSeriesInfo(inp.value);
-      var block = !inp.checked && ((units.length >= DASH_MAX_UNITS && units.indexOf(info.unit) < 0) || keys.length >= DASH_MAX_SERIES);
+      var base0 = keys.length ? (dashSeriesInfo(keys[0]) || {}).base : null;
+      var block = !inp.checked && ((units.length >= DASH_MAX_UNITS && units.indexOf(info.unit) < 0) || keys.length >= DASH_MAX_SERIES || (base0 && info.base !== base0));
       inp.disabled = block;
       lbl.classList.toggle("disabled", block);
       var sw = lbl.querySelector(".wd-swatch");
@@ -6241,16 +6358,18 @@ window.EN = (function () {
   function wdBuildValueLists(selected) {
     var single = $("#wdSingle"), multi = $("#wdMulti");
     single.innerHTML = ""; multi.innerHTML = "";
-    var catalog = dashSeriesCatalog();
-    VALUE_UNITS.forEach(function (u) {
-      var items = catalog.filter(function (s) { return s.unit === u; });
+    var catalog = dashSeriesCatalog(), groups = [];
+    catalog.forEach(function (s) { if (groups.indexOf(s.group) < 0) groups.push(s.group); });
+    groups.forEach(function (gname) {
+      var items = catalog.filter(function (s) { return s.group === gname; });
       var og = document.createElement("optgroup");
-      og.label = DASH_UNIT_TITLES[u];
-      var grp = el("div", "wd-group");
-      grp.appendChild(el("div", "wd-group-title", DASH_UNIT_TITLES[u]));
+      og.label = gname;
+      var grp = el("details", "wd-group");
+      grp.open = items.some(function (s) { return selected.indexOf(s.key) >= 0; }) || gname.indexOf("Energiearten") === 0;
+      grp.appendChild(el("summary", "wd-group-title", gname + " (" + items.length + ")"));
       items.forEach(function (s) {
         var o = document.createElement("option");
-        o.value = s.key; o.textContent = s.label;
+        o.value = s.key; o.textContent = s.label + " (" + s.unit + ")";
         og.appendChild(o);
         var lbl = el("label", "wd-check");
         var inp = document.createElement("input");
@@ -6258,7 +6377,7 @@ window.EN = (function () {
         inp.checked = selected.indexOf(s.key) >= 0;
         inp.addEventListener("change", wdSyncChecks);
         var sw = el("span", "wd-swatch");
-        lbl.appendChild(inp); lbl.appendChild(sw); lbl.appendChild(document.createTextNode(s.label));
+        lbl.appendChild(inp); lbl.appendChild(sw); lbl.appendChild(document.createTextNode(s.label + " (" + s.unit + ")"));
         grp.appendChild(lbl);
       });
       single.appendChild(og);
@@ -6333,7 +6452,7 @@ window.EN = (function () {
     $("#wdSingle").hidden = multi;
     $("#wdMulti").hidden = !multi;
     $("#wdValuesLabel").textContent = multi ? "Angezeigte Werte" : "Angezeigter Wert";
-    if (!multi) $("#wdValuesHint").textContent = "Monatswerte über den im Dashboard gewählten Zeitraum.";
+    if (!multi) $("#wdValuesHint").textContent = "Monatswerte über den im Dashboard gewählten Zeitraum; Online-Messwerte als Tageswerte (30 Tage) bzw. Stundenwerte (7 Tage).";
     else wdSyncChecks();
     wdError(null);
   }
@@ -6984,6 +7103,18 @@ window.EN = (function () {
   // Lokal nachgebildeter Zählerstand eines Zählers zu einem Zeitpunkt (null = keiner)
   function onlHash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; }
   function onlDayW(m, d) { var wd = d.getDay(); return (wd === 0 || wd === 6 ? 0.45 : 1) * (0.85 + 0.3 * onlHash(m.id + isoOf(d))); }
+  var ONL_PROFILE = (function () {
+    var w = [], cum = [0], sum = 0, h;
+    for (h = 0; h < 24; h++) { w.push(h < 6 ? 0.45 : h < 22 ? 1.25 : 0.6); sum += w[h]; }
+    for (h = 0; h < 24; h++) cum.push(cum[h] + w[h] / sum);
+    return cum;
+  })();
+  function onlDayFrac(f) {
+    if (f <= 0) return 0;
+    if (f >= 1) return 1;
+    var h = f * 24, i = Math.floor(h);
+    return ONL_PROFILE[i] + (ONL_PROFILE[i + 1] - ONL_PROFILE[i]) * (h - i);
+  }
   function onlLocalValue(m, t) {
     var rs = EN.readingsOf(energy, m.id).map(function (r) { return { t: dateOnly(r.date).getTime(), v: EN.num(r.value) }; }).filter(function (x) { return x.v != null; });
     if (!rs.length || t < rs[0].t) return null;
@@ -6995,7 +7126,7 @@ window.EN = (function () {
       if (b.v < a.v || b.t <= a.t) return a.v;   // Überlauf/Wechsel: nicht nachbilden
       var tot = 0, part = 0;
       for (var d = a.t; d < b.t; d += DAY) {
-        var w = onlDayW(m, new Date(d)), frac = Math.max(0, Math.min(1, (t - d) / DAY));
+        var w = onlDayW(m, new Date(d)), frac = onlDayFrac((t - d) / DAY);
         tot += w; part += w * frac;
       }
       return Math.round((a.v + (b.v - a.v) * (tot ? part / tot : 0)) * 100) / 100;
@@ -7004,7 +7135,7 @@ window.EN = (function () {
     var L = rs[rs.length - 1], P = rs[rs.length - 2];
     var perDay = P && L.v >= P.v && L.t > P.t ? (L.v - P.v) / ((L.t - P.t) / DAY) : 0;
     var add = 0;
-    for (var d2 = L.t; d2 < t; d2 += DAY) add += perDay * onlDayW(m, new Date(d2)) / 0.84 * Math.max(0, Math.min(1, (t - d2) / DAY));
+    for (var d2 = L.t; d2 < t; d2 += DAY) add += perDay * onlDayW(m, new Date(d2)) / 0.84 * onlDayFrac((t - d2) / DAY);
     return Math.round((L.v + add) * 100) / 100;
   }
   function onlLocalMeters() { return energy.meters.filter(function (m) { var c = onlActive(m); return c && c.type === "sim"; }); }
@@ -7069,6 +7200,66 @@ window.EN = (function () {
     return Promise.resolve({ value: source ? EN.num(source.simStart) || 0 : null, connected: true });
   }
   function onlWhen(ts) { return ts ? fmtDateTime(new Date(ts).getTime()) : "—"; }
+
+  /* -- Online-Messwerte aufbereiten: Verbrauch je Stunde (letzte 30 Tage, × Messfaktor), daraus je Tag und Grundlast -- */
+  var onlAggCache = {};
+  function onlHourKey(d) { return isoOf(d) + "T" + String(d.getHours()).padStart(2, "0"); }
+  function onlHourly(m) {
+    var c = onlAggCache[m.id];
+    if (c && Date.now() - c.at < 300000) return c.p;
+    var to = new Date(), from = new Date(to.getTime() - 30 * 86400000);
+    from.setHours(0, 0, 0, 0);
+    var p = onlSeries(m, from, to, 31 * 24 + 10).then(function (vals) {
+      var byH = {};
+      vals.forEach(function (x) { byH[onlHourKey(new Date(x.t))] = x.v; });
+      var out = [], prev = null;
+      for (var t = from.getTime(); t <= to.getTime(); t += 3600000) {
+        var key = onlHourKey(new Date(t)), v = byH[key], cons = null;
+        if (prev != null && v != null && v >= prev) cons = EN.round((v - prev) * (EN.num(EN.propsAt(m, key.slice(0, 7)).factor) || 1), 4);
+        out.push({ h: key, c: cons, v: v });
+        if (v != null) prev = v;
+      }
+      if (!out.some(function (x) { return x.v != null; })) delete onlAggCache[m.id];   // leer: beim nächsten Mal neu laden
+      return out;
+    }).catch(function () { delete onlAggCache[m.id]; return []; });
+    onlAggCache[m.id] = { at: Date.now(), p: p };
+    return p;
+  }
+  // Daten für Online-Diagramme und -Kacheln: base "hour" = letzte 7 Tage je Stunde, "day" = letzte 30 Tage je Tag
+  function onlChartData(keys, base) {
+    return (onlConns ? Promise.resolve() : onlLoadConns()).then(function () { return Promise.all(keys.map(function (k) {
+      var m = EN.meterById(energy, k.split(":")[2]);
+      return m ? onlHourly(m) : Promise.resolve([]);
+    })); }).then(function (lists) {
+      if (base === "hour") {
+        var n = 7 * 24, ref = lists.filter(function (l) { return l.length; })[0] || [];
+        var isos = ref.slice(-n).map(function (x) { return x.h; });
+        return { isos: isos, series: lists.map(function (l) {
+          var by = {}; l.forEach(function (x) { by[x.h] = x.c; });
+          return isos.map(function (h) { return by[h] != null ? by[h] : null; });
+        }) };
+      }
+      var days = [];
+      // bis gestern — der laufende Tag ist noch nicht vollständig
+      var todayIso = isoOf(new Date());
+      for (var d = new Date(Date.now() - 30 * 86400000); isoOf(d) < todayIso; d.setDate(d.getDate() + 1)) days.push(isoOf(d));
+      return { isos: days, series: lists.map(function (l, i) {
+        var kind = keys[i].split(":")[1], per = {};
+        l.forEach(function (x) {
+          var day = x.h.slice(0, 10), e = per[day] || (per[day] = { sum: 0, n: 0, min: null });
+          if (x.c == null) return;
+          e.sum += x.c; e.n++;
+          if (e.min == null || x.c < e.min) e.min = x.c;
+        });
+        return days.map(function (day) {
+          var e = per[day];
+          if (!e || !e.n) return null;
+          if (kind === "b") return e.n >= 12 ? EN.round(e.min, 3) : null;
+          return EN.round(e.sum, 3);
+        });
+      }) };
+    });
+  }
 
   /* ---------- Einstellungen → Zähler-Anbindung ---------- */
   function renderOnlinePane() {
@@ -9841,6 +10032,13 @@ window.EN = (function () {
     $("#setLine").value = settings.lineName;
     $("#setCutoff").value = settings.cutoffDay;
     $("#setWarnPct").value = settings.warnPct;
+    var co2Box = $("#setCo2"); co2Box.innerHTML = "";
+    EN.TYPES.forEach(function (t) {
+      var d = el("div"), lb = el("label", "mini-label", t.label + " (kg CO₂/" + t.bill + ")"), inp = el("input");
+      lb.htmlFor = "setCo2-" + t.key; inp.id = "setCo2-" + t.key; inp.type = "number"; inp.min = "0"; inp.max = "10"; inp.step = "0.001"; inp.inputMode = "decimal";
+      inp.value = settings.co2[t.key];
+      d.appendChild(lb); d.appendChild(inp); co2Box.appendChild(d);
+    });
     renderTypeTable();
     $("#setMailSenderName").value = settings.mail.senderName;
     $("#setMailSender").value = settings.mail.sender;
@@ -9912,6 +10110,10 @@ window.EN = (function () {
     settings.lineName = $("#setLine").value.trim() || DEFAULT_SETTINGS.lineName;
     settings.cutoffDay = clampNum($("#setCutoff").value, 0, 15, settings.cutoffDay);
     settings.warnPct = clampNum($("#setWarnPct").value, 0, 1000, settings.warnPct);
+    EN.TYPES.forEach(function (t) {
+      var v = Number(byId("setCo2-" + t.key).value);
+      if (byId("setCo2-" + t.key).value !== "" && isFinite(v) && v >= 0 && v <= 10) settings.co2[t.key] = v;
+    });
     saveSettings(); applySettings(); renderAll();
     flash("stammSaved");
     toast("Stammdaten gespeichert");
@@ -10167,6 +10369,15 @@ window.EN = (function () {
           "<b>Kacheln</b> — Verbrauch je Energieart, Kosten gesamt, fehlende Ablesungen, offene Maßnahmen."
         ] },
         { h: "Monat und Zeitraum", p: "Mit den Pfeilen den Abrechnungsmonat wählen; „Diagramme“ legt fest, wie viele Monate bis dahin gezeigt werden. „CSV-Export“ liefert die Monatswerte je Energieart." },
+        { h: "Welche Werte es gibt", p: "Beim Hinzufügen eines Diagramms oder einer Kachel stehen die Werte in Gruppen — Kostenstellen, Zähler und online angebundene Zähler kommen automatisch dazu:", list: [
+          "<b>Energiearten</b> — Verbrauch und Kosten je Energieart, Kosten gesamt.",
+          "<b>Vorjahresvergleich</b> — Verbrauch im selben Monat des Vorjahres (zusammen mit dem aktuellen Verbrauch in einem Diagramm).",
+          "<b>Kennzahlen</b> — Gesamtenergie (Strom + Gas in kWh), CO₂-Emissionen gesamt und je Energieart (Faktoren in den Stammdaten), Preis je Energieart, nicht verteilte Menge.",
+          "<b>Kostenstellen</b> — Verbrauch und Kosten je Kostenstelle und Energieart aus der ILV, Kosten gesamt je Kostenstelle.",
+          "<b>Zähler</b> — Monatsverbrauch jedes Zählers (bei einem Zählerwechsel die ganze Wechselkette).",
+          "<b>Online-Messwerte</b> — für online angebundene Zähler: Verbrauch je Tag und Grundlast (kleinster Stundenverbrauch des Tages) über 30 Tage, Verbrauch je Stunde über 7 Tage. Eine hohe Grundlast nachts und am Wochenende deutet z. B. auf Druckluftleckagen hin.",
+          "<b>Kacheln</b> zeigen jeden Monatswert mit Vergleich zum Vormonat; die Online-Kachel „Verbrauch gestern“ vergleicht mit dem Vortag."
+        ], note: "Monatswerte und Online-Messwerte haben verschiedene Zeitachsen und lassen sich nicht in einem Diagramm mischen." },
         { h: "Dashboards anpassen", img: "dashboard-anpassen", cap: "Dashboard anpassen", p: "Über das Dashboard-Menü lassen sich Dashboards wechseln, kopieren, neu anlegen (privat oder öffentlich) und anpassen: Widgets hinzufügen, verschieben, Größe ändern. Die Standard-Dashboards „Standard“ und „Detaillierte Auswertung“ ändern Teamleitung und Administration für alle." }
       ] },
 

@@ -11,7 +11,7 @@ Entstanden aus dem Shopfloor Board (Stand 1.6.0) — Aufbau, Design, Anmeldung, 
 
 | Bereich | Inhalt |
 |---------|--------|
-| Dashboard | Gesamtverbrauch je Energieart, Vergleich mit dem Vormonat, Kosten, Hinweise auf fehlende Zählerstände, Verbrauchs- und Kostenentwicklung über 6–36 Monate; mehrere, frei anpassbare Dashboards |
+| Dashboard | Gesamtverbrauch je Energieart, Vergleich mit dem Vormonat, Kosten, Hinweise auf fehlende Zählerstände, Verbrauchs- und Kostenentwicklung über 6–36 Monate; mehrere, frei anpassbare Dashboards mit Werten je Energieart, Kostenstelle und Zähler, Vorjahresvergleich, Gesamtenergie, CO₂ (Emissionsfaktoren in den Stammdaten) sowie Online-Werten je Tag/Stunde und Grundlast |
 | Zähler | Jeder Zähler einzeln: Nummer, Bezeichnung, Energieart, Kostenstelle, Haupt-/Unterzähler, Ein- und Ausbau, Anfangsstand, Messfaktor und Überlaufwert (mit „gültig ab“), technische Eigenschaften; Zählerwechsel und Ausbau mit getrennter Verbrauchsberechnung |
 | Ablesung | Monatliche Erfassung von Hand oder per CSV; letzter Stand wird automatisch vorheriger Stand; Ablesedatum, Verbrauchszeitraum und Abrechnungsmonat getrennt; Prüfliste bei fehlendem Vorstand (nach Bestätigung 0), kleinerem Stand (Überlauf, negativ speichern oder auslassen) und rückwirkenden Ablesungen; fehlende Ablesungen werden angezeigt |
 | ILV | Verrechnung auf Kostenstellen nach Regeln aus Zählern × Faktoren (Summen, Differenzen, Anteile), automatisch aus der Zählerstruktur angelegt und von Hand änderbar; Preise je Energieart und Gas-Umrechnung (Brennwert × Zustandszahl) mit „gültig ab“ |

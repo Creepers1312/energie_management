@@ -68,7 +68,7 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
 - **Lokaler Modus vs. Server-Modus:** Ohne erreichbare API läuft alles im Browser mit Demo-Daten (`demoEnergy`,
   `demoState`, `localStorage`). Am Server startet die Anwendung leer.
 - **Dokumente:** `state` (nur Maßnahmen `deviations` + `seq`), `settings` (Standort `lineName`, Stichtag `cutoffDay`,
-  Warnschwelle `warnPct`, Mail-Absender), `users`, **`energy`** (Schlüssel `sfm-energy-v1`). Gespeichert als Ganzes
+  Warnschwelle `warnPct`, CO₂-Faktoren `co2`, Mail-Absender), `users`, **`energy`** (Schlüssel `sfm-energy-v1`). Gespeichert als Ganzes
   mit Revisionsnummer (409 bei Konflikt).
 - **Dokument `energy`** (Aufbau im Kopf von `window.EN`): `costCenters`, `meters` (mit `props`-Versionen
   `{from, factor, overflow}`), `readings` (`kind` install/read/remove, `date`, `month` = Abrechnungsmonat, `value`,
@@ -92,8 +92,12 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
 - **Abrechnungsmonat:** `EN.billingMonth(date, cutoffDay)` — bis zum Stichtag Vormonat; fällig ist `DUE_MONTH`
   (Vormonat von heute). Anzeige-Zwischenspeicher `calc()`/`invalidateCalc()` (nach jeder Änderung `energyChanged`).
 - **Kategorien** `CATS` der Maßnahmen = Energiearten (`EN.TYPES`) + `allg`; Arten `DEV_SUB_LIST`; `dev.meter` optional.
-- **Wertekatalog** `VALUE_CATALOG` (`q:<art>` Verbrauch, `c:<art>` Kosten, `c:total`) + `valueOfMonth(key, monat)`:
-  einzige Quelle für Dashboard-Diagramme. Diagramme arbeiten mit Monatsschlüsseln `JJJJ-MM` als `isos`.
+- **Wertekatalog** `valueCatalog()` (dynamisch, im Zwischenspeicher `calc()`): `q:<art>`/`c:<art>`/`c:total`, `qy:<art>`
+  (Vorjahresmonat), `k:energy`, `k:co2[:<art>]` (Faktoren `settings.co2`), `k:price:<art>`, `un:<art>`, `cc:<kst>:<art>`,
+  `ccc:<kst>:<art>`, `cct:<kst>`, `m:<zähler>` (Wechselkette) — Monatswerte über `valueOfMonth(key, monat)`, `isos` = `JJJJ-MM`;
+  Online `o:d|o:b|o:h:<zähler>` (`base` day/hour, Daten asynchron über `onlChartData` aus `onlHourly`, `isos` = Tag bzw.
+  `JJJJ-MM-TTTHH`). Ein Diagramm hat nur eine `base`. Kacheln `val:<key>` (Monatswert mit Vormonat), `on:<zähler>` (gestern).
+  Gelöschte Kostenstellen/Zähler fallen aus gespeicherten Layouts heraus (`sanitizeWidgets`).
 - **Dashboards:** wie im Shopfloor Board (Liste, Sichtbarkeit standard/public/private, `owner` = Anmeldename,
   Tabelle `dashboards`, `sanitizeWidgets`, `DW_MIN`). Widget-Typen: `bilanz` (Übersicht je Energieart), `tile`
   (`t:<art>`, `cost`, `missing`, `actions`), `chart` (max. 5 Werte, 2 Einheiten), `missing` (Liste). Monatswahl
