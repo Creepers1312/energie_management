@@ -5,7 +5,8 @@ const backups = require("../backups");
 const smb = require("../smb");
 const audit = require("../audit");
 const mailer = require("../mailer");
-const { HttpError, wrap, requireAdmin } = require("../http");
+const reports = require("../reports");
+const { HttpError, wrap, requireAdmin, requireManager } = require("../http");
 
 function register(app) {
   /* ---------- E-Mail-Versand des Servers ---------- */
@@ -31,6 +32,62 @@ function register(app) {
     const result = await mailer.test(body.settings || {}, to, req.user.name);
     await audit.log(req, "mail.test", { ok: result.ok, to: to.length || undefined, error: result.error || undefined });
     res.json({ result });
+  }));
+
+  /* ---------- Automatische Berichte (Monats-/Jahresbericht per E-Mail) ---------- */
+  app.get("/api/reports", wrap(async (req, res) => {
+    requireManager(req);
+    const prev = reports.previousMonth();
+    res.json({ config: await reports.getConfig(), mailReady: await mailer.isConfigured(), previousMonth: reports.periodKey(prev),
+      previousReleased: await reports.isReleased(prev), previousYear: new Date().getFullYear() - 1 });
+  }));
+  app.put("/api/reports", wrap(async (req, res) => {
+    requireManager(req);
+    const cfg = await reports.setConfig(req.body || {});
+    await audit.log(req, "report.config", { monthly: cfg.monthly.enabled, yearly: cfg.yearly.enabled, recipients: cfg.recipients.length, formats: cfg.formats });
+    res.json({ config: cfg });
+  }));
+  // Vorschau als HTML — kind=month&period=JJJJ-MM oder kind=year&period=JJJJ
+  app.get("/api/reports/preview", wrap(async (req, res) => {
+    requireManager(req);
+    const p = reports.parsePeriod(req.query.kind, req.query.period);
+    if (!p) throw new HttpError(400, "Ungültiger Zeitraum.");
+    const mail = await reports.build(p);
+    let html = mail.html;
+    const tpl = require("../mailtemplates").attachments();
+    (tpl || []).forEach((a) => { if (a.cid) html = html.split("cid:" + a.cid).join(`data:${a.contentType};base64,${a.content.toString("base64")}`); });
+    res.json({ subject: mail.subject, html, files: mail.files.map((f) => ({ filename: f.filename, size: f.content.length })) });
+  }));
+  // Anhang direkt herunterladen (gleicher Inhalt wie in der E-Mail)
+  app.get("/api/reports/file", wrap(async (req, res) => {
+    requireManager(req);
+    const p = reports.parsePeriod(req.query.kind, req.query.period);
+    if (!p) throw new HttpError(400, "Ungültiger Zeitraum.");
+    const fmt = String(req.query.format || "");
+    if (!reports.FORMATS.includes(fmt)) throw new HttpError(400, "Unbekanntes Format.");
+    const cfg = await reports.getConfig();
+    const mail = await reports.build(p, Object.assign({}, cfg, { formats: [fmt] }));
+    const f = mail.files[0];
+    res.setHeader("Content-Type", f.contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${f.filename}"`);
+    res.send(f.content);
+  }));
+  // Jetzt senden: an den Verteiler oder als Probe an die eigene Adresse
+  app.post("/api/reports/send", wrap(async (req, res) => {
+    requireManager(req);
+    const body = req.body || {};
+    const p = reports.parsePeriod(body.kind, body.period);
+    if (!p) throw new HttpError(400, "Ungültiger Zeitraum.");
+    let to = null;
+    if (body.test) {
+      const r = await db.pool.query("SELECT email FROM users WHERE lower(name) = lower($1)", [req.user.name]);
+      const own = r.rows[0] && r.rows[0].email;
+      if (!own) throw new HttpError(400, "Für eine Probe an Sie selbst bitte unter „Mein Konto“ eine E-Mail-Adresse hinterlegen.");
+      to = [own];
+    }
+    const last = await reports.send(p, { to, by: req.user.name });
+    await audit.log(req, "report.send", { period: last.period, to: last.to, test: !!body.test });
+    res.json({ last });
   }));
 
   /* ---------- Sicherheitsprotokoll ---------- */

@@ -24,6 +24,7 @@ async function main() {
   setInterval(() => { sessions.purgeExpired(); audit.purge(); purgeResets(); }, 60 * 60 * 1000).unref();
   backups.startScheduler();
   require("./metering").startScheduler();
+  require("./reports").startScheduler();
 
   const server = createApp().listen(config.port, () => {
     console.log(`[api] lauscht auf Port ${config.port} · Registrierung: ${config.allowRegister ? "an" : "aus"} · Demo: ${config.allowDemo ? "an" : "aus"}`);
