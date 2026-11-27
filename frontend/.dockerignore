@@ -1,0 +1,11 @@
+# Nur, was ins Image gehört
+*
+!nginx.conf
+!energie-proxy.conf
+!05-energie-proxy.sh
+!csp-hashes.js
+!index.html
+!fonts
+!docs
+!favicon.ico
+!apple-touch-icon.png
