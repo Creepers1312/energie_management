@@ -53,5 +53,7 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   für online angebundene Zähler Verbrauch je Tag, Grundlast und Verbrauch je Stunde. Kacheln für jeden Monatswert
   und „Verbrauch gestern“. Die „Detaillierte Auswertung“ zeigt zusätzlich Gesamtenergie, CO₂ und den Vorjahresvergleich.
 
+- Beim Anpassen eines Dashboards bleibt die Leiste mit „+ Widget hinzufügen“ und „Fertig“ beim Scrollen unter der Kopfzeile stehen.
+
 ### Entfernt (gegenüber dem Shopfloor Board)
 - Daily Huddle, SQIDP-Board, Tageskennzahlen, Tagesbericht, TV-Modus und Monatsbericht.
