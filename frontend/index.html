@@ -2035,6 +2035,12 @@ dialog.wide-dialog .dlg-body { max-height: calc(100dvh - 170px); overflow-y: aut
 .cv-meter { display: flex; gap: 6px; align-items: center; }
 .cv-stack { display: flex; flex-direction: column; border-radius: 4px 4px 1px 1px; overflow: hidden; }
 .cv-stack i { display: block; min-height: 1px; }
+.im-opts { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0 12px; }
+.im-opts > summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+.im-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 12px; margin-top: 10px; align-items: end; }
+.im-head { align-self: center; }
+.im-save { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.im-save input { flex: 1 1 240px; }
 .ci-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; margin: 12px 0; }
 tr.ci-err td { color: var(--crit-text); }
 
@@ -2318,8 +2324,8 @@ details.wd-group { padding-bottom: 4px; }
     </div>
     <div class="head-actions">
       <button class="btn" id="rdTplBtn" title="CSV-Vorlage mit allen eingebauten Zählern herunterladen">CSV-Vorlage</button>
-      <button class="btn" id="rdImportBtn" title="Zählerstände aus einer CSV-Datei übernehmen">CSV importieren</button>
-      <input type="file" id="rdFile" accept=".csv,text/csv,text/plain" hidden>
+      <button class="btn" id="rdImportBtn" title="Zählerstände aus einer CSV- oder Excel-Datei übernehmen (mit Importprofilen)">Importieren</button>
+      <button class="btn" id="rdLogBtn" title="Bisherige Importe mit Fehlerprotokoll">Importprotokoll</button>
     </div>
   </div>
   <div class="card" style="margin-bottom: 16px;">
@@ -3533,6 +3539,60 @@ details.wd-group { padding-bottom: 4px; }
   </form>
 </dialog>
 
+<!-- Dialog: Zählerstände importieren -->
+<dialog id="importDialog" class="wide-dialog">
+  <div class="dlg-head">
+    <h2>Zählerstände importieren</h2>
+    <button type="button" class="btn ghost sm" id="imClose" aria-label="Schließen">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="field-row">
+      <div class="field"><label for="imProfile">Importprofil</label><select class="perm-select" id="imProfile"></select></div>
+      <div class="field"><label for="imFile">Datei (CSV oder Excel .xlsx)</label><input type="file" id="imFile" accept=".csv,.txt,.xlsx,text/csv,text/plain"></div>
+    </div>
+    <p class="mini-hint" id="imFileName"></p>
+    <details class="im-opts">
+      <summary>Dateiaufbau (aus dem Profil)</summary>
+      <div class="im-grid">
+        <div class="field"><label for="imType">Energieart</label><select class="perm-select" id="imType"><option value="">Alle Energiearten</option><option value="strom">Strom</option><option value="wasser">Wasser</option><option value="gas">Gas</option><option value="druckluft">Druckluft</option></select></div>
+        <div class="field"><label for="imDelim">Trennzeichen</label><select class="perm-select" id="imDelim"><option value="">automatisch</option><option value=";">Semikolon ;</option><option value=",">Komma ,</option><option value="tab">Tabulator</option></select></div>
+        <div class="field"><label for="imDecimal">Dezimalzeichen</label><select class="perm-select" id="imDecimal"><option value="">automatisch</option><option value=",">Komma (1.234,5)</option><option value=".">Punkt (1,234.5)</option></select></div>
+        <div class="field"><label for="imDateFmt">Datumsformat</label><select class="perm-select" id="imDateFmt"><option value="">automatisch (TT.MM.JJJJ / JJJJ-MM-TT)</option><option value="dmy">TT/MM/JJJJ</option><option value="mdy">MM/TT/JJJJ</option></select></div>
+        <div class="field"><label for="imStrip">Präfix der Zählernummer entfernen</label><input id="imStrip" maxlength="30" autocomplete="off" placeholder="z. B. DE0001"></div>
+        <label class="check-line im-head"><input type="checkbox" id="imHeader" checked> Erste Zeile ist Kopfzeile</label>
+      </div>
+      <div class="im-save">
+        <input class="perm-select" id="imProfName" maxlength="60" autocomplete="off" placeholder="Name des Profils, z. B. Strom-Export Netzbetreiber" aria-label="Name des Profils">
+        <button type="button" class="btn sm" id="imSaveProfile">Als Profil speichern</button>
+        <button type="button" class="btn sm ghost danger" id="imDelProfile" hidden>Profil löschen</button>
+      </div>
+    </details>
+    <div id="imPreview"></div>
+    <p class="mini-hint">Im nächsten Schritt wird jede Zeile geprüft (unbekannte Zähler, doppelte Ablesungen, kleinerer Stand, fehlender Vorstand). Gespeichert wird erst nach Ihrer Bestätigung; jeder Import steht mit Fehlerliste im Importprotokoll.</p>
+    <p class="login-error" id="imError" hidden></p>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn" id="imCancel">Abbrechen</button>
+    <button type="button" class="btn primary" id="imOk" disabled>Weiter zur Prüfung</button>
+  </div>
+</dialog>
+
+<!-- Dialog: Importprotokoll -->
+<dialog id="importLogDialog" class="wide-dialog">
+  <div class="dlg-head">
+    <h2>Importprotokoll</h2>
+    <button type="button" class="btn ghost sm" id="ilClose" aria-label="Schließen">✕</button>
+  </div>
+  <div class="dlg-body">
+    <p class="cf-text">Alle Importe von Zählerständen mit Datei, Profil, Person und Zeitpunkt. Nicht übernommene Zeilen stehen im Fehlerprotokoll.</p>
+    <div class="trk-table-wrap pv-wrap"><table class="trk-table" id="ilTable"></table></div>
+    <div id="ilErrors" hidden></div>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn primary" id="ilOk">Schließen</button>
+  </div>
+</dialog>
+
 <!-- Dialog: Kostenstellen importieren -->
 <dialog id="ccImportDialog" class="wide-dialog">
   <div class="dlg-head">
@@ -4040,6 +4100,7 @@ window.SFM = (function () {
                      rollover, zeroStart, note, by, at, edits: [...], deleted: null|{ by, at } }]
      rules        [{ id, cc, type, name, versions: [{ from, terms: [{ meter, factor }], at, by }] }]
      prices       [{ type, from, price, base, baseMode: "on"|"hidden"|"off", at, by }]   ← base = Grundpreis €/Monat
+     imports      [{ id, at, by, file, profile, type, rows, saved, errors: [{ line, no, date, value, reason }] }]  ← Importprotokoll
      billing      [{ month, status: "open"|"checked"|"released", checked: {at, by}, released: {at, by},
                      snap: { rows, totals, meters }, history: [{ at, by, action, reason, snap }] }]  ← Abrechnung je Monat
      conversions  [{ type: "gas", from, brennwert, zustandszahl, at, by }]
@@ -4095,11 +4156,20 @@ window.EN = (function () {
     var n = Number(s);
     return isFinite(n) ? n : null;
   }
+  // Zahl mit vorgegebenem Dezimaltrennzeichen ("," oder "."); ohne Vorgabe wie num()
+  function numDec(v, dec) {
+    if (typeof v === "number" || !dec) return num(v);
+    var s = String(v == null ? "" : v).trim().replace(/\s/g, "");
+    if (!s) return null;
+    s = dec === "," ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+    var n = Number(s);
+    return isFinite(n) ? n : null;
+  }
   function round(v, d) { if (v == null) return null; var f = Math.pow(10, d == null ? 6 : d); return Math.round(v * f) / f; }
 
   /* ---------- Dokument prüfen / auffüllen ---------- */
   function emptyDoc() {
-    return { v: 1, seq: 1, costCenters: [], meters: [], readings: [], rules: [], prices: [], conversions: [], changes: [], runs: [], billing: [] };
+    return { v: 1, seq: 1, costCenters: [], meters: [], readings: [], rules: [], prices: [], conversions: [], changes: [], runs: [], billing: [], imports: [] };
   }
   function normalize(d) {
     var e = emptyDoc();
@@ -4482,11 +4552,13 @@ window.EN = (function () {
   }
 
   /* ---------- CSV ---------- */
-  function parseCsv(text) {
+  // Trennzeichen automatisch (; , Tab) oder vorgegeben
+  function parseCsv(text, forceSep) {
     text = String(text || "").replace(/^﻿/, "");
     var first = text.split(/\r?\n/)[0] || "";
     var sep = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ";" : ",";
     if ((first.match(/\t/g) || []).length > (first.match(new RegExp(sep, "g")) || []).length) sep = "\t";
+    if (forceSep) sep = forceSep;
     var rows = [], row = [], cell = "", q = false;
     for (var i = 0; i < text.length; i++) {
       var ch = text[i];
@@ -4506,13 +4578,15 @@ window.EN = (function () {
     if (row.some(function (c) { return c.trim() !== ""; })) rows.push(row);
     return rows.map(function (r) { return r.map(function (c) { return c.trim(); }); });
   }
-  // Datum in ISO: 01.12.2026, 1.12.26, 2026-12-01
-  function parseDate(v) {
-    v = String(v || "").trim();
-    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v);
+  // Datum in ISO: 01.12.2026, 1.12.26, 2026-12-01; mit fmt "dmy"/"mdy" auch 01/12/2026. Uhrzeit dahinter wird ignoriert.
+  function parseDate(v, fmt) {
+    v = String(v || "").trim().replace(/[ T]\d{1,2}:\d{2}(:\d{2})?(\.\d+)?Z?$/, "");
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v) || /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(v);
     if (m) return valid(+m[1], +m[2], +m[3]);
     m = /^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/.exec(v);
     if (m) return valid(m[3].length === 2 ? 2000 + +m[3] : +m[3], +m[2], +m[1]);
+    m = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{4})$/.exec(v);
+    if (m) { var y = m[3].length === 2 ? 2000 + +m[3] : +m[3]; return fmt === "mdy" ? valid(y, +m[1], +m[2]) : valid(y, +m[2], +m[1]); }
     return null;
     function valid(y, mo, d) {
       var dt = new Date(y, mo - 1, d);
@@ -4536,7 +4610,7 @@ window.EN = (function () {
   return {
     TYPES: TYPES, TYPE_KEYS: TYPE_KEYS, typeOf: typeOf,
     isDate: isDate, isMonth: isMonth, monthOf: monthOf, addMonths: addMonths, monthRange: monthRange,
-    billingMonth: billingMonth, dueMonth: dueMonth, num: num, round: round,
+    billingMonth: billingMonth, dueMonth: dueMonth, num: num, numDec: numDec, round: round,
     emptyDoc: emptyDoc, normalize: normalize, nextId: nextId, clone: clone,
     versionAt: versionAt, meterById: meterById, ccById: ccById, propsAt: propsAt, priceAt: priceAt, convAt: convAt,
     priceVersionAt: priceVersionAt, baseAt: baseAt, billingOf: billingOf, billingStatus: billingStatus, isReleased: isReleased,
@@ -4633,6 +4707,7 @@ window.EN = (function () {
       lineName: (typeof s.lineName === "string" && s.lineName.trim()) ? s.lineName.trim() : DEFAULT_SETTINGS.lineName,
       cutoffDay: clampNum(s.cutoffDay, 0, 15, DEFAULT_SETTINGS.cutoffDay),
       warnPct: clampNum(s.warnPct, 0, 1000, DEFAULT_SETTINGS.warnPct),
+      importProfiles: (Array.isArray(s.importProfiles) ? s.importProfiles : []).filter(function (x) { return x && typeof x === "object" && typeof x.id === "string" && typeof x.name === "string"; }).slice(0, 50),
       co2: (function (c) {
         c = c && typeof c === "object" ? c : {};
         var o = {};
@@ -8230,6 +8305,7 @@ window.EN = (function () {
     var m = EN.meterById(energy, e.meter), out = { errors: [], warn: [], info: [] };
     e.m = m;
     if (!m) { out.errors.push("Unbekannter Zähler"); return out; }
+    if (e.wrongType) { out.errors.push("Zähler ist " + typeLabel(m.type) + " — das Importprofil gilt nur für eine andere Energieart"); return out; }
     if (e.value == null) { out.errors.push("Zählerstand fehlt oder ist keine Zahl"); return out; }
     if (!EN.isDate(e.date)) { out.errors.push("Ungültiges Ablesedatum"); return out; }
     if (e.date > TODAY_ISO) out.errors.push("Ablesedatum liegt in der Zukunft");
@@ -8259,7 +8335,7 @@ window.EN = (function () {
     return out;
   }
   var isDlg = $("#issueDialog"), isState = null;
-  function checkAndSave(entries, label, showAll, onDone) {
+  function checkAndSave(entries, label, showAll, onDone, meta) {
     entries.forEach(function (e) { e.check = checkEntry(e, entries); });
     entries.forEach(function (e) {
       // Vorschlag: Überlauf, wenn er wahrscheinlich ist; sonst muss der Benutzer wählen
@@ -8268,8 +8344,8 @@ window.EN = (function () {
     });
     var needs = entries.some(function (e) { return e.check.errors.length || e.check.warn.length || e.check.info.length; });
     if (!needs && !showAll) { saveEntries(entries, label, onDone); return; }
-    isState = { entries: entries, label: label, onDone: onDone, showAll: showAll };
-    $("#isTitle").textContent = showAll ? "CSV-Import prüfen" : "Ablesungen prüfen";
+    isState = { entries: entries, label: label, onDone: onDone, showAll: showAll, meta: meta || null };
+    $("#isTitle").textContent = meta ? "Import prüfen · " + (meta.file || "") : showAll ? "Import prüfen" : "Ablesungen prüfen";
     $("#isSub").textContent = "Bitte die markierten Zeilen prüfen. Fehlerhafte Zeilen werden nicht übernommen; bei Warnungen entscheiden Sie, wie gerechnet wird.";
     renderIssues();
     isDlg.showModal();
@@ -8338,23 +8414,25 @@ window.EN = (function () {
     if (!st) return;
     var ok = st.entries.filter(entryOk);
     isDlg.close(); isState = null;
-    saveEntries(ok, st.label, st.onDone);
+    saveEntries(ok, st.label, st.onDone, st.meta ? { meta: st.meta, all: st.entries } : null);
   });
   $("#isCancel").addEventListener("click", function () { isDlg.close(); isState = null; });
   $("#isClose").addEventListener("click", function () { isDlg.close(); isState = null; });
-  function saveEntries(entries, label, onDone) {
+  function saveEntries(entries, label, onDone, imp) {
     if (!entries.length) { toast("Nichts gespeichert"); return; }
     var w = who(), retro = entries.some(function (e) { return e.check.info.length; });
     var mk = function (doc, e) {
       return { id: EN.nextId(doc, "a"), meter: e.meter, kind: "read", date: e.date, month: e.month, value: e.value,
         rollover: e.decision && e.decision.neg === "rollover", zeroStart: !!(e.decision && e.decision.zero), note: e.note || "",
-        by: w.by, at: w.at, edits: [], deleted: null };
+        by: w.by, at: w.at, edits: [], deleted: null, imp: impRec ? impRec.id : undefined };
     };
+    var impRec = null;
     if (EN.releasedMonths(energy).length) {
       var test = EN.clone(energy);
       entries.forEach(function (e) { test.readings.push(mk(test, e)); });
       if (lockGuard(test)) return;
     }
+    if (imp) impRec = logImport(imp.meta, imp.all, entries);
     entries.forEach(function (e) { energy.readings.push(mk(energy, e)); });
     var months = entries.map(function (e) { return e.month; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).sort();
     var flags = [];
@@ -8482,41 +8560,257 @@ window.EN = (function () {
     csvDownload(rows, "ablesung-" + rdMonth + ".csv");
     toast("Vorlage für " + monthLabel(rdMonth) + " heruntergeladen");
   });
-  $("#rdImportBtn").addEventListener("click", function () { if (can("edit")) $("#rdFile").click(); });
-  $("#rdFile").addEventListener("change", function () {
-    var file = this.files && this.files[0];
-    this.value = "";
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onerror = function () { appAlert("Fehler", "Die Datei konnte nicht gelesen werden."); };
-    reader.onload = function () { importCsv(String(reader.result || "")); };
-    reader.readAsText(file, "utf-8");
-  });
-  function importCsv(text) {
-    var rows = EN.parseCsv(text);
-    if (!rows.length) { appAlert("Leere Datei", "Die Datei enthält keine Zeilen."); return; }
-    var head = rows[0].map(function (h) { return h.toLowerCase(); });
-    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) return i; return -1; };
-    var cNo = col(/z(ä|ae)hler.*(nr|nummer)|^z(ä|ae)hler$|^nummer|^nr/), cDate = col(/datum/), cVal = col(/^z(ä|ae)hlerstand$|^stand$|^neuer stand|^wert/), cMon = col(/monat/), cNote = col(/bemerk|notiz|kommentar/);
-    var hasHead = cNo >= 0 && cVal >= 0;
-    if (!hasHead) { cNo = 0; cDate = 1; cVal = 2; cMon = rows[0].length > 3 ? 3 : -1; cNote = rows[0].length > 4 ? 4 : -1; }
+  /* ---------- Import von Zählerständen (CSV oder Excel) mit Importprofilen ----------
+     Ein Profil legt je Energieart fest, wie eine Datei aufgebaut ist: Trennzeichen, Dezimalzeichen, Datumsformat,
+     Kopfzeilen und welche Spalte welches Feld enthält (Kopfzeilen-Text oder Spaltennummer). Profile stehen in den
+     Einstellungen (settings.importProfiles) und werden von Teamleitung/Administration gepflegt. Jeder Import landet mit
+     Datei, Profil, Person, Zeitpunkt und Fehlerliste im Importprotokoll (energy.imports). */
+  var IM_FIELDS = [
+    ["no", "Zählernummer", true, /z(ä|ae)hler.*(nr|nummer)|^z(ä|ae)hler$|^nummer|^nr\b|^messstelle|^zählpunkt/i],
+    ["date", "Ablesedatum", false, /datum|^date|zeitpunkt|zeitstempel/i],
+    ["value", "Zählerstand", true, /^z(ä|ae)hlerstand|^stand$|^neuer stand|^wert|^value|^messwert|^reading/i],
+    ["month", "Abrechnungsmonat", false, /monat|^periode/i],
+    ["note", "Bemerkung", false, /bemerk|notiz|kommentar/i]
+  ];
+  var IM_DEFAULT = { id: "", name: "Standard (Vorlage aus dem Programm)", type: "", delim: "", decimal: "", dateFmt: "", header: true, cols: {}, strip: "" };
+  var imDlg = $("#importDialog"), imRows = null, imFile = "";
+  // zuletzt benutztes Profil merkt sich jedes Gerät selbst
+  function imLast(v) {
+    try { if (v !== undefined) LS.setItem("sfm-import-last", v || ""); return LS.getItem("sfm-import-last") || ""; } catch (e) { return ""; }
+  }
+  function imProfiles() { return [IM_DEFAULT].concat(Array.isArray(settings.importProfiles) ? settings.importProfiles : []); }
+  function imProfile() { var id = $("#imProfile").value; return imProfiles().filter(function (p) { return p.id === id; })[0] || IM_DEFAULT; }
+  function openImportDialog() {
+    imRows = null; imFile = "";
+    fillSelect($("#imProfile"), imProfiles().map(function (p) { return { v: p.id, t: p.name + (p.type ? " · " + typeLabel(p.type) : "") }; }), imLast());
+    if (!imProfiles().some(function (p) { return p.id === $("#imProfile").value; })) $("#imProfile").value = "";
+    $("#imFile").value = "";
+    $("#imFileName").textContent = "Noch keine Datei gewählt.";
+    imLoadProfile();
+    $("#imPreview").innerHTML = "";
+    $("#imSaveProfile").hidden = !can("stamm");
+    $("#imDelProfile").hidden = true;
+    showErr("imError", null);
+    imSync();
+    imDlg.showModal();
+  }
+  function imLoadProfile() {
+    var p = imProfile();
+    $("#imType").value = p.type || "";
+    $("#imDelim").value = p.delim || "";
+    $("#imDecimal").value = p.decimal || "";
+    $("#imDateFmt").value = p.dateFmt || "";
+    $("#imHeader").checked = p.header !== false;
+    $("#imStrip").value = p.strip || "";
+    $("#imProfName").value = p.id ? p.name : "";
+    $("#imDelProfile").hidden = !(p.id && can("stamm"));
+    if (imRows) imParse();
+  }
+  // Datei neu einlesen (Trennzeichen kann die Zerlegung ändern)
+  function imRead() {
+    var f = $("#imFile").files && $("#imFile").files[0];
+    if (!f) return;
+    imFile = f.name;
+    var go = /\.xlsx$/i.test(f.name) ? f.arrayBuffer().then(XL.read)
+      : /\.xls$/i.test(f.name) ? Promise.reject(new Error("Alte Excel-Dateien (.xls) bitte als .xlsx oder CSV speichern."))
+      : f.text().then(function (t) { return EN.parseCsv(t, $("#imDelim").value === "tab" ? "\t" : $("#imDelim").value || null); });
+    go.then(function (rows) {
+      imRows = rows.map(function (r) { return r.map(function (v) { return v == null ? "" : v; }); }).filter(function (r) { return r.some(function (v) { return String(v).trim() !== ""; }); });
+      $("#imFileName").textContent = f.name + " · " + imRows.length + " Zeilen";
+      imParse();
+    }).catch(function (e) { imRows = null; showErr("imError", e.message || String(e)); imSync(); });
+  }
+  // Spaltenzuordnung: aus dem Profil (Kopfzeilen-Text oder Nummer) oder automatisch über die Kopfzeile
+  function imColumns(p, head) {
+    var cols = {};
+    IM_FIELDS.forEach(function (f) {
+      var want = p.cols && p.cols[f[0]], idx = -1;
+      if (want != null && want !== "") {
+        if (/^\d+$/.test(String(want))) idx = +want - 1;
+        else if (head) idx = head.findIndex(function (h) { return String(h).trim().toLowerCase() === String(want).trim().toLowerCase(); });
+      } else if (head) idx = head.findIndex(function (h) { return f[3].test(String(h).trim()); });
+      else if (!p.id) idx = { no: 0, date: 1, value: 2, month: 3, note: 4 }[f[0]];
+      cols[f[0]] = idx;
+    });
+    return cols;
+  }
+  function imParse() {
+    var p = imCurrent(), host = $("#imPreview"); host.innerHTML = "";
+    if (!imRows || !imRows.length) { imSync(); return; }
+    var head = p.header ? imRows[0] : null, cols = imColumns(p, head);
+    // Spaltenwahl je Feld (überschreibt das Profil für diesen Import)
+    var map = el("div", "ci-map");
+    var width = Math.max.apply(null, imRows.slice(0, 50).map(function (r) { return r.length; }));
+    IM_FIELDS.forEach(function (f) {
+      var wrap = el("div", "field"), lab = el("label", null, f[1] + (f[2] ? " *" : "")), sel = el("select", "perm-select");
+      sel.id = "imCol-" + f[0]; lab.htmlFor = sel.id;
+      var opts = [{ v: "", t: f[0] === "date" ? "— Ablesedatum der Ansicht —" : f[0] === "month" ? "— aus dem Datum —" : "— keine —" }];
+      for (var i = 0; i < width; i++) opts.push({ v: String(i), t: "Spalte " + (i + 1) + (head && String(head[i] == null ? "" : head[i]).trim() ? ": " + head[i] : "") });
+      fillSelect(sel, opts, cols[f[0]] >= 0 ? String(cols[f[0]]) : "");
+      sel.addEventListener("change", function () { imPreviewTable(); imSync(); });
+      wrap.appendChild(lab); wrap.appendChild(sel); map.appendChild(wrap);
+    });
+    host.appendChild(map);
+    host.appendChild(el("div", "trk-table-wrap pv-wrap", null)).id = "imSample";
+    imPreviewTable();
+    imSync();
+  }
+  function imColsNow() { var c = {}; IM_FIELDS.forEach(function (f) { var s = byId("imCol-" + f[0]); c[f[0]] = s && s.value !== "" ? +s.value : -1; }); return c; }
+  // Erste Zeilen so, wie sie gelesen werden
+  function imPreviewTable() {
+    var p = imCurrent(), cols = imColsNow(), wrap = byId("imSample");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    var t = el("table", "trk-table"); t.appendChild(headRow(["Zeile"].concat(IM_FIELDS.map(function (f) { return f[1]; })), [1, 0, 0, 1, 0, 0]));
+    var tb = document.createElement("tbody");
+    imEntries(p, cols).slice(0, 6).forEach(function (e) {
+      var tr = document.createElement("tr");
+      tr.appendChild(td(e.line, "num"));
+      tr.appendChild(td(e.no + (e.meter ? "" : " (unbekannt)"), e.meter ? "" : "crit-text"));
+      tr.appendChild(td(EN.isDate(e.date) ? fmtDate(e.date) : (e.rawDate || "") + " ✕", EN.isDate(e.date) ? "" : "crit-text"));
+      tr.appendChild(td(e.value != null ? fmtValue(e.value) : e.raw + " ✕", "num" + (e.value != null ? "" : " crit-text")));
+      tr.appendChild(td(EN.isMonth(e.month) ? monthShort(e.month) : "—"));
+      tr.appendChild(td(e.note || ""));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); wrap.appendChild(t);
+  }
+  // Profil aus den Feldern des Dialogs (für Vorschau und Speichern)
+  function imCurrent() {
+    var base = imProfile();
+    return { id: base.id, name: base.name, type: $("#imType").value, delim: $("#imDelim").value, decimal: $("#imDecimal").value, dateFmt: $("#imDateFmt").value,
+      header: $("#imHeader").checked, strip: $("#imStrip").value.trim(), cols: base.cols || {} };
+  }
+  function imEntries(p, cols) {
     var byNo = {};
     energy.meters.forEach(function (m) { (byNo[String(m.no).trim().toLowerCase()] = byNo[String(m.no).trim().toLowerCase()] || []).push(m); });
-    var entries = [];
-    rows.slice(hasHead ? 1 : 0).forEach(function (r) {
-      var rawVal = (r[cVal] || "").trim();
-      if (!rawVal) return;   // leere Zeilen der Vorlage überspringen
-      var no = (r[cNo] || "").trim(), date = EN.parseDate(cDate >= 0 ? r[cDate] : "") || (cDate < 0 ? rdDate : null);
+    var out = [], strip = p.strip ? p.strip.toLowerCase() : "";
+    imRows.slice(p.header ? 1 : 0).forEach(function (r, i) {
+      var g = function (k) { return cols[k] >= 0 && r[cols[k]] != null ? r[cols[k]] : ""; };
+      var rawVal = g("value");
+      if (String(rawVal).trim() === "") return;   // leere Zeilen der Vorlage überspringen
+      var no = String(g("no")).trim();
+      if (strip && no.toLowerCase().indexOf(strip) === 0) no = no.slice(strip.length).trim();
+      var rd = g("date"), date = typeof rd === "number" ? excelDate(rd) : cols.date >= 0 ? EN.parseDate(rd, p.dateFmt) : rdDate;
       var cands = byNo[no.toLowerCase()] || [];
-      // Bei gleicher Nummer (z. B. wieder eingebaut): der Zähler, der am Ablesedatum eingebaut war
       var m = cands.filter(function (x) { return date && x.installed <= date && (!x.removed || x.removed >= date); })[0] || cands[0] || null;
-      var month = cMon >= 0 && (r[cMon] || "").trim() ? EN.parseMonth(r[cMon]) : date ? EN.billingMonth(date, settings.cutoffDay) : null;
-      entries.push({ meter: m ? m.id : null, no: no, date: date, rawDate: cDate >= 0 ? r[cDate] : "", month: month, value: EN.num(rawVal), raw: rawVal, note: cNote >= 0 ? (r[cNote] || "").trim().slice(0, 200) : "" });
+      var rm = g("month"), month = String(rm).trim() ? (typeof rm === "number" ? (excelDate(rm) || "").slice(0, 7) : EN.parseMonth(rm)) : date ? EN.billingMonth(date, settings.cutoffDay) : null;
+      out.push({ line: i + 1 + (p.header ? 1 : 0), meter: m ? m.id : null, no: no, date: date, rawDate: String(rd), month: month,
+        value: EN.numDec(rawVal, p.decimal), raw: String(rawVal), note: String(g("note")).trim().slice(0, 200), wrongType: !!(m && p.type && m.type !== p.type) });
     });
-    if (!entries.length) { appAlert("Keine Zählerstände", "In der Datei steht kein Zählerstand. Erwartet: Zählernummer; Ablesedatum; Zählerstand (optional Abrechnungsmonat; Bemerkung)."); return; }
-    entries.forEach(function (e) { if (!e.meter) e.unknown = true; });
-    checkAndSave(entries, "CSV-Import", true, function () { renderReadings(); });
+    return out;
   }
+  function imSync() {
+    var c = byId("imCol-no") ? imColsNow() : null;
+    $("#imOk").disabled = !(imRows && c && c.no >= 0 && c.value >= 0);
+  }
+  $("#rdImportBtn").addEventListener("click", function () { if (can("edit")) openImportDialog(); });
+  $("#imFile").addEventListener("change", imRead);
+  $("#imProfile").addEventListener("change", imLoadProfile);
+  ["imDelim"].forEach(function (id) { byId(id).addEventListener("change", function () { if (imRows) imRead(); }); });
+  ["imDecimal", "imDateFmt", "imStrip", "imType"].forEach(function (id) { byId(id).addEventListener("change", function () { if (imRows) imPreviewTable(); }); });
+  $("#imHeader").addEventListener("change", function () { if (imRows) imParse(); });
+  $("#imCancel").addEventListener("click", function () { imDlg.close(); });
+  $("#imClose").addEventListener("click", function () { imDlg.close(); });
+  // Profil speichern: Spalten werden mit dem Text der Kopfzeile gemerkt (robust gegen verschobene Spalten), ohne Kopfzeile als Nummer
+  $("#imSaveProfile").addEventListener("click", function () {
+    if (!can("stamm")) return;
+    var name = $("#imProfName").value.trim();
+    if (!name) { showErr("imError", "Bitte einen Namen für das Profil angeben."); $("#imProfName").focus(); return; }
+    var p = imCurrent(), cols = {}, head = p.header && imRows ? imRows[0] : null;
+    if (byId("imCol-no")) {
+      var c = imColsNow();
+      IM_FIELDS.forEach(function (f) { if (c[f[0]] >= 0) cols[f[0]] = head && String(head[c[f[0]]] || "").trim() ? String(head[c[f[0]]]).trim() : String(c[f[0]] + 1); });
+    } else cols = p.cols;
+    var list = Array.isArray(settings.importProfiles) ? settings.importProfiles.slice() : [];
+    var existing = list.filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0] || (p.id ? list.filter(function (x) { return x.id === p.id; })[0] : null);
+    var rec = { id: existing ? existing.id : "ip" + Date.now().toString(36), name: name, type: p.type, delim: p.delim, decimal: p.decimal, dateFmt: p.dateFmt, header: p.header, strip: p.strip, cols: cols };
+    list = list.filter(function (x) { return x !== existing; }).concat([rec]);
+    settings.importProfiles = list; imLast(rec.id);
+    saveSettings();
+    fillSelect($("#imProfile"), imProfiles().map(function (x) { return { v: x.id, t: x.name + (x.type ? " · " + typeLabel(x.type) : "") }; }), rec.id);
+    $("#imDelProfile").hidden = false;
+    showErr("imError", null);
+    toast("Importprofil „" + name + "“ gespeichert");
+  });
+  $("#imDelProfile").addEventListener("click", function () {
+    var p = imProfile();
+    if (!p.id || !can("stamm")) return;
+    appConfirm("Importprofil löschen?", "„" + p.name + "“ wird gelöscht. Bisherige Importe im Protokoll bleiben.", "Löschen", true, function () {
+      settings.importProfiles = (settings.importProfiles || []).filter(function (x) { return x.id !== p.id; });
+      saveSettings();
+      fillSelect($("#imProfile"), imProfiles().map(function (x) { return { v: x.id, t: x.name + (x.type ? " · " + typeLabel(x.type) : "") }; }), "");
+      imLoadProfile();
+    });
+  });
+  $("#imOk").addEventListener("click", function () {
+    var p = imCurrent(), entries = imEntries(p, imColsNow());
+    if (!entries.length) { showErr("imError", "In der Datei steht kein Zählerstand."); return; }
+    entries.forEach(function (e) { if (!e.meter) e.unknown = true; });
+    imLast(imProfile().id);
+    imDlg.close();
+    checkAndSave(entries, "Import " + imFile, true, function () { renderReadings(); },
+      { file: imFile, profile: imProfile().id ? imProfile().name : "Standard", type: p.type });
+  });
+
+  /* ---------- Importprotokoll ---------- */
+  var ilDlg = $("#importLogDialog");
+  function logImport(meta, all, saved, ids) {
+    var w = who(), savedSet = saved.map(function (e) { return e; });
+    var errors = all.filter(function (e) { return savedSet.indexOf(e) < 0; }).map(function (e) {
+      var why = e.check.errors.length ? e.check.errors.join(", ") : e.decision && e.decision.neg === "skip" ? "Nicht gespeichert (Entscheidung beim Import)" :
+        e.check.warn.map(function (x) { return x.kind === "noPrev" ? "vorheriger Stand fehlt (nicht bestätigt)" : "kleinerer Stand (keine Entscheidung)"; }).join(", ");
+      return { line: e.line || null, no: e.no || (e.m ? e.m.no : ""), date: e.date || e.rawDate || "", value: e.raw != null ? e.raw : e.value, reason: why };
+    });
+    var rec = { id: EN.nextId(energy, "i"), at: w.at, by: w.by, file: meta.file || "", profile: meta.profile || "", type: meta.type || "", rows: all.length, saved: saved.length, errors: errors.slice(0, 1000) };
+    energy.imports.unshift(rec);
+    if (energy.imports.length > 200) energy.imports.length = 200;
+    return rec;
+  }
+  function renderImportLog() {
+    var tbl = $("#ilTable"); tbl.innerHTML = "";
+    if (!energy.imports.length) { tbl.appendChild(emptyRow(7, "Noch keine Importe.")); return; }
+    tbl.appendChild(headRow(["Zeitpunkt", "Person", "Datei", "Profil", "Zeilen", "Gespeichert", "Fehler"], [0, 0, 0, 0, 1, 1, 1]));
+    var tb = document.createElement("tbody");
+    energy.imports.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.appendChild(td(fmtDateTime(r.at), "nowrap")); tr.appendChild(td(r.by)); tr.appendChild(td(r.file)); tr.appendChild(td(r.profile + (r.type ? " · " + typeLabel(r.type) : "")));
+      tr.appendChild(td(r.rows, "num")); tr.appendChild(td(r.saved, "num"));
+      var c = el("td", "num nowrap");
+      if (r.errors && r.errors.length) {
+        var b = el("button", "link-btn", r.errors.length + " anzeigen"); b.type = "button";
+        b.addEventListener("click", function () { renderImportErrors(r); });
+        c.appendChild(b);
+      } else c.textContent = "0";
+      tr.appendChild(c);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    $("#ilErrors").hidden = true;
+  }
+  function renderImportErrors(r) {
+    var box = $("#ilErrors"); box.hidden = false; box.innerHTML = "";
+    var h = el("div", "bk-head");
+    h.appendChild(el("div", "set-card-title", "Fehlerprotokoll · " + r.file + " · " + fmtDateTime(r.at)));
+    var dl = el("button", "btn sm", "Als CSV"); dl.type = "button";
+    dl.addEventListener("click", function () {
+      csvDownload([["Zeile", "Zählernummer", "Datum", "Wert", "Grund"]].concat(r.errors.map(function (e) { return [e.line || "", e.no, e.date, e.value, e.reason]; })), "importfehler-" + String(r.file).replace(/[^\w.-]+/g, "_") + ".csv");
+    });
+    h.appendChild(dl);
+    box.appendChild(h);
+    var t = el("table", "trk-table"); t.appendChild(headRow(["Zeile", "Zählernummer", "Datum", "Wert", "Grund"], [1, 0, 0, 1, 0]));
+    var tb = document.createElement("tbody");
+    r.errors.forEach(function (e) {
+      var tr = document.createElement("tr");
+      tr.appendChild(td(e.line || "", "num")); tr.appendChild(td(e.no)); tr.appendChild(td(EN.isDate(e.date) ? fmtDate(e.date) : e.date)); tr.appendChild(td(e.value, "num")); tr.appendChild(td(e.reason, "crit-text"));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    var w = el("div", "trk-table-wrap"); w.appendChild(t); box.appendChild(w);
+  }
+  $("#rdLogBtn").addEventListener("click", function () { renderImportLog(); ilDlg.showModal(); });
+  $("#ilOk").addEventListener("click", function () { ilDlg.close(); });
+  $("#ilClose").addEventListener("click", function () { ilDlg.close(); });
 
 
   /* ---------- ILV: Verrechnung auf Kostenstellen ---------- */
