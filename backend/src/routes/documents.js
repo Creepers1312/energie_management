@@ -3,6 +3,7 @@
 const db = require("../db");
 const users = require("../users");
 const audit = require("../audit");
+const billing = require("../billing");
 const { HttpError, wrap, requireManager, requireEdit } = require("../http");
 
 const DOCS = ["state", "settings", "users", "energy"];
@@ -78,7 +79,7 @@ function register(app) {
       throw new HttpError(400, "Ungültige Daten.");
     }
 
-    let changes = null;
+    let changes = null, billingEvents = [];
     const result = await db.tx(async (c) => {
       await db.lockRevision(c);
       const cur = await c.query("SELECT revision, value FROM documents WHERE name = $1", [name]);
@@ -90,6 +91,8 @@ function register(app) {
       if (name === "users") {
         changes = await users.syncFromClient(c, value, req.user.perm);
       } else {
+        // Abrechnung: Freigabe/Wiederöffnen nach Rechten, freigegebene Monate gesperrt (wirft 403/409)
+        if (name === "energy") billingEvents = billing.check(cur.rows[0].value, value, req.user);
         const toStore = name === "settings" ? mergeSettings(cur.rows[0].value, value, req.user.perm) : value;
         await c.query("UPDATE documents SET value = $2::jsonb WHERE name = $1", [name, JSON.stringify(toStore)]);
       }
@@ -104,6 +107,7 @@ function register(app) {
       if (any) await audit.log(req, "users.update", changes);
     } else {
       await audit.log(req, "document.save", { doc: name });
+      for (const ev of billingEvents) await audit.log(req, "billing." + ev.action, ev);
     }
     res.json({ revision: result.revision });
   }));

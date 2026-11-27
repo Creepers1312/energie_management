@@ -59,4 +59,23 @@ const diff = EN.diffSnapshots(before, after); assert(diff.length > 0, 'Vorschau 
 assert.equal(EN.allocate(d, "2026-01").rows[0].cost, 175);
 assert.deepEqual(EN.parseCsv('Zähler;Datum;Stand\n"H1";01.12.2026;"1.234,5"\n'), [["Zähler","Datum","Stand"],["H1","01.12.2026","1.234,5"]]);
 assert.equal(EN.num("1.234,5"), 1234.5); assert.equal(EN.parseDate("1.12.26"), "2026-12-01"); assert.equal(EN.parseMonth("November 2026"), "2026-11");
+// Grundpreis: anteilig nach Menge, ausgeblendet/deaktiviert nicht berechnet
+{
+  const d3 = EN.clone(d);
+  d3.prices = [{ type: "strom", from: "2026-01", price: 0.25, base: 100, baseMode: "on" }];
+  const a3 = EN.allocate(d3, "2026-01"), c1 = a3.rows.find(r => r.cc === "c1"), c2 = a3.rows.find(r => r.cc === "c2");
+  assert.equal(c1.base, 70); assert.equal(c2.base, 30); assert.equal(c1.cost, 175 + 70); assert.equal(a3.totals.strom.cost, 350);
+  assert.equal(a3.totals.strom.measuredCost, 350);
+  d3.prices[0].baseMode = "hidden"; assert.equal(EN.allocate(d3, "2026-01").totals.strom.cost, 250);
+  d3.prices[0].baseMode = "off"; assert.equal(EN.allocate(d3, "2026-01").rows.find(r => r.cc === "c1").base, 0);
+  // Freigabe sperrt: Faktoränderung, die Januar ändert, wird erkannt; eine Änderung ab März nicht
+  d3.prices[0].baseMode = "on";
+  d3.billing = [{ month: "2026-01", status: "released", snap: EN.billingSnap(d3, "2026-01"), history: [] }];
+  assert.deepEqual(EN.releasedMonths(d3), ["2026-01"]);
+  const d4 = EN.clone(d3); EN.setMeterProps(EN.meterById(d4, U.id), "2026-01", { factor: 2, overflow: null }, who);
+  assert.deepEqual(EN.lockedChanges(d3, d4), ["2026-01"]);
+  const d5 = EN.clone(d3); EN.setMeterProps(EN.meterById(d5, U.id), "2026-03", { factor: 2, overflow: null }, who);
+  assert.deepEqual(EN.lockedChanges(d3, d5), []);
+  const d6 = EN.clone(d3); d6.prices[0].base = 200; assert.deepEqual(EN.lockedChanges(d3, d6), ["2026-01"]);
+}
 console.log('Rechenkern: alle Prüfungen bestanden');

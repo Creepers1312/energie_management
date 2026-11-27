@@ -20,6 +20,7 @@
   <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></symbol>
   <symbol id="i-meter" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 14 4-5"/><circle cx="12" cy="14" r="1.3"/><path d="M3 21h18"/></symbol>
   <symbol id="i-reading" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="18" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 11h7M8.5 15h4"/></symbol>
+  <symbol id="i-bill" viewBox="0 0 24 24"><path d="M6 2.5h8.5L19 7v14.5H6z"/><path d="M14 2.5V7h5"/><path d="m9 14 2 2 4-4.5"/></symbol>
   <symbol id="i-ilv" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2"/><circle cx="19" cy="5" r="2.2"/><circle cx="19" cy="12" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M7.2 12h9.6M7 11l10-5M7 13l10 5"/></symbol>
 </svg>
 
@@ -37,6 +38,7 @@
       <button class="tab" role="tab" data-view="meters" aria-selected="false" aria-label="Zähler"><svg class="ico" aria-hidden="true"><use href="#i-meter"/></svg><span class="tab-label">Zähler</span></button>
       <button class="tab" role="tab" data-view="readings" aria-selected="false" aria-label="Ablesung"><svg class="ico" aria-hidden="true"><use href="#i-reading"/></svg><span class="tab-label">Ablesung</span><span class="tab-badge" id="readBadge" hidden></span></button>
       <button class="tab" role="tab" data-view="ilv" aria-selected="false" aria-label="ILV"><svg class="ico" aria-hidden="true"><use href="#i-ilv"/></svg><span class="tab-label">ILV</span></button>
+      <button class="tab" role="tab" data-view="billing" aria-selected="false" aria-label="Abrechnung"><svg class="ico" aria-hidden="true"><use href="#i-bill"/></svg><span class="tab-label">Abrechnung</span></button>
       <button class="tab" role="tab" data-view="actions" aria-selected="false" aria-label="Maßnahmen"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg><span class="tab-label">Maßnahmen</span><span class="tab-badge" id="actionsBadge" hidden></span></button>
       <button class="tab" role="tab" data-view="tracking" aria-selected="false" aria-label="Maßnahmen-Tracking"><svg class="ico" aria-hidden="true"><use href="#i-track"/></svg><span class="tab-label">Tracking</span></button>
       <button class="tab" role="tab" data-view="doku" aria-selected="false" aria-label="Anwenderdoku"><svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span class="tab-label">Anwenderdoku</span></button>
@@ -1422,7 +1424,7 @@ kbd {
 .cd-finding-reason b { color: var(--ink); font-weight: 600; }
 .cd-finding-reason.missing { color: var(--warn-text); font-weight: 600; }
 .cd-dev .btn { align-self: flex-start; }
-.cf-text { margin: 0; font-size: 14px; color: var(--ink-2); }
+.cf-text { margin: 0; font-size: 14px; color: var(--ink-2); white-space: pre-line; }
 .bk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .btn.danger-solid { background: var(--crit); border-color: var(--crit); color: #fff; }
 .btn.danger-solid:hover { filter: brightness(1.08); background: var(--crit); }
@@ -2010,6 +2012,41 @@ dialog.wide-dialog .dlg-body { max-height: calc(100dvh - 170px); overflow-y: aut
 @media (max-width: 1100px) { .en-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .en-sum-grid { grid-template-columns: minmax(0, 1fr); } }
 
+/* Abrechnung */
+.bl-head { margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
+.bl-head .period-controls .pill { margin-left: 8px; }
+.bl-year { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; }
+.bl-mon { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.bl-mon:hover:not(:disabled) { border-color: var(--ink-2); }
+.bl-mon.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.bl-mon.future { opacity: .45; cursor: default; }
+.bl-mon-name { font-weight: 600; font-size: 12.5px; }
+.bl-mon-st { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bl-mon.bl-checked .bl-mon-st { color: var(--warn-text, #b45309); }
+.bl-mon.bl-released { background: color-mix(in srgb, var(--good, #16a34a) 10%, var(--surface)); }
+.bl-mon.bl-released .bl-mon-st { color: var(--good-text, #15803d); font-weight: 600; }
+.bl-grid { display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.bl-steps { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
+.bl-step { display: flex; gap: 10px; align-items: center; }
+.bl-step .mini-hint { margin: 0; }
+.bl-step b { display: block; line-height: 1.25; }
+.price-hint { margin: 0 0 12px; max-width: 900px; }
+.bl-step-no { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; flex: none; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.bl-step-ok .bl-step-no { background: color-mix(in srgb, var(--good, #16a34a) 16%, transparent); color: var(--good-text, #15803d); border-color: transparent; }
+.bl-step-warn .bl-step-no { background: color-mix(in srgb, #f59e0b 18%, transparent); color: var(--warn-text, #b45309); border-color: transparent; }
+.bl-step-crit .bl-step-no { background: color-mix(in srgb, var(--crit) 16%, transparent); color: var(--crit-text); border-color: transparent; }
+.bl-issues { margin: 0 0 12px; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.bl-issue-crit { color: var(--crit-text); }
+.bl-issue-warn { color: var(--warn-text, #b45309); font-size: 13px; }
+.bl-ok { color: var(--good-text, #15803d); font-size: 13px; margin: 0 0 12px; }
+.bl-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bl-table tr.bl-cc-first td { border-top: 1px solid var(--line); }
+.bl-table tr.bl-sub td { color: var(--ink-2); font-size: 12.5px; }
+.bl-table tr.bl-total td { font-weight: 700; border-top: 2px solid var(--line); }
+.bl-table td .cat-chip { vertical-align: -3px; }
+.bl-table td:nth-child(2) { white-space: nowrap; }
+@media (max-width: 1000px) { .bl-grid { grid-template-columns: minmax(0, 1fr); } .bl-year { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
 /* Zähler */
 .me-chips .trk-chip:not(.on) > span { text-decoration: none !important; }
 .me-chips .trk-chip:not(.on) .trk-chip-dot { opacity: 1; }
@@ -2362,6 +2399,7 @@ details.wd-group { padding-bottom: 4px; }
     </div>
   </div>
   <div class="ilv-pane" id="ilvPane-prices" hidden>
+    <p class="mini-hint price-hint">Arbeitspreis je Einheit und optional ein Grundpreis je Monat. Der Grundpreis wird anteilig nach Menge auf die Kostenstellen verteilt. „Ausblenden“ und „Deaktiviert“ behalten den Wert gespeichert, rechnen ihn aber nicht: ausgeblendet erscheint er nicht mehr in Übersichten, deaktiviert bleibt er sichtbar und lässt sich jederzeit wieder einschalten. Neue Werte gelten ab dem gewählten Monat.</p>
     <div class="ilv-price-grid" id="priceGrid"></div>
   </div>
   <div class="ilv-pane" id="ilvPane-runs" hidden>
@@ -2386,6 +2424,46 @@ details.wd-group { padding-bottom: 4px; }
 </section>
 
 <!-- Ansicht: actions -->
+<section class="view" id="view-billing" role="tabpanel">
+  <div class="view-head">
+    <div>
+      <div class="eyebrow">Abrechnung</div>
+      <h1>Monatsabrechnung</h1>
+      <p>Die Abrechnung wird automatisch vorbereitet: Zählerstände, Verbrauch, ILV-Verteilung und Kosten. Danach wird sie geprüft und ausdrücklich freigegeben. Ein freigegebener Monat ist gesperrt — wieder öffnen kann nur ein Administrator mit Begründung.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="blCsvBtn" title="Abrechnung des Monats als CSV exportieren">CSV-Export</button>
+    </div>
+  </div>
+  <div class="card bl-head">
+    <div class="period-nav-row">
+      <div class="period-controls">
+        <button class="btn sm icon-btn" id="blPrev" aria-label="Vorheriger Monat">◀</button>
+        <span class="month-label" id="blMonthLabel"></span>
+        <button class="btn sm icon-btn" id="blNext" aria-label="Nächster Monat">▶</button>
+        <span class="pill neutral" id="blStatus"></span>
+      </div>
+    </div>
+    <div class="bl-year" id="blYear" aria-label="Status der Monate"></div>
+  </div>
+  <div class="bl-grid">
+    <div class="card">
+      <div class="set-card-title">Ablauf</div>
+      <div class="bl-steps" id="blSteps"></div>
+      <div id="blInfo"></div>
+      <div class="bl-actions" id="blActions"></div>
+    </div>
+    <div class="card">
+      <div class="set-card-title" id="blTableTitle">Verrechnung</div>
+      <div class="trk-table-wrap"><table class="trk-table bl-table" id="blTable"></table></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 16px;">
+    <div class="set-card-title">Verlauf der Abrechnung</div>
+    <div class="trk-table-wrap"><table class="trk-table" id="blHist"></table></div>
+  </div>
+</section>
+
 <section class="view" id="view-actions" role="tabpanel">
   <div class="view-head">
     <div>
@@ -3484,6 +3562,29 @@ details.wd-group { padding-bottom: 4px; }
   </div>
 </dialog>
 
+<!-- Dialog: Abrechnung freigeben / wieder öffnen -->
+<dialog id="billDialog" class="wide-dialog">
+  <div class="dlg-head">
+    <h2 id="blgTitle">Abrechnung freigeben</h2>
+    <button type="button" class="btn ghost sm" id="blgClose" aria-label="Schließen">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="pv-summary" id="blgTotals"></div>
+    <ul class="bl-issues" id="blgIssues" hidden></ul>
+    <p class="cf-text" id="blgText"></p>
+    <div class="field">
+      <label for="blgReason" id="blgReasonLbl">Bemerkung</label>
+      <input id="blgReason" maxlength="200" autocomplete="off">
+    </div>
+    <label class="check-line"><input type="checkbox" id="blgConfirm"><span id="blgConfirmTxt"></span></label>
+    <p class="login-error" id="blgError" hidden></p>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn" id="blgCancel">Abbrechen</button>
+    <button type="button" class="btn primary" id="blgOk" disabled>Freigeben</button>
+  </div>
+</dialog>
+
 <!-- Dialog: Berechnungsstand ansehen -->
 <dialog id="runDialog" class="wide-dialog">
   <div class="dlg-head">
@@ -3847,7 +3948,9 @@ window.SFM = (function () {
      readings     [{ id, meter, kind: "install"|"read"|"remove", date, month, value,
                      rollover, zeroStart, note, by, at, edits: [...], deleted: null|{ by, at } }]
      rules        [{ id, cc, type, name, versions: [{ from, terms: [{ meter, factor }], at, by }] }]
-     prices       [{ type, from, price, at, by }]
+     prices       [{ type, from, price, base, baseMode: "on"|"hidden"|"off", at, by }]   ← base = Grundpreis €/Monat
+     billing      [{ month, status: "open"|"checked"|"released", checked: {at, by}, released: {at, by},
+                     snap: { rows, totals, meters }, history: [{ at, by, action, reason, snap }] }]  ← Abrechnung je Monat
      conversions  [{ type: "gas", from, brennwert, zustandszahl, at, by }]
      changes      [{ id, at, by, kind, text, retro: null|{ from, months }, run }]
      runs         [{ id, at, by, label, reason, months: { "JJJJ-MM": snapshot } }]
@@ -3905,7 +4008,7 @@ window.EN = (function () {
 
   /* ---------- Dokument prüfen / auffüllen ---------- */
   function emptyDoc() {
-    return { v: 1, seq: 1, costCenters: [], meters: [], readings: [], rules: [], prices: [], conversions: [], changes: [], runs: [] };
+    return { v: 1, seq: 1, costCenters: [], meters: [], readings: [], rules: [], prices: [], conversions: [], changes: [], runs: [], billing: [] };
   }
   function normalize(d) {
     var e = emptyDoc();
@@ -3940,9 +4043,17 @@ window.EN = (function () {
   function propsAt(meter, month) {
     return versionAt(meter.props, month) || meter.props[0] || { factor: 1, overflow: null };
   }
+  function priceVersionAt(doc, type, month) { return versionAt(doc.prices.filter(function (p) { return p.type === type; }), month); }
   function priceAt(doc, type, month) {
-    var v = versionAt(doc.prices.filter(function (p) { return p.type === type; }), month);
+    var v = priceVersionAt(doc, type, month);
     return v ? num(v.price) : null;
+  }
+  // Grundpreis €/Monat, der berechnet wird: nur im Modus „on“ (ausgeblendet/deaktiviert: gespeichert, nicht berechnet)
+  function baseAt(doc, type, month) {
+    var v = priceVersionAt(doc, type, month);
+    if (!v || (v.baseMode && v.baseMode !== "on")) return 0;
+    var b = num(v.base);
+    return b != null && b > 0 ? b : 0;
   }
   function convAt(doc, type, month) {
     var t = typeOf(type);
@@ -4098,7 +4209,7 @@ window.EN = (function () {
     cache = cache || {};
     var rows = [], totals = {};
     TYPES.forEach(function (t) {
-      totals[t.key] = { measured: 0, allocated: 0, cost: 0, unassigned: 0, price: priceAt(doc, t.key, month), missing: 0 };
+      totals[t.key] = { measured: 0, allocated: 0, cost: 0, unassigned: 0, price: priceAt(doc, t.key, month), base: baseAt(doc, t.key, month), baseAllocated: 0, missing: 0 };
     });
     // Gesamtverbrauch je Energieart: alle Zähler ohne übergeordneten Zähler (Hauptzähler)
     doc.meters.forEach(function (m) {
@@ -4120,16 +4231,28 @@ window.EN = (function () {
       });
       qty = round(qty);
       var price = totals[rule.type].price;
-      var cost = price == null ? null : round(qty * price, 2);
-      rows.push({ rule: rule.id, cc: rule.cc, type: rule.type, qty: qty, cost: cost, incomplete: incomplete, terms: detail });
+      var work = price == null ? null : round(qty * price, 2);
+      rows.push({ rule: rule.id, cc: rule.cc, type: rule.type, qty: qty, work: work, base: 0, cost: work, incomplete: incomplete, terms: detail });
       totals[rule.type].allocated += qty;
-      if (cost != null) totals[rule.type].cost += cost;
     });
     TYPES.forEach(function (t) {
       var x = totals[t.key];
-      x.measured = round(x.measured); x.allocated = round(x.allocated); x.cost = round(x.cost, 2);
+      x.measured = round(x.measured); x.allocated = round(x.allocated);
       x.unassigned = round(x.measured - x.allocated);
-      x.measuredCost = x.price == null ? null : round(x.measured * x.price, 2);
+    });
+    // Grundpreis anteilig nach Menge auf die Kostenstellen; der Anteil der nicht verteilten Menge bleibt offen.
+    // Kosten = Arbeitspreis × Menge + Anteil Grundpreis
+    rows.forEach(function (r) {
+      var x = totals[r.type];
+      if (x.base && x.measured > 0) r.base = round(x.base * r.qty / x.measured, 2);
+      if (r.base) r.cost = round((r.work || 0) + r.base, 2);
+      x.baseAllocated += r.base;
+      if (r.cost != null) x.cost += r.cost;
+    });
+    TYPES.forEach(function (t) {
+      var x = totals[t.key];
+      x.cost = round(x.cost, 2); x.baseAllocated = round(x.baseAllocated, 2);
+      x.measuredCost = x.price == null && !x.base ? null : round(x.measured * (x.price || 0) + x.base, 2);
     });
     return { month: month, rows: rows, totals: totals };
   }
@@ -4139,8 +4262,8 @@ window.EN = (function () {
     months.forEach(function (mo) {
       var a = allocate(doc, mo, cache), rows = {};
       a.rows.forEach(function (r) {
-        var k = r.cc + "|" + r.type, x = rows[k] || (rows[k] = { qty: 0, cost: 0 });
-        x.qty = round(x.qty + r.qty); x.cost = r.cost == null ? x.cost : round(x.cost + r.cost, 2);
+        var k = r.cc + "|" + r.type, x = rows[k] || (rows[k] = { qty: 0, cost: 0, base: 0 });
+        x.qty = round(x.qty + r.qty); x.cost = r.cost == null ? x.cost : round(x.cost + r.cost, 2); x.base = round(x.base + (r.base || 0), 2);
       });
       var tot = {};
       TYPES.forEach(function (t) { tot[t.key] = { measured: a.totals[t.key].measured, allocated: a.totals[t.key].allocated, cost: a.totals[t.key].cost }; });
@@ -4178,6 +4301,34 @@ window.EN = (function () {
     var dm = dataMonths(doc);
     if (!dm || !isMonth(fromMonth) || fromMonth > dm.last) return [];
     return monthRange(fromMonth < dm.first ? dm.first : fromMonth, dm.last);
+  }
+
+  /* ---------- Abrechnung je Monat: prüfen, freigeben, wieder öffnen ---------- */
+  function billingOf(doc, month) { return (doc.billing || []).filter(function (b) { return b.month === month; })[0] || null; }
+  function billingStatus(doc, month) { var b = billingOf(doc, month); return b ? b.status : "open"; }
+  function isReleased(doc, month) { return billingStatus(doc, month) === "released"; }
+  function releasedMonths(doc) {
+    return (doc.billing || []).filter(function (b) { return b.status === "released"; }).map(function (b) { return b.month; }).sort();
+  }
+  // Festgehaltener Stand einer Freigabe: Verrechnung (wie snapshot) + Monatswerte aller Zähler
+  function billingSnap(doc, month) {
+    var s = snapshot(doc, [month])[month], cache = {}, meters = {};
+    doc.meters.forEach(function (m) {
+      var r = meterMonth(doc, m.id, month, cache);
+      if (r.status !== "inactive") meters[m.id] = { qty: r.qty, energy: r.energy, status: r.status };
+    });
+    s.meters = meters;
+    return s;
+  }
+  // Würde eine Änderung (before → after) freigegebene Monate verändern? Liefert die betroffenen Monate.
+  function lockedChanges(before, after) {
+    var out = [];
+    releasedMonths(before).forEach(function (mo) {
+      if (!isReleased(after, mo)) return;
+      var a = billingSnap(before, mo), b = billingSnap(after, mo);
+      if (JSON.stringify(a) !== JSON.stringify(b)) out.push(mo);
+    });
+    return out;
   }
 
   /* ---------- Regeln automatisch aus der Zählerstruktur ---------- */
@@ -4297,6 +4448,8 @@ window.EN = (function () {
     billingMonth: billingMonth, dueMonth: dueMonth, num: num, round: round,
     emptyDoc: emptyDoc, normalize: normalize, nextId: nextId, clone: clone,
     versionAt: versionAt, meterById: meterById, ccById: ccById, propsAt: propsAt, priceAt: priceAt, convAt: convAt,
+    priceVersionAt: priceVersionAt, baseAt: baseAt, billingOf: billingOf, billingStatus: billingStatus, isReleased: isReleased,
+    releasedMonths: releasedMonths, billingSnap: billingSnap, lockedChanges: lockedChanges,
     readingsOf: readingsOf, consumptions: consumptions, overflowSuggestion: overflowSuggestion, previousReading: previousReading,
     meterActiveIn: meterActiveIn, meterLastMonth: meterLastMonth, meterMonth: meterMonth, chainOf: chainOf, chainHead: chainHead,
     chainMonth: chainMonth, missingReadings: missingReadings, ruleTermsAt: ruleTermsAt, allocate: allocate,
@@ -4605,7 +4758,7 @@ window.EN = (function () {
       });
     }
     // Preise und Umrechnung
-    d.prices.push({ type: "strom", from: M0, price: 0.214, at: w.at, by: w.by }, { type: "strom", from: EN.addMonths(M0, 9), price: 0.189, at: w.at, by: w.by },
+    d.prices.push({ type: "strom", from: M0, price: 0.214, at: w.at, by: w.by }, { type: "strom", from: EN.addMonths(M0, 9), price: 0.189, base: 480, baseMode: "on", at: w.at, by: w.by },
       { type: "wasser", from: M0, price: 4.12, at: w.at, by: w.by }, { type: "gas", from: M0, price: 0.087, at: w.at, by: w.by },
       { type: "druckluft", from: M0, price: 0.024, at: w.at, by: w.by });
     d.conversions.push({ type: "gas", from: M0, brennwert: 11.31, zustandszahl: 0.9526, at: w.at, by: w.by });
@@ -4873,6 +5026,11 @@ window.EN = (function () {
   //   opts: { from: "JJJJ-MM", kind, text, mutate(doc), done(), always: Vorschau auch ohne Auswirkung, okMsg }
   var pvDlg = $("#previewDialog"), pvPending = null;
   function commitChange(opts) {
+    if (EN.releasedMonths(energy).length) {
+      var test = EN.clone(energy);
+      opts.mutate(test);
+      if (lockGuard(test)) return;
+    }
     var months = opts.from ? EN.affectedMonths(energy, opts.from) : [];
     if (!months.length) {
       opts.mutate(energy);
@@ -7987,6 +8145,7 @@ window.EN = (function () {
     if (e.date < m.installed) out.errors.push("Ablesedatum vor dem Einbau (" + fmtDate(m.installed) + ")");
     if (m.removed && e.date > m.removed) out.errors.push("Zähler ist seit " + fmtDate(m.removed) + " ausgebaut");
     if (!EN.isMonth(e.month)) out.errors.push("Ungültiger Abrechnungsmonat");
+    else if (EN.isReleased(energy, e.month)) out.errors.push("Abrechnung " + monthLabel(e.month) + " ist freigegeben — erst wieder öffnen (Administrator)");
     var same = EN.readingsOf(energy, m.id).filter(function (r) { return r.date === e.date && r.kind !== "install"; });
     if (same.length) out.errors.push("Am " + fmtDate(e.date) + " gibt es schon eine Ablesung (" + fmtValue(EN.num(same[0].value)) + ") — bitte dort ändern");
     if (batch.some(function (o) { return o !== e && o.meter === e.meter && o.date === e.date; })) out.errors.push("Doppelt in dieser Liste");
@@ -8001,6 +8160,10 @@ window.EN = (function () {
         " (" + fmtDate(prev.date) + "). " + (sug ? "Mit Überlaufwert " + fmtValue(EN.num(EN.propsAt(m, e.month).overflow)) + " wären es " + fmtQty(EN.round(sug.delta * (EN.num(EN.propsAt(m, e.month).factor) || 1)), meterUnit(m.type)) + "." : "Kein Überlaufwert hinterlegt — Zählerwechsel prüfen.") });
     }
     var later = EN.readingsOf(energy, m.id).filter(function (r) { return r.date > e.date; });
+    if (later.length && later[0].kind !== "install" && EN.isReleased(energy, later[0].month)) {
+      out.errors.push("Die folgende Ablesung vom " + fmtDate(later[0].date) + " gehört zur freigegebenen Abrechnung " + monthLabel(later[0].month) + " — erst wieder öffnen (Administrator)");
+      return out;
+    }
     if (later.length) out.info.push("Rückwirkend: die folgende Ablesung vom " + fmtDate(later[0].date) + " wird danach gegen diesen Stand gerechnet.");
     return out;
   }
@@ -8091,11 +8254,17 @@ window.EN = (function () {
   function saveEntries(entries, label, onDone) {
     if (!entries.length) { toast("Nichts gespeichert"); return; }
     var w = who(), retro = entries.some(function (e) { return e.check.info.length; });
-    entries.forEach(function (e) {
-      energy.readings.push({ id: EN.nextId(energy, "a"), meter: e.meter, kind: "read", date: e.date, month: e.month, value: e.value,
+    var mk = function (doc, e) {
+      return { id: EN.nextId(doc, "a"), meter: e.meter, kind: "read", date: e.date, month: e.month, value: e.value,
         rollover: e.decision && e.decision.neg === "rollover", zeroStart: !!(e.decision && e.decision.zero), note: e.note || "",
-        by: w.by, at: w.at, edits: [], deleted: null });
-    });
+        by: w.by, at: w.at, edits: [], deleted: null };
+    };
+    if (EN.releasedMonths(energy).length) {
+      var test = EN.clone(energy);
+      entries.forEach(function (e) { test.readings.push(mk(test, e)); });
+      if (lockGuard(test)) return;
+    }
+    entries.forEach(function (e) { energy.readings.push(mk(energy, e)); });
     var months = entries.map(function (e) { return e.month; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).sort();
     var flags = [];
     var nz = entries.filter(function (e) { return e.decision && e.decision.zero; }).length, nr = entries.filter(function (e) { return e.decision && e.decision.neg === "rollover"; }).length,
@@ -8309,7 +8478,9 @@ window.EN = (function () {
     var inc = a.rows.filter(function (r) { return r.incomplete; }).length;
     $("#ilvHint").textContent = (hasAnyData(ilvMonth) ? "" : "Für diesen Monat liegen noch keine Ablesungen vor. ") +
       (inc ? inc + (inc === 1 ? " Regel ist" : " Regeln sind") + " unvollständig, weil Ablesungen fehlen (markiert mit !). " : "") +
-      "Ein Klick auf eine Kostenstelle zeigt die Berechnung. Gas in kWh.";
+      "Ein Klick auf eine Kostenstelle zeigt die Berechnung. Gas in kWh." +
+      (EN.TYPES.some(function (t) { return EN.baseAt(energy, t.key, ilvMonth); }) ? " Kosten enthalten den anteiligen Grundpreis." : "") +
+      (EN.isReleased(energy, ilvMonth) ? " · Abrechnung " + monthLabel(ilvMonth) + " ist freigegeben (gesperrt)." : "");
     var tbl = $("#ilvTable"); tbl.innerHTML = "";
     var ccs = energy.costCenters.slice().sort(function (x, y) { return String(x.no).localeCompare(String(y.no), "de", { numeric: true }); });
     var byCc = {};
@@ -8625,6 +8796,12 @@ window.EN = (function () {
     var w = el("div", "trk-table-wrap"); w.appendChild(t);
     return w;
   }
+  function baseText(p) {
+    var b = EN.num(p.base);
+    if (b == null) return "—";
+    if (p.baseMode === "hidden") return "ausgeblendet";
+    return fmtEuro(b) + (p.baseMode === "off" ? " (deaktiviert)" : "");
+  }
   function renderPrices() {
     var host = $("#priceGrid"); host.innerHTML = "";
     var nextM = DUE_MONTH;
@@ -8634,27 +8811,39 @@ window.EN = (function () {
       card.appendChild(h);
       var list = energy.prices.filter(function (p) { return p.type === t.key; }).sort(function (a, b) { return a.from < b.from ? 1 : -1; });
       card.appendChild(versionTable(list.map(function (p) {
-        return { item: p, cells: ["ab " + monthLabel(p.from), fmtNum(EN.num(p.price), 4) + " €", (p.by || "") + (p.at ? " · " + fmtDateTime(p.at) : "")] };
-      }), ["Gültig ab", "Preis", "Geändert"], function (p) {
+        return { item: p, cells: ["ab " + monthLabel(p.from), fmtNum(EN.num(p.price), 4) + " €", baseText(p), (p.by || "") + (p.at ? " · " + fmtDateTime(p.at) : "")] };
+      }), ["Gültig ab", "Arbeitspreis", "Grundpreis / Monat", "Geändert"], function (p) {
         commitChange({ from: p.from, kind: "price", okMsg: "Preis entfernt", text: "Preis " + t.label + " ab " + monthLabel(p.from) + " (" + fmtNum(EN.num(p.price), 4) + " €) entfernt",
           mutate: function (doc) { doc.prices = doc.prices.filter(function (x) { return !(x.type === p.type && x.from === p.from); }); } });
       }));
       if (can("edit")) {
         var f = el("div", "price-form");
         var mi = el("input", "perm-select"); mi.type = "month"; mi.value = nextM; mi.setAttribute("aria-label", "Gültig ab");
-        var pi = el("input", "perm-select"); pi.inputMode = "decimal"; pi.placeholder = "€/" + t.bill; pi.setAttribute("aria-label", "Preis");
+        var cur = list[0] || null;
+        var pi = el("input", "perm-select"); pi.inputMode = "decimal"; pi.placeholder = "€/" + t.bill; pi.setAttribute("aria-label", "Arbeitspreis €/" + t.bill);
+        var bi = el("input", "perm-select"); bi.inputMode = "decimal"; bi.placeholder = "Grundpreis €"; bi.setAttribute("aria-label", "Grundpreis € je Monat (optional)");
+        var bm = el("select", "perm-select"); bm.setAttribute("aria-label", "Grundpreis berechnen");
+        [["on", "Grundpreis berechnen"], ["hidden", "Grundpreis ausblenden"], ["off", "Grundpreis deaktiviert"]].forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; bm.appendChild(op); });
+        if (cur) {
+          pi.value = String(EN.num(cur.price)).replace(".", ",");
+          if (EN.num(cur.base) != null) bi.value = String(EN.num(cur.base)).replace(".", ",");
+          bm.value = cur.baseMode || "on";
+        }
         var b = el("button", "btn sm primary", "Preis übernehmen"); b.type = "button";
         b.addEventListener("click", function () {
-          var price = EN.num(pi.value), from = mi.value;
-          if (!EN.isMonth(from) || price == null || price < 0) { toast("Bitte Monat und Preis angeben"); return; }
-          commitChange({ from: from, kind: "price", okMsg: "Preis gespeichert", text: "Preis " + t.label + " ab " + monthLabel(from) + ": " + fmtNum(price, 4) + " €/" + t.bill,
+          var price = EN.num(pi.value), base = bi.value.trim() ? EN.num(bi.value) : null, mode = bm.value, from = mi.value;
+          if (!EN.isMonth(from) || price == null || price < 0) { toast("Bitte Monat und Arbeitspreis angeben"); return; }
+          if (bi.value.trim() && (base == null || base < 0)) { toast("Grundpreis ist keine gültige Zahl"); return; }
+          var txt = "Preis " + t.label + " ab " + monthLabel(from) + ": " + fmtNum(price, 4) + " €/" + t.bill +
+            (base != null ? ", Grundpreis " + fmtEuro(base) + "/Monat" + (mode === "on" ? "" : mode === "hidden" ? " (ausgeblendet)" : " (deaktiviert)") : "");
+          commitChange({ from: from, kind: "price", okMsg: "Preis gespeichert", text: txt,
             mutate: function (doc) {
               var w = who();
               doc.prices = doc.prices.filter(function (x) { return !(x.type === t.key && x.from === from); });
-              doc.prices.push({ type: t.key, from: from, price: price, at: w.at, by: w.by });
+              doc.prices.push({ type: t.key, from: from, price: price, base: base, baseMode: base != null ? mode : "on", at: w.at, by: w.by });
             } });
         });
-        f.appendChild(el("span", "mini-label", "Neuer Preis ab")); f.appendChild(mi); f.appendChild(pi); f.appendChild(b);
+        f.appendChild(el("span", "mini-label", "Neu ab")); f.appendChild(mi); f.appendChild(pi); f.appendChild(bi); f.appendChild(bm); f.appendChild(b);
         card.appendChild(f);
       }
       host.appendChild(card);
@@ -8718,7 +8907,7 @@ window.EN = (function () {
     $("#rnTitle").textContent = "Berechnungsstand vom " + fmtDateTime(r.at);
     $("#rnSub").textContent = r.label + (r.reason ? " — Grund: " + r.reason : "") + (r.by ? " (" + r.by + ")" : "") + ". Verglichen mit der heutigen Berechnung.";
     fillSelect($("#rnMonth"), ms.map(function (m) { return { v: m, t: monthLabel(m) }; }), ms[ms.length - 1]);
-    $("#rnDelete").hidden = !can("manageUsers");
+    $("#rnDelete").hidden = !can("manageUsers") || !!r.readonly;
     renderRunTable();
     rnDlg.showModal();
   }
@@ -8755,8 +8944,280 @@ window.EN = (function () {
     });
   });
 
+  /* ---------- Abrechnung je Monat: prüfen, freigeben, wieder öffnen ----------
+     Ablauf: Zählerstände → Verbrauch → ILV → Kosten → prüfen (Bearbeiten) → freigeben (Teamleitung/Administration).
+     Freigegebene Monate sind gesperrt: Änderungen, die ihre Werte verändern würden, werden abgewiesen (lockGuard).
+     Wieder öffnen nur durch Administratoren mit Begründung; der freigegebene Stand bleibt im Verlauf erhalten. */
+  var blMonth = DUE_MONTH;
+  var BL_STATUS = { open: ["Offen", "neutral"], checked: ["Geprüft", "warn"], released: ["Freigegeben", "good"] };
+  var BL_ACTIONS = { check: "Als geprüft markiert", uncheck: "Prüfung zurückgenommen", release: "Freigegeben", reopen: "Wieder geöffnet" };
+  function canRelease() { return can("stamm"); }
+  function canReopen() { return can("manageUsers"); }
+  function blSig(mo) { return JSON.stringify(EN.billingSnap(energy, mo)); }
+  // Würde die Änderung (Kopie „after“) freigegebene Monate verändern? Dann Hinweis und abbrechen.
+  function lockGuard(after) {
+    var mos = EN.lockedChanges(energy, after);
+    if (!mos.length) return false;
+    appAlert("Abrechnung freigegeben", "Die Änderung würde die freigegebene Abrechnung " + (mos.length === 1 ? "für " : "der Monate ") +
+      mos.map(monthLabel).join(", ") + " verändern und wurde nicht gespeichert. Ein Administrator kann den Monat unter „Abrechnung“ mit Begründung wieder öffnen.");
+    return true;
+  }
+  // Offene Punkte eines Monats (Hinweise vor Prüfung und Freigabe)
+  function blIssues(mo) {
+    var a = allocMonth(mo), out = [];
+    var miss = EN.missingReadings(energy, mo, mo).length;
+    if (miss) out.push({ cls: "crit", step: 1, text: miss + (miss === 1 ? " Ablesung fehlt" : " Ablesungen fehlen") });
+    var part = energy.meters.filter(function (m) { return meterMonthC(m.id, mo).status === "partial"; }).length;
+    if (part) out.push({ cls: "warn", step: 2, text: part + (part === 1 ? " Zähler mit unvollständiger Berechnung (prüfen)" : " Zähler mit unvollständiger Berechnung (prüfen)") });
+    EN.TYPES.forEach(function (t) {
+      var x = a.totals[t.key];
+      if (Math.abs(x.unassigned) > 1e-6 && x.measured) out.push({ cls: "warn", step: 3, text: typeLabel(t.key) + ": " + fmtQty(x.unassigned, t.bill) + " nicht verteilt" });
+      if (x.measured && x.price == null) out.push({ cls: "crit", step: 4, text: typeLabel(t.key) + ": kein Preis hinterlegt" });
+    });
+    var neg = a.rows.filter(function (r) { return r.qty < 0; }).length;
+    if (neg) out.push({ cls: "warn", step: 3, text: neg + (neg === 1 ? " Kostenstelle mit negativer Menge" : " Kostenstellen mit negativer Menge") });
+    return out;
+  }
+  function blEntry(mo, create) {
+    var b = EN.billingOf(energy, mo);
+    if (!b && create) { b = { month: mo, status: "open", checked: null, released: null, snap: null, history: [] }; energy.billing.push(b); }
+    return b;
+  }
+  function blLog(b, action, extra) {
+    var w = who(), h = { at: w.at, by: w.by, action: action };
+    Object.keys(extra || {}).forEach(function (k) { h[k] = extra[k]; });
+    b.history.push(h);
+    return w;
+  }
+  // Werte des Monats: freigegeben = festgehaltener Stand, sonst aktuelle Berechnung
+  function blValues(mo) {
+    var b = EN.billingOf(energy, mo);
+    if (b && b.status === "released" && b.snap) return { frozen: true, rows: b.snap.rows, totals: b.snap.totals };
+    var s = EN.snapshot(energy, [mo])[mo];
+    return { frozen: false, rows: s.rows, totals: s.totals };
+  }
+  function renderBilling() {
+    var mo = blMonth, b = EN.billingOf(energy, mo), status = b ? b.status : "open";
+    $("#blMonthLabel").textContent = monthLabel(mo);
+    $("#blNext").disabled = mo >= DUE_MONTH;
+    var pill = $("#blStatus"); pill.className = "pill " + BL_STATUS[status][1]; pill.textContent = BL_STATUS[status][0];
+    // Jahresleiste
+    var yr = $("#blYear"); yr.innerHTML = "";
+    EN.monthRange(mo.slice(0, 4) + "-01", mo.slice(0, 4) + "-12").forEach(function (m) {
+      var st = EN.billingStatus(energy, m), c = el("button", "bl-mon bl-" + st + (m === mo ? " on" : "") + (m > DUE_MONTH ? " future" : ""));
+      c.type = "button";
+      c.appendChild(el("span", "bl-mon-name", MONTH_SHORT[+m.slice(5, 7) - 1]));
+      c.appendChild(el("span", "bl-mon-st", m > DUE_MONTH ? "—" : BL_STATUS[st][0]));
+      c.title = monthLabel(m) + ": " + (m > DUE_MONTH ? "noch nicht fällig" : BL_STATUS[st][0]);
+      c.disabled = m > DUE_MONTH;
+      c.addEventListener("click", function () { blMonth = m; renderBilling(); });
+      yr.appendChild(c);
+    });
+    // Schritte
+    var issues = status === "released" ? [] : blIssues(mo), a = allocMonth(mo);
+    var steps = $("#blSteps"); steps.innerHTML = "";
+    var stepState = function (n) { return issues.some(function (i) { return i.step === n && i.cls === "crit"; }) ? "crit" : issues.some(function (i) { return i.step === n; }) ? "warn" : "ok"; };
+    var any = EN.TYPES.some(function (t) { return a.totals[t.key].measured; });
+    var sigNow = status === "checked" ? blSig(mo) : null, stale = status === "checked" && b.checked && b.checked.sig && b.checked.sig !== sigNow;
+    [
+      [1, "Zählerstände", "erfasst oder importiert"],
+      [2, "Verbrauch", "automatisch berechnet"],
+      [3, "ILV-Verteilung", "auf Kostenstellen"],
+      [4, "Kosten", "Arbeitspreis + Grundpreis"],
+      [5, "Prüfung", status === "open" ? "noch offen" : b.checked ? fmtDateTime(b.checked.at) + " · " + b.checked.by : ""],
+      [6, "Freigabe", status === "released" ? fmtDateTime(b.released.at) + " · " + b.released.by : "noch offen"]
+    ].forEach(function (x) {
+      var st = x[0] <= 4 ? (status === "released" ? "ok" : !any && x[0] > 1 ? "idle" : stepState(x[0]))
+        : x[0] === 5 ? (status === "open" ? "idle" : stale ? "warn" : "ok") : (status === "released" ? "ok" : "idle");
+      var s = el("div", "bl-step bl-step-" + st);
+      s.appendChild(el("span", "bl-step-no", st === "ok" ? "✓" : st === "crit" ? "!" : String(x[0])));
+      var tx = el("div"); tx.appendChild(el("b", null, x[1])); tx.appendChild(el("div", "mini-hint", x[0] === 5 && stale ? "seit der Prüfung geändert" : x[2]));
+      s.appendChild(tx);
+      steps.appendChild(s);
+    });
+    // Hinweise und Aktionen
+    var info = $("#blInfo"); info.innerHTML = "";
+    if (!any && status !== "released") info.appendChild(el("p", "mini-hint", "Für diesen Monat liegen noch keine Verbräuche vor."));
+    if (issues.length) {
+      var ul = el("ul", "bl-issues");
+      issues.forEach(function (i) { ul.appendChild(el("li", "bl-issue-" + i.cls, i.text)); });
+      info.appendChild(ul);
+    } else if (any && status !== "released") info.appendChild(el("p", "bl-ok", "Keine offenen Punkte."));
+    if (status === "released") {
+      var cur = blSig(mo), diff = b.snap && cur !== JSON.stringify(b.snap);
+      info.appendChild(el("p", "mini-hint", "Freigegeben am " + fmtDateTime(b.released.at) + " von " + b.released.by + ". Die Werte unten sind der freigegebene Stand; Änderungen, die diesen Monat betreffen, sind gesperrt." +
+        (diff ? "" : "")));
+      if (diff) info.appendChild(el("p", "bl-issue-warn", "Achtung: Die heutige Berechnung weicht vom freigegebenen Stand ab (z. B. nach einer Wiederherstellung). Maßgeblich bleibt der freigegebene Stand."));
+    }
+    if (stale) info.appendChild(el("p", "bl-issue-warn", "Seit der Prüfung haben sich Werte dieses Monats geändert — bitte erneut prüfen, bevor freigegeben wird."));
+    var acts = $("#blActions"); acts.innerHTML = "";
+    var btn = function (label, cls, fn, title) { var x = el("button", "btn" + (cls ? " " + cls : ""), label); x.type = "button"; if (title) x.title = title; x.addEventListener("click", fn); acts.appendChild(x); return x; };
+    if (mo <= DUE_MONTH) {
+      if (status === "open" && can("edit")) btn("Als geprüft markieren", "primary", function () { blCheck(mo, issues); });
+      if (status === "checked") {
+        if (can("edit")) btn(stale ? "Erneut prüfen" : "Prüfung zurücknehmen", stale ? "primary" : "", function () { if (stale) blCheck(mo, issues, true); else blUncheck(mo); });
+        if (canRelease()) { var rb = btn("Abrechnung freigeben", stale ? "" : "primary", function () { openBillDialog("release", mo); }); rb.disabled = !!stale; }
+        else acts.appendChild(el("span", "mini-hint", "Freigeben dürfen Teamleitung und Administration."));
+      }
+      if (status === "released") {
+        if (canReopen()) btn("Wieder öffnen …", "", function () { openBillDialog("reopen", mo); });
+        else acts.appendChild(el("span", "mini-hint", "Wieder öffnen darf nur ein Administrator."));
+      }
+    }
+    renderBillTable(mo);
+    // Verlauf
+    var ht = $("#blHist"); ht.innerHTML = "";
+    var hist = b ? b.history.slice().reverse() : [];
+    if (!hist.length) ht.appendChild(emptyRow(4, "Noch keine Einträge."));
+    else {
+      ht.appendChild(headRow(["Zeitpunkt", "Person", "Schritt", "Begründung / Bemerkung"], [0, 0, 0, 0]));
+      var tb = document.createElement("tbody");
+      hist.forEach(function (h) {
+        var tr = document.createElement("tr");
+        tr.appendChild(td(fmtDateTime(h.at), "nowrap")); tr.appendChild(td(h.by));
+        var c = td(BL_ACTIONS[h.action] || h.action);
+        if (h.snap) {
+          var sb = el("button", "link-btn bl-snap", "Stand ansehen"); sb.type = "button";
+          sb.addEventListener("click", function () { openSnapDialog(mo, h); });
+          c.appendChild(document.createTextNode(" · ")); c.appendChild(sb);
+        }
+        tr.appendChild(c);
+        tr.appendChild(td(h.reason || h.note || ""));
+        tb.appendChild(tr);
+      });
+      ht.appendChild(tb);
+    }
+  }
+  function renderBillTable(mo) {
+    var v = blValues(mo), tbl = $("#blTable"); tbl.innerHTML = "";
+    $("#blTableTitle").textContent = (v.frozen ? "Freigegebener Stand " : "Verrechnung ") + monthLabel(mo);
+    var keys = Object.keys(v.rows);
+    if (!keys.length) { tbl.appendChild(emptyRow(6, "Keine Verrechnungswerte in diesem Monat.")); return; }
+    tbl.appendChild(headRow(["Kostenstelle", "Energieart", "Menge", "Arbeitspreis", "Grundpreis", "Kosten"], [0, 0, 1, 1, 1, 1]));
+    var tb = document.createElement("tbody"), byCc = {};
+    keys.forEach(function (k) { var p = k.split("|"); (byCc[p[0]] = byCc[p[0]] || []).push({ type: p[1], v: v.rows[k] }); });
+    var sum = 0, sumBase = 0;
+    Object.keys(byCc).sort(function (x, y) { return ccLabel(x).localeCompare(ccLabel(y), "de", { numeric: true }); }).forEach(function (cc) {
+      var list = byCc[cc].sort(function (x, y) { return EN.TYPE_KEYS.indexOf(x.type) - EN.TYPE_KEYS.indexOf(y.type); }), ccSum = 0;
+      list.forEach(function (x, i) {
+        var tr = el("tr", i === 0 ? "bl-cc-first" : ""), base = x.v.base || 0, cost = x.v.cost || 0;
+        tr.appendChild(td(i === 0 ? ccLabel(cc) : ""));
+        var tc = el("td"); tc.appendChild(typeChip(x.type)); tc.appendChild(document.createTextNode(" " + typeLabel(x.type))); tr.appendChild(tc);
+        tr.appendChild(td(fmtQty(x.v.qty, billUnit(x.type)), "num nowrap"));
+        tr.appendChild(td(fmtEuro(cost - base), "num nowrap"));
+        tr.appendChild(td(base ? fmtEuro(base) : "—", "num nowrap"));
+        tr.appendChild(td(fmtEuro(cost), "num nowrap"));
+        tb.appendChild(tr);
+        ccSum += cost; sumBase += base;
+      });
+      if (list.length > 1) {
+        var st = el("tr", "bl-sub"); st.appendChild(td("")); st.appendChild(td("Summe Kostenstelle")); st.appendChild(td("")); st.appendChild(td("")); st.appendChild(td(""));
+        st.appendChild(td(fmtEuro(ccSum), "num nowrap")); tb.appendChild(st);
+      }
+      sum += ccSum;
+    });
+    var ft = el("tr", "bl-total"); ft.appendChild(td("Gesamt verrechnet")); ft.appendChild(td("")); ft.appendChild(td("")); ft.appendChild(td(""));
+    ft.appendChild(td(sumBase ? fmtEuro(sumBase) : "—", "num nowrap")); ft.appendChild(td(fmtEuro(sum), "num nowrap"));
+    tb.appendChild(ft);
+    tbl.appendChild(tb);
+  }
+  function blCheck(mo, issues, again) {
+    var go = function () {
+      var b = blEntry(mo, true);
+      b.status = "checked";
+      var w = blLog(b, "check", again ? { note: "erneut geprüft" } : null);
+      b.checked = { at: w.at, by: w.by, sig: blSig(mo) };
+      logChange("billing", "Abrechnung " + monthLabel(mo) + (again ? " erneut" : "") + " als geprüft markiert" + (issues.length ? " (" + issues.length + " offene Hinweise)" : ""));
+      energyChanged("Abrechnung " + monthLabel(mo) + " geprüft");
+    };
+    if (!issues.length) { go(); return; }
+    appConfirm("Trotz offener Punkte als geprüft markieren?", issues.map(function (i) { return "• " + i.text; }).join("\n") + "\n\nDie Punkte bleiben sichtbar und werden bei der Freigabe erneut angezeigt.", "Als geprüft markieren", false, go);
+  }
+  function blUncheck(mo) {
+    var b = blEntry(mo);
+    if (!b) return;
+    b.status = "open"; b.checked = null;
+    blLog(b, "uncheck");
+    logChange("billing", "Prüfung der Abrechnung " + monthLabel(mo) + " zurückgenommen");
+    energyChanged("Prüfung zurückgenommen");
+  }
+  var blDlg = $("#billDialog"), blMode = null, blDlgMonth = null;
+  function openBillDialog(mode, mo) {
+    blMode = mode; blDlgMonth = mo;
+    var rel = mode === "release";
+    $("#blgTitle").textContent = (rel ? "Abrechnung freigeben · " : "Abrechnung wieder öffnen · ") + monthLabel(mo);
+    var v = blValues(mo), tot = $("#blgTotals"); tot.innerHTML = "";
+    var sumAll = 0;
+    EN.TYPES.forEach(function (t) {
+      var x = v.totals[t.key] || {};
+      if (!x.measured && !x.allocated) return;
+      var c = 0; Object.keys(v.rows).forEach(function (k) { if (k.split("|")[1] === t.key) c += v.rows[k].cost || 0; });
+      sumAll += c;
+      var tile = el("div", "card mini-tile"); tile.appendChild(el("div", "mini-value", fmtEuro(c))); tile.appendChild(el("div", "mini-label", typeLabel(t.key) + " · " + fmtQty(x.allocated || 0, t.bill)));
+      tot.appendChild(tile);
+    });
+    var tAll = el("div", "card mini-tile"); tAll.appendChild(el("div", "mini-value", fmtEuro(sumAll))); tAll.appendChild(el("div", "mini-label", "Kosten verrechnet gesamt")); tot.appendChild(tAll);
+    var iss = rel ? blIssues(mo) : [], il = $("#blgIssues"); il.innerHTML = "";
+    iss.forEach(function (i) { il.appendChild(el("li", "bl-issue-" + i.cls, i.text)); });
+    il.hidden = !iss.length;
+    $("#blgText").textContent = rel
+      ? "Mit der Freigabe wird der Stand des Monats festgehalten. Danach sind Änderungen gesperrt, die Verbrauch, Verrechnung oder Kosten dieses Monats verändern würden (Ablesungen, Messfaktoren, Regeln, Preise). Wieder öffnen kann nur ein Administrator mit Begründung."
+      : "Der Monat wird wieder zur Bearbeitung freigegeben. Der bisher freigegebene Stand bleibt im Verlauf erhalten und lässt sich jederzeit ansehen. Danach muss der Monat erneut geprüft und freigegeben werden.";
+    $("#blgReasonLbl").textContent = rel ? "Bemerkung (optional)" : "Begründung (Pflicht)";
+    $("#blgReason").value = "";
+    $("#blgReason").placeholder = rel ? "z. B. abgestimmt mit Controlling" : "z. B. Ablesung E-110 war falsch erfasst";
+    $("#blgConfirmTxt").textContent = rel ? " Ich habe die Abrechnung geprüft und gebe sie frei." : " Ich öffne die freigegebene Abrechnung wieder.";
+    $("#blgConfirm").checked = false;
+    $("#blgOk").textContent = rel ? "Freigeben" : "Wieder öffnen";
+    $("#blgOk").classList.toggle("danger-solid", !rel);
+    $("#blgOk").classList.toggle("primary", rel);
+    showErr("blgError", null);
+    blgSync();
+    blDlg.showModal();
+  }
+  function blgSync() { $("#blgOk").disabled = !($("#blgConfirm").checked && (blMode === "release" || $("#blgReason").value.trim())); }
+  $("#blgConfirm").addEventListener("change", blgSync);
+  $("#blgReason").addEventListener("input", blgSync);
+  $("#blgCancel").addEventListener("click", function () { blDlg.close(); });
+  $("#blgClose").addEventListener("click", function () { blDlg.close(); });
+  $("#blgOk").addEventListener("click", function () {
+    var mo = blDlgMonth, reason = $("#blgReason").value.trim(), b = blEntry(mo, true);
+    if (!$("#blgConfirm").checked) return;
+    if (blMode === "release") {
+      if (!canRelease() || b.status !== "checked") { showErr("blgError", "Freigeben ist nur nach der Prüfung und für Teamleitung oder Administration möglich."); return; }
+      var w = blLog(b, "release", reason ? { note: reason } : null);
+      b.status = "released"; b.released = { at: w.at, by: w.by }; b.snap = EN.billingSnap(energy, mo);
+      logChange("billing", "Abrechnung " + monthLabel(mo) + " freigegeben" + (reason ? " — " + reason : ""));
+      blDlg.close();
+      energyChanged("Abrechnung " + monthLabel(mo) + " freigegeben");
+    } else {
+      if (!canReopen() || b.status !== "released") { showErr("blgError", "Wieder öffnen darf nur ein Administrator."); return; }
+      if (!reason) { showErr("blgError", "Bitte eine Begründung angeben."); return; }
+      blLog(b, "reopen", { reason: reason, snap: b.snap, released: b.released });
+      b.status = "open"; b.released = null; b.checked = null; b.snap = null;
+      logChange("billing", "Abrechnung " + monthLabel(mo) + " wieder geöffnet — Grund: " + reason);
+      blDlg.close();
+      energyChanged("Abrechnung " + monthLabel(mo) + " wieder geöffnet");
+    }
+  });
+  // Früher freigegebenen Stand mit heute vergleichen (Dialog der Berechnungsstände wiederverwenden)
+  function openSnapDialog(mo, h) {
+    var months = {}; months[mo] = h.snap;
+    openRunDialog({ at: h.released ? h.released.at : h.at, by: h.released ? h.released.by : h.by, label: "Freigegebener Stand " + monthLabel(mo) + " (wieder geöffnet am " + fmtDateTime(h.at) + ")", reason: h.reason, months: months, readonly: true });
+  }
+  $("#blPrev").addEventListener("click", function () { blMonth = EN.addMonths(blMonth, -1); renderBilling(); });
+  $("#blNext").addEventListener("click", function () { if (blMonth < DUE_MONTH) { blMonth = EN.addMonths(blMonth, 1); renderBilling(); } });
+  $("#blCsvBtn").addEventListener("click", function () {
+    var mo = blMonth, v = blValues(mo), b = EN.billingOf(energy, mo), rows = [["Abrechnungsmonat", "Status", "Kostenstelle", "Energieart", "Menge", "Einheit", "Arbeitspreis €", "Grundpreis €", "Kosten €"]];
+    Object.keys(v.rows).forEach(function (k) {
+      var p = k.split("|"), x = v.rows[k], base = x.base || 0;
+      rows.push([mo, BL_STATUS[b ? b.status : "open"][0], ccLabel(p[0]), typeLabel(p[1]), fmtNum(x.qty, unitDigitsOf(billUnit(p[1]))), billUnit(p[1]), fmtNum((x.cost || 0) - base, 2), fmtNum(base, 2), fmtNum(x.cost || 0, 2)]);
+    });
+    csvDownload(rows, "abrechnung-" + mo + ".csv");
+  });
+
   /* ---------- ILV: Änderungsprotokoll ---------- */
-  var LOG_KINDS = { meter: "Zähler", props: "Messfaktor", change: "Zählerwechsel", reading: "Ablesung", rule: "Regel", cc: "Kostenstelle", price: "Preis", conv: "Umrechnung", run: "Berechnungsstand", demo: "Demo", restore: "Wiederherstellung" };
+  var LOG_KINDS = { billing: "Abrechnung", meter: "Zähler", props: "Messfaktor", change: "Zählerwechsel", reading: "Ablesung", rule: "Regel", cc: "Kostenstelle", price: "Preis", conv: "Umrechnung", run: "Berechnungsstand", demo: "Demo", restore: "Wiederherstellung" };
   var LOG_MAX = 300;
   function renderLog() {
     $("#logRetro").classList.toggle("toggled", logRetro);
@@ -9104,6 +9565,7 @@ window.EN = (function () {
     if (name === "meters") renderMeters();
     if (name === "readings") renderReadings();
     if (name === "ilv") renderIlv();
+    if (name === "billing") renderBilling();
   }
   document.querySelectorAll(".tab").forEach(function (t) {
     t.addEventListener("click", function () {
@@ -10069,7 +10531,7 @@ window.EN = (function () {
     "auth.logout": "Abmeldung", "auth.register": "Registrierung", "auth.demo": "Demo-Zugang",
     "user.create": "Konto angelegt", "user.password": "Passwort neu gesetzt (Administration)",
     "user.password.self": "Eigenes Passwort geändert", "user.password.self.failed": "Passwortänderung abgelehnt",
-    "users.update": "Benutzerliste geändert", "document.save": "Gespeichert",
+    "users.update": "Benutzerliste geändert", "document.save": "Gespeichert", "billing.release": "Abrechnung freigegeben", "billing.reopen": "Abrechnung wieder geöffnet",
     "user.update": "Konto bearbeitet", "user.email.self": "Eigene E-Mail geändert", "user.avatar.self": "Profilbild geändert", "user.avatar.remove": "Profilbild entfernt", "report.monthly.send": "Monatsbericht gesendet", "report.monthly.config": "Monatsbericht eingestellt",
     "user.reset.mail": "Passwort-Link per E-Mail verschickt", "user.reset.requested": "Passwort-Anfrage an die Administration",
     "user.reset.unknown": "Passwort vergessen: unbekanntes Konto", "user.reset.blocked": "Passwort vergessen: zu viele Anfragen",
@@ -10077,7 +10539,7 @@ window.EN = (function () {
     "backup.create": "Sicherung erstellt", "backup.restore": "Sicherung wiederhergestellt",
     "backup.delete": "Sicherung gelöscht", "backup.download": "Sicherung heruntergeladen", "backup.config": "Sicherungsplan geändert", "backup.smb": "Abgleich mit SMB-Freigabe", "backup.smb.config": "SMB-Freigabe geändert", "backup.smb.test": "SMB-Verbindung getestet", "mail.config": "Mailserver geändert", "mail.test": "Mailserver getestet"
   };
-  var AUDIT_WARN = /failed|blocked|disabled|restore|delete|unknown/;
+  var AUDIT_WARN = /failed|blocked|disabled|restore|delete|unknown|reopen/;
   var DOC_NAMES = { state: "Maßnahmen", settings: "Einstellungen", users: "Benutzerliste", energy: "Energiedaten" };
   function auditDetail(e) {
     var d = e.detail || {};
@@ -10105,6 +10567,8 @@ window.EN = (function () {
         if (d.disabled && d.disabled.length) parts.push("gesperrt: " + d.disabled.join(", "));
         if (d.enabled && d.enabled.length) parts.push("entsperrt: " + d.enabled.join(", "));
         return parts.join(" · ");
+      case "billing.release": case "billing.reopen":
+        return (d.month ? monthLabel(d.month) : "") + (d.reason ? " · Grund: " + d.reason : "");
       case "document.save":
         return (DOC_NAMES[d.doc] || d.doc || "") + (e.count > 1 ? " · " + e.count + "×" : "");
       case "backup.config":
@@ -11749,6 +12213,7 @@ window.EN = (function () {
     if (viewActive("meters")) renderMeters();
     if (viewActive("readings")) renderReadings();
     if (viewActive("ilv")) renderIlv();
+    if (viewActive("billing")) renderBilling();
     renderTracking();
     if (viewActive("settings")) renderTypeTable();
   }
