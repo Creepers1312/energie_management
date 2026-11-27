@@ -21,4 +21,7 @@ const re = (reason) => ({ billing: [{ month: "2026-09", status: "open", history:
 t(() => b.check(rel, re("x"), { perm: "manager" }), 403);
 t(() => b.check(rel, re(" "), { perm: "admin" }), 400);
 assert.equal(b.check(rel, re("Korrektur"), { perm: "admin" })[0].action, "reopen");
+// Alle Energiedaten löschen: nur Administration
+t(() => b.check(rel, { billing: [], meters: [], readings: [] }, { perm: "manager" }), 403);
+assert.equal(b.check(rel, { billing: [], meters: [], readings: [] }, { perm: "admin" })[0].action, "wipe");
 console.log('Server-Prüfung Abrechnung: alle Fälle bestanden');

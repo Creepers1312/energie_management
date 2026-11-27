@@ -13,12 +13,25 @@ function byMonth(doc) {
   list(doc).forEach((b) => { if (typeof b.month === "string") out[b.month] = b; });
   return out;
 }
-const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+// Vergleich unabhängig von der Reihenfolge der Schlüssel (PostgreSQL/jsonb sortiert sie um)
+function canon(v) {
+  if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+  if (v && typeof v === "object") return "{" + Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}";
+  return JSON.stringify(v === undefined ? null : v);
+}
+const same = (a, b) => canon(a) === canon(b);
 
 // Liefert die Ereignisse fürs Sicherheitsprotokoll; wirft HttpError bei einem Verstoß.
 function check(oldDoc, newDoc, user) {
   const before = byMonth(oldDoc), after = byMonth(newDoc), events = [];
   const perm = user && user.perm;
+  // „Alle Energiedaten löschen“ (Administration, vorher automatische Sicherung): leeres Dokument ohne Zähler,
+  // Ablesungen und Abrechnungen ist erlaubt und wird protokolliert
+  const empty = (d) => !list(d).length && !(Array.isArray(d.meters) && d.meters.length) && !(Array.isArray(d.readings) && d.readings.length);
+  if (Object.keys(before).length && empty(newDoc)) {
+    if (perm !== "admin") throw new HttpError(403, "Energiedaten mit Abrechnungen kann nur ein Administrator löschen.");
+    return [{ month: Object.keys(before).sort().join(", "), action: "wipe" }];
+  }
   const months = Object.keys(before).concat(Object.keys(after)).filter((m, i, a) => a.indexOf(m) === i);
   months.forEach((m) => {
     const o = before[m] || { status: "open", history: [] }, n = after[m] || { status: "open", history: [] };

@@ -61,5 +61,32 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
 
 - Beim Anpassen eines Dashboards bleibt die Leiste mit „+ Widget hinzufügen“ und „Fertig“ beim Scrollen unter der Kopfzeile stehen.
 
+- **Monatsabrechnung mit Freigabe:** neuer Bereich „Abrechnung“ mit Ablauf (Zählerstände → Verbrauch → ILV → Kosten →
+  Prüfung → Freigabe), offenen Punkten und Verrechnung je Kostenstelle. Bearbeiten markiert als geprüft, Teamleitung und
+  Administration geben frei (Zeitpunkt, Person und Stand werden gespeichert). Freigegebene Monate sind gesperrt —
+  Änderungen, die ihre Werte verändern würden (Ablesungen, Faktoren, Regeln, Preise), werden abgewiesen, auch vom Server.
+  Wieder öffnen nur durch Administratoren mit Begründung; der frühere Stand bleibt im Verlauf. Einträge im Änderungs- und
+  Sicherheitsprotokoll, CSV-Export.
+- **Grundpreis** je Energieart (€/Monat, mit „gültig ab“), anteilig nach Menge auf die Kostenstellen verteilt; lässt sich
+  ausblenden oder deaktivieren, ohne den Wert zu verlieren.
+- **Abteilungen** an den Kostenstellen und neuer Bereich **„Auswertung“**: Kostenstellen- und Abteilungsübersicht mit
+  Verbrauch und Kosten je Energieart für Monat, Quartal, Jahr oder frei gewählten Zeitraum, Vergleich mit Vorperiode oder
+  Vorjahr (nur über Monate mit Werten in beiden Zeiträumen) und Details je Kostenstelle mit Zählern und Regeln.
+- **Kostenstellen-Import** aus Excel (.xlsx) oder CSV mit Spaltenerkennung und Vorschau (neu/geändert/unverändert/Fehler).
+- **Import von Zählerständen** jetzt auch aus Excel und mit **Importprofilen** je Energieart (Trennzeichen,
+  Dezimalzeichen, Datumsformat, Spaltenzuordnung, Präfix der Zählernummer), Vorschau der gelesenen Zeilen, Prüfung der
+  Energieart und **Importprotokoll** mit Datei, Profil, Person, Zeitpunkt und Fehlerliste.
+- **Berichte** unter „Auswertung → Berichte“: Monat, Quartal, Jahr oder Zeitraum, gefiltert nach Kostenstelle/Abteilung
+  und Energieart, Inhalt wählbar (Übersicht, Kostenstellen, Abteilungen, Zähler, Ablesungen, fehlende Ablesungen,
+  Abrechnungsstatus, Maßnahmen), als Excel, PDF oder CSV.
+- **Automatische Monats- und Jahresberichte per E-Mail** (Teamleitung/Administration): Monatsbericht, sobald der Vormonat
+  freigegeben ist, Jahresbericht im Januar; Grundlage sind die freigegebenen Abrechnungen; Anhänge Excel/PDF/CSV; Vorschau,
+  Probe an sich selbst, jederzeit ab- und wieder einschaltbar.
+- **Diagramme** im Dashboard wahlweise als Balken und je Quartal oder Jahr zusammengefasst.
+
+### Geändert
+- Der Reiter „Anwenderdoku“ zeigt nur noch das Symbol (Name beim Darüberfahren), damit alle Reiter mit Namen in die Leiste passen.
+- „Alle Energiedaten löschen“ entfernt auch die Abrechnungen und ist dann nur noch für Administratoren möglich.
+
 ### Entfernt (gegenüber dem Shopfloor Board)
 - Daily Huddle, SQIDP-Board, Tageskennzahlen, Tagesbericht, TV-Modus und Monatsbericht.

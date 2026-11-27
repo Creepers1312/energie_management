@@ -4579,13 +4579,19 @@ window.EN = (function () {
     s.meters = meters;
     return s;
   }
+  // Text eines Werts unabhängig von der Reihenfolge der Schlüssel (der Server/jsonb sortiert sie um)
+  function canon(v) {
+    if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+    if (v && typeof v === "object") return "{" + Object.keys(v).filter(function (k) { return v[k] !== undefined; }).sort().map(function (k) { return JSON.stringify(k) + ":" + canon(v[k]); }).join(",") + "}";
+    return JSON.stringify(v === undefined ? null : v);
+  }
   // Würde eine Änderung (before → after) freigegebene Monate verändern? Liefert die betroffenen Monate.
   function lockedChanges(before, after) {
     var out = [];
     releasedMonths(before).forEach(function (mo) {
       if (!isReleased(after, mo)) return;
       var a = billingSnap(before, mo), b = billingSnap(after, mo);
-      if (JSON.stringify(a) !== JSON.stringify(b)) out.push(mo);
+      if (canon(a) !== canon(b)) out.push(mo);
     });
     return out;
   }
@@ -4712,7 +4718,7 @@ window.EN = (function () {
     emptyDoc: emptyDoc, normalize: normalize, nextId: nextId, clone: clone,
     versionAt: versionAt, meterById: meterById, ccById: ccById, propsAt: propsAt, priceAt: priceAt, convAt: convAt,
     priceVersionAt: priceVersionAt, baseAt: baseAt, billingOf: billingOf, billingStatus: billingStatus, isReleased: isReleased,
-    releasedMonths: releasedMonths, billingSnap: billingSnap, lockedChanges: lockedChanges,
+    releasedMonths: releasedMonths, billingSnap: billingSnap, lockedChanges: lockedChanges, canon: canon,
     readingsOf: readingsOf, consumptions: consumptions, overflowSuggestion: overflowSuggestion, previousReading: previousReading,
     meterActiveIn: meterActiveIn, meterLastMonth: meterLastMonth, meterMonth: meterMonth, chainOf: chainOf, chainHead: chainHead,
     chainMonth: chainMonth, missingReadings: missingReadings, ruleTermsAt: ruleTermsAt, allocate: allocate,
@@ -9628,7 +9634,7 @@ window.EN = (function () {
   var BL_ACTIONS = { check: "Als geprüft markiert", uncheck: "Prüfung zurückgenommen", release: "Freigegeben", reopen: "Wieder geöffnet" };
   function canRelease() { return can("stamm"); }
   function canReopen() { return can("manageUsers"); }
-  function blSig(mo) { return JSON.stringify(EN.billingSnap(energy, mo)); }
+  function blSig(mo) { return EN.canon(EN.billingSnap(energy, mo)); }
   // Würde die Änderung (Kopie „after“) freigegebene Monate verändern? Dann Hinweis und abbrechen.
   function lockGuard(after) {
     var mos = EN.lockedChanges(energy, after);
@@ -9719,7 +9725,7 @@ window.EN = (function () {
       info.appendChild(ul);
     } else if (any && status !== "released") info.appendChild(el("p", "bl-ok", "Keine offenen Punkte."));
     if (status === "released") {
-      var cur = blSig(mo), diff = b.snap && cur !== JSON.stringify(b.snap);
+      var cur = blSig(mo), diff = b.snap && cur !== EN.canon(b.snap);
       info.appendChild(el("p", "mini-hint", "Freigegeben am " + fmtDateTime(b.released.at) + " von " + b.released.by + ". Die Werte unten sind der freigegebene Stand; Änderungen, die diesen Monat betreffen, sind gesperrt." +
         (diff ? "" : "")));
       if (diff) info.appendChild(el("p", "bl-issue-warn", "Achtung: Die heutige Berechnung weicht vom freigegebenen Stand ab (z. B. nach einer Wiederherstellung). Maßgeblich bleibt der freigegebene Stand."));
@@ -10249,6 +10255,7 @@ window.EN = (function () {
         var t1 = totalsOf(months, types), t0 = cmp ? totalsOf(cmpMonths, types) : null, tc = cmp ? totalsOf(cmp.cur, types) : null;
         types.forEach(function (t) {
           var x = t1[t], y = t0 ? t0[t] : null, xc = tc ? tc[t] : null;
+          if (!x.measured && !x.cost && (!y || (!y.measured && !y.cost))) return;
           rows.push([typeLabel(t), EN.typeOf(t).bill, x.measured, x.allocated, x.unassigned, x.cost].concat(cmp ? [y.measured, pct(xc.measured, y.measured), y.cost, pct(xc.cost, y.cost)] : []));
         });
         sec("summary", "Übersicht je Energieart", ["Energieart", "Einheit", "Verbrauch gesamt", "verrechnet", "nicht verteilt", "Kosten €"].concat(cmp ? ["Verbrauch " + cmp.label, "Veränderung %", "Kosten " + cmp.label + " €", "Veränderung Kosten %"] : []),
@@ -10452,6 +10459,13 @@ window.EN = (function () {
      Der Server schickt Monats- und Jahresbericht per E-Mail — Grundlage sind die freigegebenen Abrechnungen.
      Einstellungen: Teamleitung und Administration. */
   var arCfg = null, arInfo = null, arLoading = false;
+  // API-Aufruf: Daten bei Erfolg, sonst Fehler mit der Meldung des Servers
+  function arApi(path, opts) {
+    return SFM.api(path, opts).then(function (r) {
+      if (!r.ok) throw new Error((r.data && r.data.error) || "Fehler " + r.status);
+      return r.data;
+    });
+  }
   var AR_CONTENT = [["summary", "Übersicht je Energieart"], ["months", "Monatswerte (Jahresbericht)"], ["cc", "Kostenstellen"], ["dept", "Abteilungen"], ["meters", "Zähler"], ["status", "Abrechnungsstatus"]];
   function renderAutoReports() {
     var host = $("#rpAuto"); host.innerHTML = "";
@@ -10467,7 +10481,7 @@ window.EN = (function () {
       host.appendChild(el("p", "mini-hint", "Lade Einstellungen …"));
       if (!arLoading) {
         arLoading = true;
-        SFM.api("/api/reports").then(function (r) { arCfg = r.config; arInfo = r; arLoading = false; renderAutoReports(); })
+        arApi("/api/reports").then(function (r) { arCfg = r.config; arInfo = r; arLoading = false; renderAutoReports(); })
           .catch(function (e) { arLoading = false; host.innerHTML = ""; host.appendChild(el("p", "login-error", e.message || "Einstellungen nicht verfügbar.")); });
       }
       return;
@@ -10502,7 +10516,7 @@ window.EN = (function () {
       lb.appendChild(cb); lb.appendChild(document.createTextNode(" " + f[1])); fl.appendChild(lb);
     });
     fm.appendChild(fl);
-    fm.appendChild(el("label", null, "Inhalt"));
+    var lc = el("label", null, "Inhalt"); lc.style.marginTop = "10px"; lc.style.display = "block"; fm.appendChild(lc);
     var cl = el("div", "rp-checks rp-checks-2");
     AR_CONTENT.forEach(function (x) {
       var lb = el("label", "check-line"), cb = document.createElement("input"); cb.type = "checkbox"; cb.value = x[0]; cb.className = "ar-cnt"; cb.checked = !!c.content[x[0]];
@@ -10540,14 +10554,14 @@ window.EN = (function () {
   }
   function arMsg(t, err) { var m = byId("arMsg"); if (m) { m.textContent = t; m.className = err ? "login-error" : "mini-hint"; } }
   function arSave() {
-    SFM.api("/api/reports", { method: "PUT", body: arCollect() }).then(function (r) { arCfg = r.config; renderAutoReports(); toast("Berichtseinstellungen gespeichert"); })
+    arApi("/api/reports", { method: "PUT", body: arCollect() }).then(function (r) { arCfg = r.config; renderAutoReports(); toast("Berichtseinstellungen gespeichert"); })
       .catch(function (e) { arMsg(e.message, true); });
   }
   function arPeriod(v) { var p = v.split(":"); return { kind: p[0], period: p[1] }; }
   function arPreview(v) {
     var p = arPeriod(v);
     arMsg("Vorschau wird erstellt …");
-    SFM.api("/api/reports/preview?kind=" + p.kind + "&period=" + encodeURIComponent(p.period)).then(function (r) {
+    arApi("/api/reports/preview?kind=" + p.kind + "&period=" + encodeURIComponent(p.period)).then(function (r) {
       arMsg("Betreff: " + r.subject + " · Anhänge (nach gespeicherten Einstellungen): " + r.files.map(function (f) { return f.filename; }).join(", "));
       var host = byId("arPreview"); host.innerHTML = "";
       var fr = document.createElement("iframe"); fr.className = "ar-frame"; fr.setAttribute("sandbox", ""); fr.title = "Vorschau der E-Mail"; fr.srcdoc = r.html;
@@ -10566,7 +10580,7 @@ window.EN = (function () {
     var p = arPeriod(v);
     var go = function () {
       arMsg(test ? "Probe wird gesendet …" : "Wird gesendet …");
-      SFM.api("/api/reports/send", { method: "POST", body: { kind: p.kind, period: p.period, test: test } }).then(function (r) {
+      arApi("/api/reports/send", { method: "POST", body: { kind: p.kind, period: p.period, test: test } }).then(function (r) {
         arMsg(test ? "Probe an Ihre Adresse gesendet." : "Gesendet an " + r.last.to + " Empfänger.");
         if (!test) { arCfg = null; renderAutoReports(); }
       }).catch(function (e) { arMsg(e.message, true); });
@@ -11988,7 +12002,7 @@ window.EN = (function () {
     "auth.logout": "Abmeldung", "auth.register": "Registrierung", "auth.demo": "Demo-Zugang",
     "user.create": "Konto angelegt", "user.password": "Passwort neu gesetzt (Administration)",
     "user.password.self": "Eigenes Passwort geändert", "user.password.self.failed": "Passwortänderung abgelehnt",
-    "users.update": "Benutzerliste geändert", "document.save": "Gespeichert", "billing.release": "Abrechnung freigegeben", "billing.reopen": "Abrechnung wieder geöffnet",
+    "users.update": "Benutzerliste geändert", "document.save": "Gespeichert", "billing.release": "Abrechnung freigegeben", "billing.reopen": "Abrechnung wieder geöffnet", "billing.wipe": "Energiedaten samt Abrechnungen gelöscht", "report.config": "Automatische Berichte eingestellt", "report.send": "Bericht gesendet",
     "user.update": "Konto bearbeitet", "user.email.self": "Eigene E-Mail geändert", "user.avatar.self": "Profilbild geändert", "user.avatar.remove": "Profilbild entfernt", "report.monthly.send": "Monatsbericht gesendet", "report.monthly.config": "Monatsbericht eingestellt",
     "user.reset.mail": "Passwort-Link per E-Mail verschickt", "user.reset.requested": "Passwort-Anfrage an die Administration",
     "user.reset.unknown": "Passwort vergessen: unbekanntes Konto", "user.reset.blocked": "Passwort vergessen: zu viele Anfragen",
@@ -11996,7 +12010,7 @@ window.EN = (function () {
     "backup.create": "Sicherung erstellt", "backup.restore": "Sicherung wiederhergestellt",
     "backup.delete": "Sicherung gelöscht", "backup.download": "Sicherung heruntergeladen", "backup.config": "Sicherungsplan geändert", "backup.smb": "Abgleich mit SMB-Freigabe", "backup.smb.config": "SMB-Freigabe geändert", "backup.smb.test": "SMB-Verbindung getestet", "mail.config": "Mailserver geändert", "mail.test": "Mailserver getestet"
   };
-  var AUDIT_WARN = /failed|blocked|disabled|restore|delete|unknown|reopen/;
+  var AUDIT_WARN = /failed|blocked|disabled|restore|delete|unknown|reopen|wipe/;
   var DOC_NAMES = { state: "Maßnahmen", settings: "Einstellungen", users: "Benutzerliste", energy: "Energiedaten" };
   function auditDetail(e) {
     var d = e.detail || {};
@@ -12024,7 +12038,8 @@ window.EN = (function () {
         if (d.disabled && d.disabled.length) parts.push("gesperrt: " + d.disabled.join(", "));
         if (d.enabled && d.enabled.length) parts.push("entsperrt: " + d.enabled.join(", "));
         return parts.join(" · ");
-      case "billing.release": case "billing.reopen":
+      case "report.send": return (d.period || "") + (d.test ? " · Probe" : d.to ? " · " + d.to + " Empfänger" : "");
+      case "billing.release": case "billing.reopen": case "billing.wipe":
         return (d.month ? monthLabel(d.month) : "") + (d.reason ? " · Grund: " + d.reason : "");
       case "document.save":
         return (DOC_NAMES[d.doc] || d.doc || "") + (e.count > 1 ? " · " + e.count + "×" : "");
@@ -12436,19 +12451,21 @@ window.EN = (function () {
       ],
       tip: "Historische Zählerstände werden nie überschrieben: Korrekturen und Löschungen bleiben mit Person, Zeitpunkt und Grund nachvollziehbar." },
 
-    { id: "csv", group: "Zähler & Ablesung", title: "Zählerstände per CSV importieren",
-      intro: "Größere Ablesungen (z. B. aus einem Ablesegerät oder einer Excel-Liste) lassen sich als CSV-Datei übernehmen.",
+    { id: "csv", group: "Zähler & Ablesung", title: "Zählerstände importieren (CSV/Excel, Importprofile)",
+      intro: "Größere Ablesungen — z. B. der Strom-Export des Netzbetreibers, eine Liste aus dem Ablesegerät oder eine Excel-Tabelle — lassen sich als CSV- oder Excel-Datei (.xlsx) übernehmen. Wie eine Datei aufgebaut ist, merkt sich ein Importprofil je Energieart.",
       sections: [
         { h: "Ablauf", steps: [
-          ["Vorlage", "„CSV-Vorlage“ lädt für den gewählten Monat eine Datei mit allen eingebauten Zählern, dem vorherigen Stand und dem Ablesedatum."],
-          ["Ausfüllen", "In Excel die Spalte „Zählerstand“ füllen und als CSV (Trennzeichen Semikolon) speichern. Leere Zeilen werden übersprungen."],
-          ["Importieren", "„CSV importieren“ und die Datei wählen. Jede Zeile wird geprüft und in einer Liste angezeigt — mit Verbrauch und allen Warnungen wie bei der Eingabe von Hand."],
-          ["Übernehmen", "Bei Warnungen die Entscheidung je Zeile treffen, dann speichern. Fehlerhafte Zeilen (unbekannte Zählernummer, ungültiges Datum) werden nicht übernommen."]
+          ["Vorlage (optional)", "„CSV-Vorlage“ lädt für den gewählten Monat eine Datei mit allen eingebauten Zählern, dem vorherigen Stand und dem Ablesedatum."],
+          ["Importieren", "„Importieren“ öffnet den Import: Profil wählen und die Datei auswählen. Die ersten Zeilen erscheinen so, wie sie gelesen werden; die Zuordnung der Spalten lässt sich für diesen Import ändern."],
+          ["Prüfen", "„Weiter zur Prüfung“: Jede Zeile wird wie bei der Eingabe von Hand geprüft — unbekannte Zählernummer, doppelte Ablesung, kleinerer Stand, fehlender vorheriger Stand, freigegebener Monat, falsche Energieart."],
+          ["Übernehmen", "Bei Warnungen je Zeile entscheiden, dann speichern. Fehlerhafte Zeilen werden nicht übernommen und stehen im Fehlerprotokoll."]
         ] },
+        { h: "Importprofile", img: "import", cap: "Import mit Profil und Dateiaufbau", p: "Unter „Dateiaufbau“ stehen Energieart, Trennzeichen, Dezimalzeichen, Datumsformat, ein Präfix, das von der Zählernummer entfernt wird (z. B. „DE0001…“), und ob die erste Zeile eine Kopfzeile ist. „Als Profil speichern“ merkt sich das zusammen mit den Spalten (über den Text der Kopfzeile, sonst über die Spaltennummer). Profile pflegen Teamleitung und Administration; jedes Gerät merkt sich das zuletzt benutzte Profil. Gilt ein Profil für eine Energieart, werden Zähler anderer Energiearten abgewiesen." },
+        { h: "Importprotokoll", p: "„Importprotokoll“ zeigt alle Importe mit Datei, Profil, Person, Zeitpunkt, Zeilen und gespeicherten Ablesungen. Nicht übernommene Zeilen stehen mit Grund im Fehlerprotokoll (auch als CSV). Bei jeder Ablesung ist vermerkt, aus welchem Import sie stammt." },
         { h: "Aufbau der Datei", list: [
-          "Erkannt werden die Spalten <b>Zählernummer</b>, <b>Ablesedatum</b>, <b>Zählerstand</b>, optional <b>Abrechnungsmonat</b> und <b>Bemerkung</b> (Überschriften in beliebiger Reihenfolge).",
+          "Ohne Profil („Standard“) werden die Spalten <b>Zählernummer</b>, <b>Ablesedatum</b>, <b>Zählerstand</b>, optional <b>Abrechnungsmonat</b> und <b>Bemerkung</b> an der Überschrift erkannt (auch Zählpunkt, Zeitstempel, Messwert …).",
           "Ohne Überschrift gilt die Reihenfolge Zählernummer; Ablesedatum; Zählerstand; Abrechnungsmonat; Bemerkung.",
-          "Datum als 01.12.2026 oder 2026-12-01, Monat als 11/2026, 2026-11 oder „November 2026“, Zahlen mit Komma oder Punkt.",
+          "Datum als 01.12.2026, 2026-12-01 oder nach Profil 12/01/2026 (Uhrzeit dahinter wird ignoriert; Excel-Datumszellen werden erkannt), Monat als 11/2026, 2026-11 oder „November 2026“.",
           "Fehlt der Abrechnungsmonat, wird er aus dem Ablesedatum und dem Stichtag bestimmt."
         ] }
       ] },
@@ -12490,8 +12507,13 @@ window.EN = (function () {
           ["Neue Regel", "Z. B. für eine Aufteilung: Kostenstelle A 0,6 × (Hauptzähler − Unterzähler), Kostenstelle B 0,4 × (dasselbe)."],
           ["Beenden", "„Ab Monat beenden“ — ab dann wird über die Regel nichts mehr verrechnet."]
         ] },
-        { h: "Kostenstellen", p: "Unter „ILV → Kostenstellen“ werden Kostenstellen angelegt und gepflegt. Kostenstellen mit Zählern oder Regeln lassen sich nicht löschen, aber auf inaktiv setzen." },
-        { h: "Preise und Gas-Umrechnung", img: "preise", cap: "Preise und Gas-Umrechnung mit „gültig ab“", p: "Je Energieart ein Preis in € je Abrechnungseinheit mit „gültig ab“. Gas wird in m³ abgelesen und mit Brennwert × Zustandszahl in kWh umgerechnet; ohne Umrechnung für einen Monat bleibt der Gasverbrauch als unvollständig markiert." }
+        { h: "Kostenstellen", p: "Unter „ILV → Kostenstellen“ werden Kostenstellen mit Abteilung angelegt und gepflegt. Kostenstellen mit Zählern oder Regeln lassen sich nicht löschen, aber auf inaktiv setzen — die Historie bleibt erhalten. „Import Excel/CSV“ übernimmt Kostenstellen aus einer Datei (Spalten Nummer, Bezeichnung, Abteilung, Bemerkung, Aktiv werden an der Kopfzeile erkannt): gleiche Nummer → aktualisiert, sonst neu; vorher zeigt eine Vorschau neu/geändert/unverändert/Fehler." },
+        { h: "Preise, Grundpreis und Gas-Umrechnung", img: "preise", cap: "Preise und Gas-Umrechnung mit „gültig ab“", p: "Je Energieart ein Arbeitspreis in € je Abrechnungseinheit mit „gültig ab“ (Strom €/kWh, Wasser €/m³, Gas €/kWh, Druckluft €/Nm³). Gas wird in m³ abgelesen und mit Brennwert × Zustandszahl in kWh umgerechnet; ohne Umrechnung für einen Monat bleibt der Gasverbrauch als unvollständig markiert.", list: [
+          "<b>Grundpreis</b> (optional) in € je Monat: wird anteilig nach Menge auf die Kostenstellen verteilt; der Anteil der nicht verteilten Menge bleibt offen. Die Kosten in Verrechnung, Abrechnung und Berichten enthalten ihn.",
+          "<b>Grundpreis ausblenden</b>: Der Wert bleibt gespeichert, wird aber nicht berechnet und erscheint in den Übersichten nicht mehr.",
+          "<b>Grundpreis deaktiviert</b>: Der Wert bleibt gespeichert und sichtbar, wird nicht berechnet und lässt sich jederzeit wieder einschalten (neuen Preis mit gleichem Monat speichern).",
+          "Preisänderungen haben „gültig ab“ und eine Historie. Freigegebene Abrechnungen verändern sie nicht — betrifft eine Änderung einen freigegebenen Monat, wird sie abgewiesen."
+        ] }
       ] },
 
     { id: "rueckwirkend", group: "Verrechnung (ILV)", title: "Rückwirkende Änderungen, Vorschau und Berechnungsstände",
@@ -12508,12 +12530,55 @@ window.EN = (function () {
       ] },
 
     /* ===== Auswertung & Maßnahmen ===== */
+    { id: "abrechnung", group: "Verrechnung (ILV)", title: "Monatsabrechnung: prüfen, freigeben, wieder öffnen",
+      intro: "Die Abrechnung wird automatisch vorbereitet und danach von Hand geprüft und ausdrücklich freigegeben. Ein freigegebener Monat ist gesperrt; nur ein Administrator kann ihn mit Begründung wieder öffnen.",
+      flow: ["Zählerstände erfassen", "Verbrauch berechnen", "ILV verteilen", "Kosten berechnen", "Prüfen", "Freigeben"],
+      sections: [
+        { h: "So geht es", img: "abrechnung", cap: "Monatsabrechnung mit Ablauf und Verrechnung", steps: [
+          ["Monat wählen", "Unter „Abrechnung“ mit den Pfeilen oder in der Monatsleiste (Status je Monat: offen, geprüft, freigegeben)."],
+          ["Offene Punkte klären", "Der Ablauf links zeigt je Schritt den Stand: fehlende Ablesungen, unvollständige Berechnung, nicht verteilte Menge, fehlender Preis, negative Mengen. Rechts steht die Verrechnung je Kostenstelle mit Arbeitspreis, Grundpreis und Kosten."],
+          ["Als geprüft markieren", "Bearbeiten, Teamleitung und Administration. Offene Punkte müssen vorher bestätigt werden. Ändern sich danach Werte des Monats, steht „seit der Prüfung geändert“ — dann erneut prüfen."],
+          ["Freigeben", "Teamleitung und Administration: Summen und offene Punkte prüfen, Häkchen setzen, „Freigeben“. Gespeichert werden Zeitpunkt, Person und der Stand des Monats (Verrechnung und Monatswerte aller Zähler)."]
+        ] },
+        { h: "Was die Freigabe sperrt", p: "Jede Änderung, die Verbrauch, Verrechnung oder Kosten eines freigegebenen Monats verändern würde, wird abgewiesen — Ablesungen in diesem Monat, Korrekturen der Ablesung davor, rückwirkende Messfaktoren, Regeln, Preise, Grundpreis oder Gas-Umrechnung. Spätere Monate bleiben frei. Auch der Server prüft das (Rechte, unveränderter Stand, Ablesungen des Monats)." },
+        { h: "Wieder öffnen", p: "Nur Administratoren, mit Pflicht-Begründung. Der bisher freigegebene Stand bleibt im Verlauf (Stand ansehen = Vergleich mit heute). Danach muss der Monat erneut geprüft und freigegeben werden. Freigabe und Wiederöffnen stehen im Änderungs- und im Sicherheitsprotokoll." }
+      ],
+      tip: "Berichte und die Kostenstellenübersicht nehmen für freigegebene Monate den freigegebenen Stand, für offene Monate die vorläufige Berechnung." },
+
+    { id: "auswertung", group: "Auswertung & Maßnahmen", title: "Kostenstellen- und Abteilungsübersicht",
+      intro: "Unter „Auswertung → Kostenstellen“ stehen Verbrauch und Kosten je Kostenstelle und Abteilung, getrennt nach Energieart — für einen Monat, ein Quartal, ein Jahr oder einen frei gewählten Zeitraum.",
+      sections: [
+        { h: "Bedienung", img: "auswertung", cap: "Kostenstellen nach Abteilungen mit Vergleich", list: [
+          "<b>Auswahl</b>: alle Kostenstellen, eine Abteilung oder eine Kostenstelle.",
+          "<b>Zeitraum</b>: Monat, Quartal, Jahr oder „Zeitraum“ (von … bis …), mit den Pfeilen blättern.",
+          "<b>Vergleich</b> mit der Vorperiode oder dem Vorjahr. Verglichen werden nur Monate, für die es in beiden Zeiträumen Werte gibt — so entstehen keine schiefen Prozente bei unvollständigen Zeiträumen.",
+          "<b>Kosten / Verbrauch</b>: Verbrauch steht je Energieart mit eigener Einheit; Einheiten werden nie zusammengezählt, eine Summe gibt es nur für Kosten."
+        ] },
+        { h: "Details einer Kostenstelle", p: "Ein Klick auf eine Kostenstelle zeigt Kosten gesamt und je Energieart mit Vergleich, die Kosten je Monat (gestapelt nach Energieart), die zugeordneten Zähler (Klick öffnet den Zähler) und die ILV-Regeln. Ein Klick auf eine Abteilung zeigt nur deren Kostenstellen." }
+      ] },
+
+    { id: "berichte", group: "Auswertung & Maßnahmen", title: "Berichte (Excel, PDF, CSV) und automatischer Versand",
+      intro: "Unter „Auswertung → Berichte“ entstehen Monats-, Quartals-, Jahres- oder frei gewählte Berichte — gefiltert nach Kostenstelle, Abteilung und Energieart, mit wählbarem Inhalt und Format.",
+      sections: [
+        { h: "Bericht erstellen", img: "berichte", cap: "Bericht zusammenstellen, rechts die Vorschau", steps: [
+          ["Zeitraum und Auswahl", "Monat, Quartal, Jahr oder Zeitraum; Kostenstellen oder Abteilung; Vergleich mit Vorjahr oder Vorperiode; Energiearten."],
+          ["Inhalt", "Übersicht je Energieart, Kostenstellen, Abteilungen, Zähler (bei bis zu 12 Monaten mit Monatsspalten), Ablesungen, fehlende Ablesungen, Abrechnungsstatus, Maßnahmen. Rechts zeigt die Vorschau Umfang und erste Zeilen."],
+          ["Format", "<b>Excel</b>: ein Blatt je Abschnitt, Zahlen als Zahlen. <b>PDF</b>: Druckansicht — im Druckfenster „Als PDF speichern“ wählen. <b>CSV</b>: alle Abschnitte untereinander (Semikolon, für Excel)."]
+        ] },
+        { h: "Automatische Berichte per E-Mail", p: "Teamleitung und Administration richten unten den Versand ein (nur am Server, E-Mail-Versand muss eingerichtet sein):", list: [
+          "<b>Monatsbericht</b> für den Vormonat: ab dem eingestellten Tag und der Uhrzeit, sobald der Monat freigegeben ist.",
+          "<b>Jahresbericht</b> für das Vorjahr: im Januar am eingestellten Tag; nicht freigegebene Monate werden ausgewiesen.",
+          "Grundlage sind nur freigegebene Abrechnungen. Empfänger, Anhänge (Excel, PDF, CSV) und Inhalt sind wählbar; beide Berichte lassen sich jederzeit ab- und wieder einschalten.",
+          "„Vorschau“ zeigt die E-Mail und bietet die Anhänge zum Herunterladen, „Probe an mich“ schickt sie an die eigene Adresse, „Jetzt an Verteiler senden“ sofort an alle."
+        ] }
+      ] },
+
     { id: "dashboard", group: "Auswertung & Maßnahmen", title: "Dashboard",
       intro: "Das Dashboard ist die zentrale Übersicht über die Verbrauchsentwicklung.",
       sections: [
         { h: "Inhalte", img: "dashboard", cap: "Dashboard „Standard“", list: [
           "<b>Übersicht je Energieart</b> — Gesamtverbrauch des gewählten Abrechnungsmonats, Veränderung zum Vormonat (rot ab der Warnschwelle aus den Stammdaten), Kosten, fehlende Ablesungen und nicht verteilte Mengen.",
-          "<b>Diagramme</b> — Verbrauchs- und Kostenentwicklung über 6 bis 36 Monate; ein gestrichelter Ring markiert Monate mit angelegten Maßnahmen.",
+          "<b>Diagramme</b> — Verbrauchs- und Kostenentwicklung über 6 bis 36 Monate als Linie oder Balken, je Monat, Quartal oder Jahr zusammengefasst (im Diagramm-Fenster unter „Darstellung“); ein gestrichelter Ring markiert Monate mit angelegten Maßnahmen.",
           "<b>Fehlende Zählerstände</b> — je Monat, ein Klick öffnet die Ablesung.",
           "<b>Kacheln</b> — Verbrauch je Energieart, Kosten gesamt, fehlende Ablesungen, offene Maßnahmen."
         ] },
@@ -12547,9 +12612,9 @@ window.EN = (function () {
       sections: [
         { h: "Übersicht", steps: [
           ["Nur Lesen", "Alle Bereiche ansehen, nichts ändern."],
-          ["Bearbeiten", "Ablesungen, Zähler, Zählerwechsel, Regeln, Kostenstellen, Preise und Maßnahmen bearbeiten."],
-          ["Teamleitung", "Zusätzlich löschen, Stammdaten, Benutzer (ohne Administrator-Konten), Standard-Dashboards."],
-          ["Administrator", "Alles, auch E-Mail-Server, Datenbank & Sicherung, Sicherheitsprotokoll."]
+          ["Bearbeiten", "Ablesungen (auch Import), Zähler, Zählerwechsel, Regeln, Kostenstellen, Preise und Maßnahmen bearbeiten; Abrechnung als geprüft markieren."],
+          ["Teamleitung", "Zusätzlich löschen, Stammdaten, Importprofile, Benutzer (ohne Administrator-Konten), Standard-Dashboards, Abrechnung freigeben, automatische Berichte."],
+          ["Administrator", "Alles, auch freigegebene Abrechnungen wieder öffnen, E-Mail-Server, Datenbank & Sicherung, Sicherheitsprotokoll."]
         ] }
       ] },
     { id: "stammdaten", group: "Verwaltung", title: "Stammdaten",

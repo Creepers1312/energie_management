@@ -56,6 +56,12 @@ const W = 1440, H = 900;
   await shot('vorschau', { clip: await box('dialog[open]', 28) });
   await p.keyboard.press('Escape'); await wait(200);
   // Maßnahmen
+  // Abrechnung, Auswertung, Berichte
+  await p.click('.tab[data-view="billing"]'); await wait(600); await shot('abrechnung');
+  await p.click('.tab[data-view="cc"]'); await wait(600); await shot('auswertung');
+  await p.click('#cvTabs [data-ctab="reports"]'); await wait(600); await shot('berichte');
+  await p.click('.tab[data-view="readings"]'); await wait(400); await p.click('#rdImportBtn'); await wait(300); await p.click('.im-opts summary'); await wait(200);
+  await shot('import', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
   await p.click('.tab[data-view="actions"]'); await wait(600); await shot('massnahmen');
   await p.locator('#kanban .kcard').first().click(); await wait(500); await shot('massnahme', { clip: await box('dialog[open]', 28) }); await p.keyboard.press('Escape'); await wait(200);
   // Tracking

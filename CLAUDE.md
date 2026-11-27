@@ -120,6 +120,26 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
 - **Kopfzeile:** Speicherstatus nur bei Problemen; Datum → Ablesung des fälligen Monats; Zähler am Reiter „Ablesung“
   = fehlende Ablesungen.
 
+- **Abrechnung** (`energy.billing`, Bereich `view-billing`, `renderBilling`): je Monat `status` open/checked/released,
+  `checked {at,by,sig}` (sig = `EN.canon(EN.billingSnap)`; geändert → „erneut prüfen“), `released`, `snap` (Verrechnung
+  + Monatswerte aller Zähler), `history` (nur anhängen; reopen mit `reason` und altem `snap`). Sperre: `lockGuard` in
+  `commitChange` und `saveEntries` (`EN.lockedChanges` vergleicht den Stand freigegebener Monate vorher/nachher), dazu
+  Fehler in `checkEntry`. Server: `backend/src/billing.js` (Rechte freigeben = manager/admin, wieder öffnen = admin mit
+  Grund, Stand/Verlauf unveränderlich, Ablesungen freigegebener Monate gesperrt, leeres Dokument nur admin = „wipe“).
+  Vergleiche immer mit `canon` — PostgreSQL/jsonb ändert die Reihenfolge der Schlüssel. Freigegebene Monate liefern in
+  Auswertung und Berichten den festgehaltenen Stand (`blValues`/`ccValuesMonth`).
+- **Preise:** `prices[]` mit `base` (Grundpreis €/Monat) und `baseMode` on/hidden/off; `EN.baseAt`; `allocate` verteilt den
+  Grundpreis nach Menge (`rows[].work/base/cost`, `totals.base/baseAllocated`). Gas wird in kWh abgerechnet (Entscheidung).
+- **Auswertung** (`view-cc`, Unterreiter `cvTab` cc/reports): `periodMonths/periodLabel/periodShift/periodCompare`
+  (Vergleich nur über Monatspaare mit Werten in beiden Zeiträumen, `cmp.cur`), `ccValues`, Auswahl `ccScopeOptions`
+  (`""`, `dept:<Name>`, `cc:<id>`), Kostenstelle mit `dept`. Berichte: `reportData` → Abschnitte → `rpExport`
+  (Excel über `XL.write`, CSV, PDF als Druckansicht `#printArea` + `body.printing-report`).
+- **Excel ohne Bibliothek:** `XL.read` (ZIP + `DecompressionStream`) / `XL.write` in der Oberfläche, `backend/src/xlsx.js`,
+  PDF auf dem Server `backend/src/pdf.js` (Helvetica/WinAnsi). Automatische Berichte `backend/src/reports.js` aus den
+  freigegebenen Ständen (meta „report_config“, Routen `/api/reports*` in `routes/admin.js`, Zeitplan alle 5 min).
+- **Import:** `#importDialog`, Profile in `settings.importProfiles` (Teamleitung), zuletzt benutztes Profil je Gerät
+  (`sfm-import-last`), `checkAndSave(..., meta)` → `logImport` → `energy.imports` (Fehlerliste), `reading.imp`.
+- **Dashboard-Diagramme:** Widget `style: "bar"`, `group: "quarter"|"year"` (`groupSeries`, `isos` `JJJJ-Qn`/`JJJJ`).
 - **Teil-Wiederherstellung:** siehe Standard „Wiederherstellung & Datenkonsistenz“ unten. Code: `backups.inspect`,
   `backups.restoreParts` (Plan → Prüfung → Transaktion), API `GET /api/backups/:file/contents`,
   `POST /api/backups/:file/restore` mit `parts` (energy, deviations, settings, users, dashboards), `select`
@@ -130,7 +150,7 @@ Verbindlich für jede Funktion, die Daten aus Sicherungen, Dateien oder anderen 
 Teil-Wiederherstellung in `backups.js`). Neue Datenfelder oder Tabellen müssen hier einem Teil zugeordnet werden.
 1. **Einheiten statt Einzelfelder.** Zusammengehöriges wird nur gemeinsam übernommen:
    - **Energiedaten** = ganzes Dokument `energy` (Zähler, Ablesungen, Kostenstellen, Regeln, Preise, Umrechnung,
-     Protokoll, Berechnungsstände) + Tabellen `meter_values`/`meter_status` (Online-Messwerte, Zuordnung über die
+     Protokoll, Berechnungsstände, Abrechnungen `billing`, Importprotokoll `imports`) + Tabellen `meter_values`/`meter_status` (Online-Messwerte, Zuordnung über die
      Zähler-Kennung; ältere Sicherungen ohne diese Tabellen lassen die Messwerte unverändert) — nur als Ganzes.
      Die Verbindungen (meta „meter_connections“) stecken wie SMB-/Mail-Einstellungen nicht in den Sicherungen.
    - **Maßnahme** = ganzes Objekt aus `state.deviations` (inkl. 5-Why, Phase, `meter`).
@@ -180,6 +200,7 @@ Es gibt keine Testsuite im Repo; geprüft wird mit Playwright (Chromium ist vori
   Limit und gesperrte Alpine-Paketquellen — Basis-Images ggf. lokal umtaggen bzw. die API direkt mit Node auf dem
   Host starten (DB-Port freigeben); `smbclient`/Samba per apt auf dem Host für SMB-Tests, einfacher SMTP-Empfänger
   für Mail-Tests. nginx drosselt Anmelde-Endpunkte (10/min) — in API-Tests Pausen einplanen.
+- Abrechnung (Server-Regeln): `node tools/test-abrechnung.js`; Berichte (Werte, Excel/PDF/CSV): `node tools/test-berichte.js [Ordner]`.
 - Rechenkern: `node tools/test-rechenkern.js` (lädt `window.EN` aus `index.html`; `global.window = {}`, den
   zweiten `<script>`-Block ausführen) — Überlauf, Zählerwechsel, Start bei 0, ILV und Vorschau-Vergleich.
 - Online-Anbindung: `node tools/test-anbindung.js` (Modbus-, M-Bus- und REST-Gerät nachgebaut, ohne Datenbank). MQTT
