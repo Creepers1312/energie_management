@@ -2011,6 +2011,57 @@ dialog.wide-dialog .dlg-body { max-height: calc(100dvh - 170px); overflow-y: aut
 @media (max-width: 560px) { .en-sum-grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* Zähler */
+.me-chips .trk-chip:not(.on) > span { text-decoration: none !important; }
+.me-chips .trk-chip:not(.on) .trk-chip-dot { opacity: 1; }
+.me-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.me-stat { text-align: left; cursor: pointer; border: 1px solid var(--line); font: inherit; color: inherit; }
+.me-stat:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.me-stat.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.me-filter { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding: 12px 14px; }
+.me-filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.me-filter-row .search-input { flex: 1 1 260px; }
+tr.me-group td { background: var(--surface-2); font-size: 12px; font-weight: 600; color: var(--ink-2); padding-top: 6px; padding-bottom: 6px; }
+.me-row td { vertical-align: middle; }
+.me-no { display: flex; gap: 6px; align-items: center; }
+.me-sub.me-cc { font-size: 11.5px; }
+.me-trend { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.me-spark { display: inline-flex; align-items: flex-end; gap: 2px; height: 20px; width: 40px; }
+.me-spark i { flex: 1; background: currentColor; opacity: .8; border-radius: 1px; min-height: 1px; }
+.me-spark i.miss { background: none; border-bottom: 2px dotted var(--crit); opacity: 1; }
+.me-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.pill.onl-pill { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.me-head { display: flex; gap: 10px; align-items: flex-start; }
+.me-head-txt { flex: 1; min-width: 0; }
+.me-head .me-title { margin: 0; font-size: 20px; }
+.me-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.me-kpi { border: 1px solid var(--line-soft); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); min-width: 0; }
+.me-kpi-val { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.me-kpi.me-kpi-text .me-kpi-val { font-size: 14px; white-space: normal; }
+.me-kpi.crit .me-kpi-val { color: var(--crit-text); }
+.me-kpi-lbl { font-size: 12px; color: var(--muted); }
+.me-kpi .en-delta { margin-top: 2px; }
+.me-more { position: relative; }
+.me-more > summary { list-style: none; }
+.me-more > summary::-webkit-details-marker { display: none; }
+.me-more-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 290px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.18); padding: 6px; display: flex; flex-direction: column; }
+.me-tabs { margin-top: 2px; }
+.me-pane { display: flex; flex-direction: column; gap: 14px; min-height: 200px; }
+.me-bars-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.me-bars { display: flex; align-items: stretch; gap: 4px; height: 150px; }
+.me-bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 4px; background: none; border: 0; padding: 0; cursor: pointer; min-width: 0; font: inherit; }
+.me-bar-fill { display: block; border-radius: 4px 4px 1px 1px; min-height: 3px; transition: opacity .15s; }
+.me-bar:hover .me-bar-fill { opacity: .75; }
+.me-bar.miss .me-bar-fill { background: none; border: 1.5px dashed color-mix(in srgb, var(--crit) 60%, transparent); }
+.me-bar.part .me-bar-fill { opacity: .55; }
+.me-bar-lbl { font-size: 10.5px; color: var(--muted); text-align: center; }
+.me-props { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 20px; }
+.me-retro { margin-left: 6px; }
+.me-dev-row { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 10px; padding: 8px 10px; cursor: pointer; font: inherit; color: inherit; }
+.me-dev-row:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.me-dev-txt { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+@media (max-width: 900px) { .me-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .me-kpis { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 640px) { .me-row td:nth-child(3), #mtTable thead th:nth-child(3) { display: none; } .me-spark { display: none; } }
+@media (max-width: 560px) { .me-kpis { grid-template-columns: minmax(0, 1fr); } }
 .me-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 1150px) { .me-layout { grid-template-columns: minmax(0, 1fr); } }
 .me-table tr.sel td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
@@ -2163,23 +2214,27 @@ details.wd-group { padding-bottom: 4px; }
     <div>
       <div class="eyebrow">Zählerverwaltung</div>
       <h1>Zähler</h1>
-      <p>Jeder Zähler wird einzeln geführt: Nummer, Energieart, Kostenstelle, Ein- und Ausbau, Messfaktor und Überlaufwert. Faktor und Überlauf gelten ab einem Monat — so bleibt jede Änderung nachvollziehbar.</p>
+      <p>Alle Zähler mit Zustand, Verbrauch und letzter Ablesung. Ein Klick auf einen Zähler zeigt Kennzahlen, Monatsverbrauch, Ablesungen, Online-Werte und den Verlauf aller Änderungen.</p>
     </div>
     <div class="head-actions">
       <button class="btn" id="mtCsvBtn" title="Zählerliste als CSV für Excel exportieren">CSV-Export</button>
       <button class="btn primary" id="mtNewBtn">+ Neuer Zähler</button>
     </div>
   </div>
-  <div class="filter-row">
-    <input type="search" class="perm-select search-input" id="mtSearch" placeholder="Zählernummer, Bezeichnung, Ort …" aria-label="Zähler suchen" autocomplete="off">
-    <select class="perm-select" id="mtType" aria-label="Nach Energieart filtern"></select>
-    <select class="perm-select" id="mtCc" aria-label="Nach Kostenstelle filtern"></select>
-    <select class="perm-select" id="mtState" aria-label="Nach Zustand filtern">
-      <option value="in">Eingebaute Zähler</option>
-      <option value="out">Ausgebaute Zähler</option>
-      <option value="">Alle Zähler</option>
-    </select>
-    <button class="btn sm" id="mtTreeBtn" aria-pressed="true" title="Unterzähler unter ihrem Hauptzähler einrücken">Zählerbaum</button>
+  <div class="me-stats" id="mtStats"></div>
+  <div class="card me-filter">
+    <div class="trk-chips me-chips" id="mtTypeChips" role="group" aria-label="Nach Energieart filtern"></div>
+    <div class="me-filter-row">
+      <input type="search" class="perm-select search-input" id="mtSearch" placeholder="Nummer, Bezeichnung, Ort, Seriennummer …" aria-label="Zähler suchen" autocomplete="off">
+      <select class="perm-select" id="mtCc" aria-label="Nach Kostenstelle filtern"></select>
+      <select class="perm-select" id="mtState" aria-label="Nach Zustand filtern">
+        <option value="in">Eingebaute Zähler</option>
+        <option value="out">Ausgebaute Zähler</option>
+        <option value="">Alle Zähler</option>
+      </select>
+      <button class="btn sm" id="mtTreeBtn" aria-pressed="true" title="Unterzähler unter ihrem Hauptzähler einrücken">Zählerbaum</button>
+      <button class="btn sm ghost" id="mtReset" type="button" hidden>Filter zurücksetzen</button>
+    </div>
   </div>
   <div class="me-layout">
     <div class="card me-list-card">
@@ -6562,13 +6617,16 @@ window.EN = (function () {
   $("#wdClose").addEventListener("click", function () { wdDlg.close(); });
 
 
-  /* ---------- Zähler: Liste und Detail ---------- */
-  var mtSel = null, mtSearch = "", mtType = "", mtCc = "", mtState = "in", mtTree = true;
+  /* ---------- Zähler: Übersicht, Liste und Detail ----------
+     Oben Statuskacheln (filtern per Klick) und Energiearten als Schalter, links die Liste (Zählerbaum), rechts das
+     Detail des gewählten Zählers mit Kennzahlen, Aktionen und Reitern (Übersicht, Ablesungen, Online, Verlauf, Maßnahmen). */
+  var mtSel = null, mtSearch = "", mtType = "", mtCc = "", mtState = "in", mtTree = true, mtFlag = "", mtTab = "over";
+  function meterMissing(m) { return missingList(DUE_MONTH).filter(function (x) { return x.meter === m.id; }).length; }
   function meterStatus(m) {
     if (m.removed) return { cls: "neutral", text: "Ausgebaut " + fmtDate(m.removed) };
-    var miss = missingList(DUE_MONTH).filter(function (x) { return x.meter === m.id; }).length;
+    var miss = meterMissing(m);
     if (miss) return { cls: "crit", text: miss + (miss === 1 ? " Ablesung fehlt" : " Ablesungen fehlen") };
-    return { cls: "good", text: "Eingebaut" };
+    return { cls: "good", text: "Aktuell" };
   }
   function lastReading(m) {
     var list = EN.readingsOf(energy, m.id);
@@ -6577,9 +6635,41 @@ window.EN = (function () {
   function meterHay(m) {
     return [m.no, m.name, m.location, m.manufacturer, m.model, m.serial, m.note, typeLabel(m.type), ccLabel(m.costCenter)].join(" ").toLowerCase();
   }
+  function meterOnline(m) { return !!(m.source && m.source.enabled && !m.removed); }
   function renderMeterFilters() {
-    fillSelect($("#mtType"), typeOptions("Alle Energiearten"), mtType);
     fillSelect($("#mtCc"), ccOptions("Alle Kostenstellen"), mtCc);
+    var host = $("#mtTypeChips"); host.innerHTML = "";
+    var base = energy.meters.filter(function (m) { return mtState === "" || (mtState === "in") === !m.removed; });
+    var chip = function (key, label, color, n) {
+      var b = el("button", "trk-chip" + (mtType === key ? " on" : ""));
+      b.type = "button"; b.setAttribute("aria-pressed", mtType === key ? "true" : "false");
+      if (color) { var dot = el("span", "trk-chip-dot"); dot.style.background = color; b.appendChild(dot); }
+      b.appendChild(el("span", null, label));
+      b.appendChild(el("span", "trk-chip-n", String(n)));
+      b.addEventListener("click", function () { mtType = key; renderMeters(); });
+      host.appendChild(b);
+    };
+    chip("", "Alle", null, base.length);
+    EN.TYPES.forEach(function (t) { chip(t.key, t.label, t.color, base.filter(function (m) { return m.type === t.key; }).length); });
+    // Statuskacheln
+    var st = $("#mtStats"); st.innerHTML = "";
+    var inst = energy.meters.filter(function (m) { return !m.removed; });
+    [
+      { k: "", state: "in", n: inst.length, label: inst.length === 1 ? "Zähler eingebaut" : "Zähler eingebaut" },
+      { k: "missing", state: "in", n: inst.filter(meterMissing).length, label: "mit fehlender Ablesung", cls: "crit" },
+      { k: "online", state: "in", n: inst.filter(meterOnline).length, label: "online angebunden" },
+      { k: "", state: "out", n: energy.meters.length - inst.length, label: "ausgebaut" }
+    ].forEach(function (x) {
+      var on = mtFlag === x.k && mtState === x.state;
+      var t = el("button", "card mini-tile me-stat" + (on ? " on" : "") + (x.cls && x.n ? " " + x.cls : ""));
+      t.type = "button";
+      t.setAttribute("aria-pressed", on ? "true" : "false");
+      t.appendChild(el("div", "mini-value", String(x.n)));
+      t.appendChild(el("div", "mini-label", x.label));
+      t.addEventListener("click", function () { mtFlag = x.k; mtState = x.state; $("#mtState").value = mtState; renderMeters(); });
+      st.appendChild(t);
+    });
+    $("#mtState").value = mtState;
   }
   function renderMeters() {
     renderMeterFilters();
@@ -6589,12 +6679,12 @@ window.EN = (function () {
       if (mtCc && m.costCenter !== mtCc) return false;
       if (mtState === "in" && m.removed) return false;
       if (mtState === "out" && !m.removed) return false;
+      if (mtFlag === "missing" && !meterMissing(m)) return false;
+      if (mtFlag === "online" && !meterOnline(m)) return false;
       return !terms.length || matchesTerms(meterHay(m), terms);
     };
-    var shown = energy.meters.filter(match);
-    var rows = [];
-    if (mtTree && !terms.length) {
-      // Zählerbaum: Hauptzähler, darunter eingerückt die Unterzähler (auch wenn der Hauptzähler herausgefiltert ist)
+    var shown = energy.meters.filter(match), rows = [];
+    if (mtTree && !terms.length && !mtFlag) {
       var ids = shown.map(function (m) { return m.id; });
       var roots = sortedMeters(shown.filter(function (m) { return !m.parent || ids.indexOf(m.parent) < 0; }));
       var walk = function (m, depth) {
@@ -6604,47 +6694,76 @@ window.EN = (function () {
       roots.forEach(function (m) { walk(m, 0); });
     } else rows = sortedMeters(shown).map(function (m) { return { m: m, depth: 0 }; });
     var tbl = $("#mtTable"); tbl.innerHTML = "";
-    $("#mtCount").textContent = shown.length + " von " + energy.meters.length + " Zählern";
+    $("#mtCount").textContent = shown.length + " von " + energy.meters.length + " Zählern" + (mtFlag || mtType || mtCc || terms.length ? " — Filter aktiv" : "");
+    $("#mtReset").hidden = !(mtFlag || mtType || mtCc || terms.length || mtState !== "in");
     if (!rows.length) {
-      tbl.appendChild(emptyRow(6, energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen."));
+      tbl.appendChild(emptyRow(4, energy.meters.length ? "Kein Zähler passt zu den Filtern." : "Noch keine Zähler angelegt — mit „+ Neuer Zähler“ beginnen."));
     } else {
-      tbl.appendChild(headRow(["Zähler", "Energieart", "Kostenstelle", "Faktor", "Letzte Ablesung", "Status"], [0, 0, 0, 1, 1, 0]));
+      tbl.appendChild(headRow(["Zähler", "Verbrauch " + monthShort(DUE_MONTH), "Letzte Ablesung", ""], [0, 1, 1, 0]));
       var tb = document.createElement("tbody");
+      var lastType = null;
       rows.forEach(function (r) {
-        var m = r.m, tr = el("tr", "trk-row" + (m.id === mtSel ? " sel" : "") + (m.removed ? " me-removed" : ""));
+        var m = r.m;
+        // Zwischenzeile je Energieart, wenn alle Energiearten angezeigt werden
+        if (!mtType && r.depth === 0 && m.type !== lastType) {
+          lastType = m.type;
+          var gr = el("tr", "me-group"), gc = el("td");
+          gc.colSpan = 4;
+          var dot = el("span", "en-dot"); dot.style.background = EN.typeOf(m.type).color;
+          gc.appendChild(dot); gc.appendChild(document.createTextNode(" " + typeLabel(m.type) + " · " + meterUnit(m.type)));
+          gr.appendChild(gc); tb.appendChild(gr);
+        }
+        var tr = el("tr", "trk-row me-row" + (m.id === mtSel ? " sel" : "") + (m.removed ? " me-removed" : ""));
         tr.tabIndex = 0;
         var c0 = document.createElement("td"), wrap = el("div", "me-name");
-        wrap.style.paddingLeft = (r.depth * 18) + "px";
+        wrap.style.paddingLeft = (r.depth * 20) + "px";
         if (r.depth) wrap.appendChild(el("span", "me-branch", "└"));
         var tx = el("div");
-        tx.appendChild(el("b", null, m.no));
-        tx.appendChild(el("div", "me-sub", m.name));
+        var ln = el("div", "me-no"); ln.appendChild(el("b", null, m.no)); tx.appendChild(ln);
+        tx.appendChild(el("div", "me-sub", m.name + (m.location ? " · " + m.location : "")));
+        if (m.costCenter) { var kc = el("div", "me-sub me-cc", ccLabel(m.costCenter)); kc.title = "Kostenstelle"; tx.appendChild(kc); }
         wrap.appendChild(tx);
         c0.appendChild(wrap);
         tr.appendChild(c0);
-        var c1 = document.createElement("td"); c1.appendChild(typeChip(m.type)); c1.appendChild(document.createTextNode(" " + typeLabel(m.type))); tr.appendChild(c1);
-        tr.appendChild(td(m.costCenter ? ccLabel(m.costCenter) : "—"));
-        tr.appendChild(td(fmtValue(EN.num(EN.propsAt(m, DUE_MONTH).factor)), "num"));
+        // Verbrauch im fälligen Monat mit kleinem Trend der letzten 6 Monate
+        var cv = el("td", "num nowrap");
+        if (!m.removed) {
+          var months = EN.monthRange(EN.addMonths(DUE_MONTH, -5), DUE_MONTH), vals = months.map(function (mo) { var x = meterMonthC(m.id, mo); return x.status === "ok" || x.status === "partial" ? x.energy : null; });
+          var cur = vals[vals.length - 1];
+          var box = el("div", "me-trend");
+          var max = Math.max.apply(null, vals.map(function (v) { return v || 0; }).concat([1e-9]));
+          var spark = el("span", "me-spark");
+          spark.style.color = EN.typeOf(m.type).color;
+          vals.forEach(function (v, i) { var bar = el("i"); bar.style.height = (v == null ? 0 : Math.max(8, v / max * 100)) + "%"; if (v == null) bar.className = "miss"; bar.title = monthShort(months[i]) + ": " + (v == null ? "fehlt" : fmtQty(v, billUnit(m.type))); spark.appendChild(bar); });
+          box.appendChild(spark);
+          box.appendChild(el("span", cur == null ? "muted" : "", cur == null ? "fehlt" : fmtQty(cur, billUnit(m.type))));
+          cv.appendChild(box);
+        } else cv.textContent = "—";
+        tr.appendChild(cv);
         var lr = lastReading(m);
-        tr.appendChild(td(lr ? fmtValue(EN.num(lr.value)) + " · " + fmtDate(lr.date) : "—", "num nowrap"));
-        var st = meterStatus(m), c5 = document.createElement("td");
-        c5.appendChild(el("span", "pill " + st.cls, st.text));
-        tr.appendChild(c5);
-        var open = function () { mtSel = m.id; renderMeters(); };
+        var cl = el("td", "num nowrap");
+        if (lr) { cl.appendChild(el("div", null, fmtValue(EN.num(lr.value)))); cl.appendChild(el("div", "me-sub", fmtDate(lr.date))); } else cl.textContent = "—";
+        tr.appendChild(cl);
+        var csTd = el("td"), cs = el("div", "me-badges");
+        csTd.appendChild(cs);
+        var st = meterStatus(m);
+        if (st.cls !== "good") cs.appendChild(el("span", "pill " + st.cls, st.cls === "crit" ? "fehlt" : "ausgebaut"));
+        if (meterOnline(m)) { var ob = el("span", "pill onl-pill", "online"); ob.title = "Zählerstand wird online abgeholt"; cs.appendChild(ob); }
+        tr.appendChild(csTd);
+        var open = function () { mtSel = m.id; renderMeters(); if (window.matchMedia && window.matchMedia("(max-width: 1150px)").matches) $("#mtDetail").scrollIntoView({ behavior: "smooth", block: "start" }); };
         tr.addEventListener("click", open);
         tr.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
         tb.appendChild(tr);
       });
       tbl.appendChild(tb);
     }
-    if (mtSel && !EN.meterById(energy, mtSel)) mtSel = null;
-    if (!mtSel && rows.length) mtSel = rows[0].m.id;
+    // Der gewählte Zähler bleibt nur, wenn er zu den Filtern passt — sonst der erste der Liste
+    if (!rows.some(function (r) { return r.m.id === mtSel; })) mtSel = rows.length ? rows[0].m.id : null;
     renderMeterDetail();
   }
   $("#mtSearch").addEventListener("input", function () { mtSearch = this.value; renderMeters(); });
-  $("#mtType").addEventListener("change", function () { mtType = this.value; renderMeters(); });
   $("#mtCc").addEventListener("change", function () { mtCc = this.value; renderMeters(); });
-  $("#mtState").addEventListener("change", function () { mtState = this.value; renderMeters(); });
+  $("#mtState").addEventListener("change", function () { mtState = this.value; mtFlag = ""; renderMeters(); });
   $("#mtTreeBtn").addEventListener("click", function () {
     mtTree = !mtTree;
     this.classList.toggle("toggled", mtTree);
@@ -6652,6 +6771,18 @@ window.EN = (function () {
     renderMeters();
   });
   $("#mtTreeBtn").classList.add("toggled");
+  // Menü „Weitere Aktionen“ schließt bei Klick daneben oder mit Esc
+  document.addEventListener("click", function (e) {
+    document.querySelectorAll(".me-more[open]").forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") document.querySelectorAll(".me-more[open]").forEach(function (d) { d.open = false; });
+  });
+  $("#mtReset").addEventListener("click", function () {
+    mtSearch = ""; mtType = ""; mtCc = ""; mtState = "in"; mtFlag = "";
+    $("#mtSearch").value = "";
+    renderMeters();
+  });
 
   function infoGrid(pairs) {
     var g = el("dl", "me-info");
@@ -6667,7 +6798,15 @@ window.EN = (function () {
   function meterLink(id) {
     var b = el("button", "link-btn", meterLabel(id));
     b.type = "button";
-    b.addEventListener("click", function () { mtSel = id; mtState = ""; $("#mtState").value = ""; renderMeters(); });
+    b.addEventListener("click", function () {
+      var mm = EN.meterById(energy, id);
+      if (!mm) return;
+      // Filter so öffnen, dass der verknüpfte Zähler in der Liste steht
+      mtSel = id; mtFlag = ""; mtType = ""; mtCc = ""; mtSearch = ""; $("#mtSearch").value = "";
+      if (mm.removed && mtState === "in") mtState = "";
+      if (!mm.removed && mtState === "out") mtState = "in";
+      renderMeters();
+    });
     return b;
   }
   function flagText(f) {
@@ -6679,142 +6818,221 @@ window.EN = (function () {
     if (f.noConv) t.push("Umrechnung Gas fehlt");
     return t.join(" · ");
   }
+  function meKpi(value, label, cls, sub) {
+    var t = el("div", "me-kpi" + (cls ? " " + cls : ""));
+    t.appendChild(el("div", "me-kpi-val", value));
+    t.appendChild(el("div", "me-kpi-lbl", label));
+    if (sub) t.appendChild(sub);
+    return t;
+  }
+  function meSection(title, body) {
+    var s = el("div", "me-sec");
+    s.appendChild(el("div", "set-card-title", title));
+    s.appendChild(body);
+    return s;
+  }
+  function wrapTable(t) { var w = el("div", "trk-table-wrap"); w.appendChild(t); return w; }
+  // 12 Monate als Balken (fehlende Monate gestrichelt), Klick auf einen Balken öffnet die Ablesung des Monats
+  function meterBars(m) {
+    var unit = billUnit(m.type);
+    var to = m.removed ? (EN.meterLastMonth(energy, m) || DUE_MONTH) : DUE_MONTH;
+    var months = EN.monthRange(EN.addMonths(to, -11), to).filter(function (mo) { return mo >= EN.monthOf(m.installed); });
+    var data = months.map(function (mo) { var r = meterMonthC(m.id, mo); return { mo: mo, r: r, v: r.status === "ok" || r.status === "partial" ? r.energy : null }; });
+    var max = Math.max.apply(null, data.map(function (x) { return x.v || 0; }).concat([1e-9]));
+    var box = el("div", "me-bars");
+    if (!data.length) { box.appendChild(el("div", "empty-hint", "Noch kein Abrechnungsmonat.")); return box; }
+    data.forEach(function (x) {
+      var col = el("button", "me-bar" + (x.v == null ? " miss" : x.r.status === "partial" ? " part" : ""));
+      col.type = "button";
+      var fill = el("span", "me-bar-fill");
+      fill.style.height = (x.v == null ? 100 : Math.max(3, x.v / max * 100)) + "%";
+      fill.style.background = x.v == null ? "" : EN.typeOf(m.type).color;
+      col.appendChild(fill);
+      col.appendChild(el("span", "me-bar-lbl", MONTH_SHORT[+x.mo.slice(5, 7) - 1]));
+      var price = EN.priceAt(energy, m.type, x.mo);
+      col.title = monthLabel(x.mo) + ": " + (x.v == null ? "Ablesung fehlt" : fmtQty(x.v, unit) + (price != null ? " · " + fmtEuro(x.v * price) : "") + (x.r.status === "partial" ? " · prüfen: " + flagText(x.r.flags) : ""));
+      col.setAttribute("aria-label", col.title);
+      col.addEventListener("click", function () { rdMonth = x.mo; rdDate = null; rdOnlyMissing = false; rdSearch = m.no; $("#rdSearch").value = m.no; switchView("readings"); });
+      box.appendChild(col);
+    });
+    return box;
+  }
   function renderMeterDetail() {
     var host = $("#mtDetail"); host.innerHTML = "";
     var m = mtSel && EN.meterById(energy, mtSel);
     if (!m) { host.appendChild(el("div", "empty-hint", "Einen Zähler in der Liste wählen.")); return; }
+    var unit = meterUnit(m.type), bunit = billUnit(m.type), p = EN.propsAt(m, DUE_MONTH);
+    // Kopf
     var head = el("div", "me-head");
     head.appendChild(typeChip(m.type));
-    var ht = el("div");
-    ht.appendChild(el("h2", "me-title", m.no + " · " + m.name));
-    var st = meterStatus(m);
-    ht.appendChild(el("span", "pill " + st.cls, st.text));
+    var ht = el("div", "me-head-txt");
+    ht.appendChild(el("h2", "me-title", m.no));
+    ht.appendChild(el("div", "me-sub", m.name + " · " + typeLabel(m.type) + (m.location ? " · " + m.location : "")));
     head.appendChild(ht);
+    var st = meterStatus(m), badges = el("div", "me-badges");
+    badges.appendChild(el("span", "pill " + st.cls, st.text));
+    if (meterOnline(m)) badges.appendChild(el("span", "pill onl-pill", "online"));
+    head.appendChild(badges);
     host.appendChild(head);
+    // Kennzahlen
+    var kp = el("div", "me-kpis"), lr = lastReading(m);
+    kp.appendChild(meKpi(lr ? fmtValue(EN.num(lr.value)) + " " + unit : "—", lr ? "Letzter Stand · " + fmtDate(lr.date) : "Noch keine Ablesung"));
+    var c1 = meterMonthC(m.id, DUE_MONTH), c0 = meterMonthC(m.id, EN.addMonths(DUE_MONTH, -1));
+    var v1 = c1.status === "ok" || c1.status === "partial" ? c1.energy : null, v0 = c0.status === "ok" || c0.status === "partial" ? c0.energy : null;
+    kp.appendChild(meKpi(v1 == null ? (m.removed ? "—" : "fehlt") : fmtQty(v1, bunit), "Verbrauch " + monthLabel(DUE_MONTH), v1 == null && !m.removed ? "crit" : "", v1 != null ? deltaLine(v1, v0, bunit) : null));
+    kp.appendChild(meKpi(m.costCenter ? ccLabel(m.costCenter) : "keine", "Kostenstelle", "me-kpi-text"));
+    host.appendChild(kp);
+    // Aktionen: die häufigen sichtbar, der Rest im Menü
     if (can("edit")) {
       var acts = el("div", "me-actions");
-      var btn = function (label, fn, primary) { var b = el("button", "btn sm" + (primary ? " primary" : ""), label); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); };
-      if (!m.removed) btn("Ablesung erfassen", function () { openReadingDialog(null, m.id); }, true);
-      btn("Bearbeiten", function () { openMeterDialog(m); });
-      btn("Messfaktor / Überlauf", function () { openPropsDialog(m); });
+      var btn = function (parent, label, fn, cls) { var b = el("button", "btn sm" + (cls ? " " + cls : ""), label); b.type = "button"; b.addEventListener("click", fn); parent.appendChild(b); return b; };
+      if (!m.removed) btn(acts, "Ablesung erfassen", function () { openReadingDialog(null, m.id); }, "primary");
+      btn(acts, "Bearbeiten", function () { openMeterDialog(m); });
+      var more = el("details", "me-more");
+      var sm = el("summary", "btn sm", "Weitere Aktionen ▾");
+      more.appendChild(sm);
+      var menu = el("div", "me-more-menu");
+      var item = function (label, sub, fn) {
+        var b = el("button", "dash-menu-item"); b.type = "button";
+        var tx = el("span"); tx.appendChild(el("b", null, label)); tx.appendChild(el("small", null, sub)); b.appendChild(tx);
+        b.addEventListener("click", function () { more.open = false; fn(); });
+        menu.appendChild(b);
+      };
+      item("Messfaktor / Überlauf ändern", "gilt ab einem Abrechnungsmonat, auch rückwirkend", function () { openPropsDialog(m); });
       if (!m.removed) {
-        btn("Zählerwechsel", function () { openChangeDialog(m, true); });
-        btn("Ausbauen", function () { openChangeDialog(m, false); });
+        item("Zählerwechsel", "alten Zähler abschließen, neuen anlegen", function () { openChangeDialog(m, true); });
+        item("Ausbauen", "ohne Ersatz abschließen", function () { openChangeDialog(m, false); });
       }
-      btn("Maßnahme anlegen", function () { openDialog(null, { cat: m.type, meter: m.id }); });
+      item("Maßnahme anlegen", "z. B. Mehrverbrauch oder Leckage", function () { openDialog(null, { cat: m.type, meter: m.id }); });
+      more.appendChild(menu);
+      acts.appendChild(more);
       host.appendChild(acts);
     }
-    var p = EN.propsAt(m, DUE_MONTH), unit = meterUnit(m.type);
-    var inst = EN.readingsOf(energy, m.id).filter(function (r) { return r.kind === "install"; })[0];
-    var rem = EN.readingsOf(energy, m.id).filter(function (r) { return r.kind === "remove"; })[0];
-    var kids = energy.meters.filter(function (k) { return k.parent === m.id; });
-    var kidsEl = null;
-    if (kids.length) { kidsEl = el("div", "me-links"); kids.forEach(function (k) { kidsEl.appendChild(meterLink(k.id)); }); }
-    host.appendChild(infoGrid([
-      ["Energieart", typeLabel(m.type) + " (Ablesung in " + unit + (billUnit(m.type) !== unit ? ", Abrechnung in " + billUnit(m.type) : "") + ")"],
-      ["Kostenstelle", m.costCenter ? ccLabel(m.costCenter) : "keine"],
-      ["Hauptzähler", m.parent ? meterLink(m.parent) : "—"],
-      ["Unterzähler", kidsEl],
-      ["Einbau", fmtDate(m.installed) + (inst ? " · Anfangsstand " + fmtValue(EN.num(inst.value)) + " " + unit : "")],
-      ["Ausbau", m.removed ? fmtDate(m.removed) + (rem ? " · Ausbaustand " + fmtValue(EN.num(rem.value)) + " " + unit : "") : ""],
-      ["Vorgänger", m.predecessor ? meterLink(m.predecessor) : ""],
-      ["Nachfolger", m.successor ? meterLink(m.successor) : ""],
-      ["Messfaktor", fmtValue(EN.num(p.factor)) + (m.props.length > 1 ? " (seit " + monthLabel(p.from) + ")" : "")],
-      ["Überlaufwert", EN.num(p.overflow) != null ? fmtValue(EN.num(p.overflow)) : "nicht hinterlegt"],
-      ["Einbauort", m.location], ["Hersteller", m.manufacturer], ["Typ / Modell", m.model], ["Seriennummer", m.serial],
-      ["Stellen", m.digits], ["Eichung bis", m.calib ? fmtDate(m.calib) : ""], ["Bemerkung", m.note]
-    ]));
-
-    renderMeterOnline(host, m);
-
-    // Verbrauch der letzten 12 Monate (Zählereinheit × Faktor, bei Gas zusätzlich kWh)
-    var sec = el("div", "me-sec");
-    sec.appendChild(el("div", "set-card-title", "Monatsverbrauch"));
-    var to = m.removed ? (EN.meterLastMonth(energy, m) || DUE_MONTH) : DUE_MONTH;
-    var months = EN.monthRange(EN.addMonths(to, -11), to).filter(function (mo) { return mo >= EN.monthOf(m.installed); }).reverse();
-    var t1 = el("table", "trk-table");
-    var gas = billUnit(m.type) !== unit;
-    t1.appendChild(headRow(["Monat", "Verbrauch", gas ? "Energie" : "Kosten", "Status"], [0, 1, 1, 0]));
-    var tb1 = document.createElement("tbody");
-    months.forEach(function (mo) {
-      var r = meterMonthC(m.id, mo), tr = document.createElement("tr");
-      tr.appendChild(td(monthLabel(mo), "nowrap"));
-      tr.appendChild(td(r.status === "missing" ? "–" : fmtQty(r.qty, unit), "num"));
-      var price = EN.priceAt(energy, m.type, mo);
-      tr.appendChild(td(r.status === "missing" ? "–" : gas ? fmtQty(r.energy, billUnit(m.type)) : price == null ? "–" : fmtEuro(r.energy * price), "num"));
-      var c = document.createElement("td");
-      c.appendChild(el("span", "pill " + (r.status === "ok" ? "good" : r.status === "missing" ? "crit" : "warn"),
-        r.status === "ok" ? "Erfasst" : r.status === "missing" ? "Fehlt" : r.status === "partial" ? "Prüfen" : "—"));
-      if (r.flags && Object.keys(r.flags).length) c.title = flagText(r.flags);
-      tr.appendChild(c);
-      tb1.appendChild(tr);
+    // Reiter
+    var nRead = EN.readingsOf(energy, m.id, true).length, devs = state.deviations.filter(function (d) { return d.meter === m.id; });
+    var chain = EN.chainOf(energy, m.id).map(function (x) { return x.no; });
+    var changes = energy.changes.filter(function (c) { return chain.some(function (no) { return String(c.text).indexOf(no) >= 0; }); });
+    var tabs = [["over", "Übersicht"], ["read", "Ablesungen (" + nRead + ")"], ["onl", "Online"], ["hist", "Verlauf (" + (m.props.length + changes.length) + ")"], ["dev", "Maßnahmen (" + devs.length + ")"]];
+    if (!tabs.some(function (t) { return t[0] === mtTab; })) mtTab = "over";
+    var bar = el("div", "dtabs me-tabs");
+    bar.setAttribute("role", "tablist");
+    tabs.forEach(function (t) {
+      var b = el("button", "dtab", t[1]); b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", t[0] === mtTab ? "true" : "false");
+      if (t[0] === "onl" && meterOnline(m)) b.appendChild(el("span", "dtab-dot"));
+      b.addEventListener("click", function () { mtTab = t[0]; renderMeterDetail(); });
+      bar.appendChild(b);
     });
-    if (!months.length) tb1.appendChild(emptyRow(4, "Noch kein Abrechnungsmonat.").firstChild);
-    t1.appendChild(tb1);
-    var w1 = el("div", "trk-table-wrap"); w1.appendChild(t1); sec.appendChild(w1);
-    host.appendChild(sec);
+    host.appendChild(bar);
+    var pane = el("div", "me-pane");
+    host.appendChild(pane);
 
-    // Ablesungen mit berechnetem Verbrauch
-    var sec2 = el("div", "me-sec");
-    sec2.appendChild(el("div", "set-card-title", "Ablesungen"));
-    var cons = {};
-    EN.consumptions(energy, m.id).forEach(function (c) { cons[c.reading.id] = c; });
-    var list = EN.readingsOf(energy, m.id, true).slice().reverse();
-    var t2 = el("table", "trk-table");
-    t2.appendChild(headRow(["Ablesedatum", "Abrechnungsmonat", "Zeitraum", "Stand", "Verbrauch", "Hinweis", ""], [0, 0, 0, 1, 1, 0, 0]));
-    var tb2 = document.createElement("tbody");
-    list.forEach(function (r) {
-      var c = cons[r.id], tr = el("tr", r.deleted ? "me-removed" : "");
-      tr.appendChild(td(fmtDate(r.date), "nowrap"));
-      tr.appendChild(td(r.kind === "install" ? "—" : monthLabel(r.month), "nowrap"));
-      tr.appendChild(td(c && c.from ? fmtDate(c.from) + " – " + fmtDate(c.to) : "—", "nowrap"));
-      tr.appendChild(td(fmtValue(EN.num(r.value)), "num"));
-      tr.appendChild(td(r.kind === "install" ? "Einbau" : c && c.qty != null ? fmtQty(c.qty, unit) : "–", "num"));
-      var note = [r.kind === "remove" ? "Ausbau" : "", r.deleted ? "gelöscht " + fmtDateTime(r.deleted.at) + " (" + r.deleted.by + ")" : "",
-        c ? flagText(c.flags) : "", r.edits && r.edits.length ? r.edits.length + "× geändert" : "", r.note].filter(Boolean).join(" · ");
-      tr.appendChild(td(note, "me-note"));
-      var c6 = document.createElement("td");
-      if (can("edit") && !r.deleted) {
-        var b = el("button", "btn sm", "✎"); b.type = "button"; b.title = "Ablesung ansehen oder korrigieren";
-        b.setAttribute("aria-label", b.title);
-        b.addEventListener("click", function () { openReadingDialog(r.id); });
-        c6.appendChild(b);
-      }
-      tr.appendChild(c6);
-      tb2.appendChild(tr);
-    });
-    t2.appendChild(tb2);
-    var w2 = el("div", "trk-table-wrap"); w2.appendChild(t2); sec2.appendChild(w2);
-    host.appendChild(sec2);
-
-    // Verlauf Messfaktor / Überlauf
-    var sec3 = el("div", "me-sec");
-    sec3.appendChild(el("div", "set-card-title", "Messfaktor und Überlauf — gültig ab"));
-    var t3 = el("table", "trk-table");
-    t3.appendChild(headRow(["Gültig ab", "Messfaktor", "Überlaufwert", "Geändert"], [0, 1, 1, 0]));
-    var tb3 = document.createElement("tbody");
-    m.props.slice().reverse().forEach(function (v) {
-      var tr = document.createElement("tr");
-      tr.appendChild(td(v.from <= "1900-12" ? "von Anfang an" : monthLabel(v.from)));
-      tr.appendChild(td(fmtValue(EN.num(v.factor)), "num"));
-      tr.appendChild(td(EN.num(v.overflow) != null ? fmtValue(EN.num(v.overflow)) : "—", "num"));
-      tr.appendChild(td(v.at ? fmtDateTime(v.at) + (v.by ? " · " + v.by : "") : ""));
-      tb3.appendChild(tr);
-    });
-    t3.appendChild(tb3);
-    var w3 = el("div", "trk-table-wrap"); w3.appendChild(t3); sec3.appendChild(w3);
-    host.appendChild(sec3);
-    var devs = state.deviations.filter(function (d) { return d.meter === m.id; });
-    if (devs.length) {
-      var sec4 = el("div", "me-sec");
-      sec4.appendChild(el("div", "set-card-title", "Maßnahmen zu diesem Zähler"));
-      devs.forEach(function (d) {
-        var b = el("button", "link-btn me-dev", d.title + " · " + phaseName(d.phase));
-        b.type = "button";
-        b.addEventListener("click", function () { openDialog(d); });
-        sec4.appendChild(b);
+    if (mtTab === "over") {
+      var bh = el("div", "me-bars-head");
+      bh.appendChild(el("div", "set-card-title", "Monatsverbrauch"));
+      bh.appendChild(el("span", "mini-hint", bunit + (bunit !== unit ? " (aus " + unit + " umgerechnet)" : "") + " · Klick auf einen Monat öffnet die Ablesung"));
+      var bs = el("div", "me-sec"); bs.appendChild(bh); bs.appendChild(meterBars(m));
+      pane.appendChild(bs);
+      var inst = EN.readingsOf(energy, m.id).filter(function (r) { return r.kind === "install"; })[0];
+      var rem = EN.readingsOf(energy, m.id).filter(function (r) { return r.kind === "remove"; })[0];
+      var kids = energy.meters.filter(function (k) { return k.parent === m.id; }), kidsEl = null;
+      if (kids.length) { kidsEl = el("div", "me-links"); kids.forEach(function (k) { kidsEl.appendChild(meterLink(k.id)); }); }
+      var grid = el("div", "me-props");
+      grid.appendChild(meSection("Zuordnung", infoGrid([
+        ["Energieart", typeLabel(m.type) + " (Ablesung in " + unit + (bunit !== unit ? ", Abrechnung in " + bunit : "") + ")"],
+        ["Kostenstelle", m.costCenter ? ccLabel(m.costCenter) : "keine"],
+        ["Hauptzähler", m.parent ? meterLink(m.parent) : "— (ist Hauptzähler)"],
+        ["Unterzähler", kidsEl]
+      ])));
+      grid.appendChild(meSection("Einbau und Messung", infoGrid([
+        ["Einbau", fmtDate(m.installed) + (inst ? " · Anfangsstand " + fmtValue(EN.num(inst.value)) + " " + unit : "")],
+        ["Ausbau", m.removed ? fmtDate(m.removed) + (rem ? " · Ausbaustand " + fmtValue(EN.num(rem.value)) + " " + unit : "") : ""],
+        ["Vorgänger", m.predecessor ? meterLink(m.predecessor) : ""],
+        ["Nachfolger", m.successor ? meterLink(m.successor) : ""],
+        ["Messfaktor", fmtValue(EN.num(p.factor)) + (m.props.length > 1 ? " (seit " + monthLabel(p.from) + ")" : "")],
+        ["Überlaufwert", EN.num(p.overflow) != null ? fmtValue(EN.num(p.overflow)) : "nicht hinterlegt"]
+      ])));
+      var techPairs = [["Einbauort", m.location], ["Hersteller", m.manufacturer], ["Typ / Modell", m.model], ["Seriennummer", m.serial],
+        ["Stellen", m.digits], ["Eichung bis", m.calib ? fmtDate(m.calib) : ""], ["Bemerkung", m.note]];
+      if (techPairs.some(function (x) { return x[1]; })) grid.appendChild(meSection("Technik", infoGrid(techPairs)));
+      pane.appendChild(grid);
+    } else if (mtTab === "read") {
+      var cons = {};
+      EN.consumptions(energy, m.id).forEach(function (c) { cons[c.reading.id] = c; });
+      var list = EN.readingsOf(energy, m.id, true).slice().reverse();
+      var t2 = el("table", "trk-table");
+      t2.appendChild(headRow(["Ablesedatum", "Monat", "Stand", "Verbrauch", "Hinweis", ""], [0, 0, 1, 1, 0, 0]));
+      var tb2 = document.createElement("tbody");
+      list.forEach(function (r) {
+        var c = cons[r.id], tr = el("tr", r.deleted ? "me-removed" : "");
+        var cd = el("td", "nowrap"); cd.appendChild(el("div", null, fmtDate(r.date)));
+        if (c && c.from) cd.appendChild(el("div", "me-sub", "seit " + fmtDate(c.from)));
+        tr.appendChild(cd);
+        tr.appendChild(td(r.kind === "install" ? "—" : monthShort(r.month), "nowrap"));
+        tr.appendChild(td(fmtValue(EN.num(r.value)), "num"));
+        tr.appendChild(td(r.kind === "install" ? "Einbau" : c && c.qty != null ? fmtQty(c.qty, unit) : "–", "num nowrap"));
+        var note = [r.kind === "remove" ? "Ausbau" : "", r.deleted ? "gelöscht " + fmtDateTime(r.deleted.at) + " (" + r.deleted.by + ")" : "",
+          c ? flagText(c.flags) : "", r.edits && r.edits.length ? r.edits.length + "× geändert" : "", r.note].filter(Boolean).join(" · ");
+        tr.appendChild(td(note, "me-note"));
+        var c6 = document.createElement("td");
+        if (can("edit") && !r.deleted) {
+          var b = el("button", "btn sm", "✎"); b.type = "button"; b.title = "Ablesung ansehen oder korrigieren"; b.setAttribute("aria-label", b.title);
+          b.addEventListener("click", function () { openReadingDialog(r.id); });
+          c6.appendChild(b);
+        }
+        tr.appendChild(c6);
+        tb2.appendChild(tr);
       });
-      host.appendChild(sec4);
+      if (!list.length) tb2.appendChild(emptyRow(6, "Noch keine Ablesung.").firstChild);
+      t2.appendChild(tb2);
+      pane.appendChild(wrapTable(t2));
+    } else if (mtTab === "onl") {
+      renderMeterOnline(pane, m);
+    } else if (mtTab === "hist") {
+      var t3 = el("table", "trk-table");
+      t3.appendChild(headRow(["Gültig ab", "Messfaktor", "Überlaufwert", "Geändert"], [0, 1, 1, 0]));
+      var tb3 = document.createElement("tbody");
+      m.props.slice().reverse().forEach(function (v) {
+        var tr = document.createElement("tr");
+        tr.appendChild(td(v.from <= "1900-12" ? "von Anfang an" : monthLabel(v.from)));
+        tr.appendChild(td(fmtValue(EN.num(v.factor)), "num"));
+        tr.appendChild(td(EN.num(v.overflow) != null ? fmtValue(EN.num(v.overflow)) : "—", "num"));
+        tr.appendChild(td(v.at ? fmtDateTime(v.at) + (v.by ? " · " + v.by : "") : ""));
+        tb3.appendChild(tr);
+      });
+      t3.appendChild(tb3);
+      pane.appendChild(meSection("Messfaktor und Überlauf", wrapTable(t3)));
+      var t4 = el("table", "trk-table");
+      t4.appendChild(headRow(["Zeitpunkt", "Person", "Änderung"], [0, 0, 0]));
+      var tb4 = document.createElement("tbody");
+      changes.slice(0, 100).forEach(function (c) {
+        var tr = document.createElement("tr");
+        tr.appendChild(td(fmtDateTime(c.at), "nowrap")); tr.appendChild(td(c.by));
+        var ct = td(c.text);
+        if (c.retro) ct.appendChild(el("span", "pill warn me-retro", "rückwirkend"));
+        tr.appendChild(ct);
+        tb4.appendChild(tr);
+      });
+      if (!changes.length) tb4.appendChild(emptyRow(3, "Keine Einträge im Änderungsprotokoll.").firstChild);
+      t4.appendChild(tb4);
+      pane.appendChild(meSection("Änderungsprotokoll zu diesem Zähler", wrapTable(t4)));
+    } else if (mtTab === "dev") {
+      if (!devs.length) pane.appendChild(el("div", "empty-hint", "Keine Maßnahmen zu diesem Zähler."));
+      devs.forEach(function (d) {
+        var row = el("button", "me-dev-row"); row.type = "button";
+        var chip = el("span", "cat-chip", letterOf(d.cat)); chip.style.background = catColor(d.cat);
+        row.appendChild(chip);
+        var tx = el("span", "me-dev-txt"); tx.appendChild(el("b", null, d.title)); tx.appendChild(el("span", "me-sub", subLabel(d.cat, devSub(d)) + (d.owner ? " · " + d.owner : "") + (d.due ? " · fällig " + fmtDate(d.due) : "")));
+        row.appendChild(tx);
+        row.appendChild(el("span", "pill " + (d.phase === "done" ? "good" : isOverdue(d) ? "crit" : "neutral"), isOverdue(d) ? "Überfällig" : phaseName(d.phase)));
+        row.addEventListener("click", function () { openDialog(d); });
+        pane.appendChild(row);
+      });
+      if (can("edit")) {
+        var nb = el("button", "btn sm", "+ Maßnahme anlegen"); nb.type = "button";
+        nb.addEventListener("click", function () { openDialog(null, { cat: m.type, meter: m.id }); });
+        pane.appendChild(nb);
+      }
     }
   }
 
@@ -10236,6 +10454,12 @@ window.EN = (function () {
     { id: "zaehler", group: "Zähler & Ablesung", title: "Zähler anlegen und pflegen",
       intro: "Jeder Zähler wird einzeln verwaltet. Unter „Zähler“ stehen alle Zähler als Liste oder als Zählerbaum (Unterzähler eingerückt unter ihrem Hauptzähler); rechts die Details des gewählten Zählers.",
       sections: [
+        { h: "Die Zählerseite im Überblick", list: [
+          "<b>Kacheln oben</b> — eingebaute Zähler, Zähler mit fehlender Ablesung, online angebundene und ausgebaute Zähler. Ein Klick auf eine Kachel zeigt nur diese Zähler.",
+          "<b>Energiearten</b> — die Schalter Alle / Strom / Wasser / Gas / Druckluft zeigen nur Zähler dieser Art; dazu Suche, Kostenstelle und „Zählerbaum“. „Filter zurücksetzen“ zeigt wieder alle eingebauten Zähler.",
+          "<b>Liste</b> — je Zähler Nummer, Bezeichnung, Ort und Kostenstelle, der Verbrauch im fälligen Monat mit kleinem Verlauf der letzten 6 Monate (rot gepunktet = Ablesung fehlt), der letzte Stand und die Kennzeichen „fehlt“, „online“ oder „ausgebaut“.",
+          "<b>Detail</b> — oben letzter Stand, Verbrauch mit Vormonatsvergleich und Kostenstelle; darunter „Ablesung erfassen“, „Bearbeiten“ und unter „Weitere Aktionen“ Messfaktor / Überlauf, Zählerwechsel, Ausbauen und Maßnahme anlegen."
+        ] },
         { h: "Neuer Zähler", img: "zaehler", cap: "Zählerliste als Zählerbaum, rechts die Details", steps: [
           ["Zählernummer und Bezeichnung", "Die Nummer muss eindeutig sein, z. B. E-4711."],
           ["Energieart", "Strom (kWh), Wasser (m³), Gas (m³, abgerechnet in kWh) oder Druckluft (Nm³). Die Energieart lässt sich später nicht ändern."],
@@ -10245,12 +10469,13 @@ window.EN = (function () {
           ["Messfaktor und Überlauf", "Verbrauch = Differenz der Zählerstände × Messfaktor (z. B. Wandlerfaktor). Der Überlaufwert ist der Stand, bei dem das Zählwerk wieder bei 0 beginnt (5 Stellen → 100000)."],
           ["Weitere Eigenschaften", "Einbauort, Hersteller, Typ, Seriennummer, Stellen des Zählwerks, Eichfrist und Bemerkung."]
         ] },
-        { h: "Messfaktor und Überlauf ändern", p: "„Messfaktor / Überlauf“ legt neue Werte ab einem Abrechnungsmonat fest. Frühere Monate behalten ihre Werte; der Verlauf steht beim Zähler. Liegt der Monat in der Vergangenheit, wird rückwirkend neu berechnet — vorher erscheint eine Vorschau, die bestätigt werden muss (siehe „Rückwirkende Änderungen“)." },
-        { h: "Details eines Zählers", list: [
-          "Eigenschaften mit Haupt- und Unterzählern, Vorgänger und Nachfolger bei einem Zählerwechsel.",
-          "Monatsverbrauch der letzten 12 Monate mit Status (erfasst, fehlt, prüfen).",
-          "Alle Ablesungen mit Ablesedatum, Abrechnungsmonat, Verbrauchszeitraum, Stand, Verbrauch und Hinweisen (z. B. Überlauf, negativer Verbrauch, mit 0 gerechnet). Gelöschte und korrigierte Ablesungen bleiben sichtbar.",
-          "Maßnahmen, die zu diesem Zähler angelegt wurden."
+        { h: "Messfaktor und Überlauf ändern", p: "„Weitere Aktionen“ → „Messfaktor / Überlauf ändern“ legt neue Werte ab einem Abrechnungsmonat fest. Frühere Monate behalten ihre Werte; der Verlauf steht beim Zähler. Liegt der Monat in der Vergangenheit, wird rückwirkend neu berechnet — vorher erscheint eine Vorschau, die bestätigt werden muss (siehe „Rückwirkende Änderungen“)." },
+        { h: "Reiter im Detail", list: [
+          "<b>Übersicht</b> — Monatsverbrauch der letzten 12 Monate als Balken (gestrichelt = Ablesung fehlt, blass = prüfen; Klick öffnet die Ablesung des Monats) und die Eigenschaften in Gruppen: Zuordnung (Kostenstelle, Haupt- und Unterzähler), Einbau und Messung (Vorgänger, Nachfolger, Faktor, Überlauf), Technik.",
+          "<b>Ablesungen</b> — alle Ablesungen mit Ablesedatum, Abrechnungsmonat, Verbrauchszeitraum, Stand, Verbrauch und Hinweisen (z. B. Überlauf, negativer Verbrauch, mit 0 gerechnet). Gelöschte und korrigierte Ablesungen bleiben sichtbar.",
+          "<b>Online</b> — Online-Messwerte und Verbrauch je Tag, wenn der Zähler angebunden ist.",
+          "<b>Verlauf</b> — Messfaktor und Überlauf mit „gültig ab“ sowie alle Einträge des Änderungsprotokolls zu diesem Zähler und seiner Wechselkette; rückwirkende Änderungen sind gekennzeichnet.",
+          "<b>Maßnahmen</b> — Maßnahmen zu diesem Zähler; ein Klick öffnet sie."
         ] }
       ],
       tip: "Löschen lässt sich ein Zähler nur, solange er keine Ablesungen hat. Danach wird er ausgebaut — so bleibt die Historie erhalten." },
@@ -10260,13 +10485,13 @@ window.EN = (function () {
       flow: ["Ausbaustand erfassen", "Neuen Zähler anlegen", "Anfangsstand erfassen", "Verbrauch getrennt berechnen"],
       sections: [
         { h: "So geht es", img: "zaehlerwechsel", cap: "Zählerwechsel: alten Zähler abschließen, neuen anlegen", steps: [
-          ["Zähler wählen", "Unter „Zähler“ den alten Zähler wählen und „Zählerwechsel“ klicken."],
+          ["Zähler wählen", "Unter „Zähler“ den alten Zähler wählen und unter „Weitere Aktionen“ „Zählerwechsel“ klicken."],
           ["Alter Zähler", "Ausbaudatum und Ausbauzählerstand eingeben. Der Abrechnungsmonat des Restverbrauchs wird vorgeschlagen; der Verbrauch seit der letzten Ablesung wird sofort angezeigt."],
           ["Neuer Zähler", "Neue Zählernummer, Einbaudatum, Anfangszählerstand sowie Messfaktor und Überlaufwert (vom alten Zähler übernommen, änderbar)."],
           ["Speichern", "Der alte Zähler gilt ab dem Ausbaudatum als ausgebaut. Unterzähler hängen danach am neuen Zähler."]
         ] },
         { h: "Was passiert in der Verrechnung?", p: "ILV-Regeln verweisen weiter auf die Messstelle: Für jeden Monat zählt die ganze Wechselkette, also Restverbrauch des alten plus Verbrauch des neuen Zählers. In der Regel-Anzeige steht deshalb z. B. „E-130 + E-131“ für den Wechselmonat." },
-        { h: "Ausbau ohne Ersatz", p: "„Ausbauen“ schließt den Zähler mit Ausbaudatum und -stand ab, ohne einen neuen anzulegen. Ab dem Folgemonat wird keine Ablesung mehr erwartet." }
+        { h: "Ausbau ohne Ersatz", p: "„Weitere Aktionen“ → „Ausbauen“ schließt den Zähler mit Ausbaudatum und -stand ab, ohne einen neuen anzulegen. Ab dem Folgemonat wird keine Ablesung mehr erwartet." }
       ] },
 
     { id: "ablesung", group: "Zähler & Ablesung", title: "Monatliche Ablesung",

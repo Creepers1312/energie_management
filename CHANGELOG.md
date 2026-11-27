@@ -53,6 +53,12 @@ Dashboards, Maßnahmen, Sicherungen, SMB-Kopie, Checkmk und Installer übernomme
   für online angebundene Zähler Verbrauch je Tag, Grundlast und Verbrauch je Stunde. Kacheln für jeden Monatswert
   und „Verbrauch gestern“. Die „Detaillierte Auswertung“ zeigt zusätzlich Gesamtenergie, CO₂ und den Vorjahresvergleich.
 
+- **Zählerseite übersichtlicher:** Kacheln oben (eingebaut, Ablesung fehlt, online, ausgebaut) filtern per Klick,
+  Energiearten als Schalter, Liste nach Energiearten gruppiert mit Verbrauch des fälligen Monats, kleinem
+  6-Monats-Verlauf und Kennzeichen „fehlt“/„online“. Das Zählerdetail zeigt oben letzten Stand, Verbrauch mit
+  Vormonatsvergleich und Kostenstelle, seltene Aktionen stehen unter „Weitere Aktionen“, der Rest in Reitern
+  (Übersicht mit Monatsbalken, Ablesungen, Online, Verlauf inkl. Änderungsprotokoll, Maßnahmen).
+
 - Beim Anpassen eines Dashboards bleibt die Leiste mit „+ Widget hinzufügen“ und „Fertig“ beim Scrollen unter der Kopfzeile stehen.
 
 ### Entfernt (gegenüber dem Shopfloor Board)

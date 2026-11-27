@@ -113,6 +113,10 @@ Drei Skriptblöcke: `SFM` (Speicher/Abgleich), `EN` (Rechenkern, reine Funktione
   `#connDialog`), Reiter `onl` im Zählerfenster (`mdSrcFill`/`mdSrcRead`), `renderMeterOnline` im Detail, Vorschläge in der
   Ablesung (`rdLoadOnline`, `rdSuggestion`, `#rdOnlineBtn`, Bemerkung „Online-Wert“). Lokal nur Simulator: Verbindungen in
   `sfm-connections-v1`, Werte aus den Ablesungen nachgebildet (`onlLocalValue`). Beim Zählerwechsel geht `source` mit.
+- **Zählerseite** (`renderMeters`/`renderMeterDetail`): Statuskacheln `#mtStats` (Filter `mtFlag` missing/online + `mtState`),
+  Energieart-Schalter `#mtTypeChips` (`mtType`), Liste gruppiert je Energieart; Detail mit Kennzahlen, Menü `.me-more`
+  („Weitere Aktionen“) und Reitern `mtTab` (over/read/onl/hist/dev). Passt der gewählte Zähler nicht zu den Filtern, wird der
+  erste der Liste gewählt; `meterLink` setzt die Filter zurück. `meterHay`, `flagText`, `lastReading`, `meterStatus` nutzt auch die Ablesung.
 - **Kopfzeile:** Speicherstatus nur bei Problemen; Datum → Ablesung des fälligen Monats; Zähler am Reiter „Ablesung“
   = fehlende Ablesungen.
 

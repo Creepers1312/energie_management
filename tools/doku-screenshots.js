@@ -34,7 +34,7 @@ const W = 1440, H = 900;
   await p.click('#dashEditDone'); await p.evaluate(() => scrollTo(0, 0));
   // Zähler
   await p.click('.tab[data-view="meters"]'); await wait(700); await shot('zaehler');
-  await p.click('.me-actions >> text=Zählerwechsel'); await wait(400); await shot('zaehlerwechsel', { clip: await box('dialog[open]', 28) });
+  await p.click('.me-more summary'); await p.click('.me-more-menu >> text=Zählerwechsel'); await wait(400); await shot('zaehlerwechsel', { clip: await box('dialog[open]', 28) });
   await p.keyboard.press('Escape'); await wait(200);
   // Ablesung mit Prüfliste (W-220: Stand kleiner als vorher)
   await p.click('.tab[data-view="readings"]'); await wait(700); await shot('ablesung');
@@ -49,7 +49,7 @@ const W = 1440, H = 900;
   // Vorschau einer rückwirkenden Faktoränderung (wird nicht übernommen)
   await p.click('.tab[data-view="meters"]'); await wait(400);
   for (const r of await p.$$('#mtTable tbody tr')) if ((await r.innerText()).includes('E-110')) { await r.click(); break; }
-  await wait(300); await p.click('.me-actions >> text=Messfaktor / Überlauf'); await wait(300);
+  await wait(300); await p.click('.me-more summary'); await p.click('.me-more-menu >> text=Messfaktor / Überlauf'); await wait(300);
   await p.fill('#ppFactor', '1,05');
   const m3 = await p.evaluate(() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return d.toISOString().slice(0, 7); });
   await p.fill('#ppFrom', m3); await p.click('#ppSave'); await wait(600);
